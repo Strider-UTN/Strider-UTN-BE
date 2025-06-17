@@ -1,0 +1,77 @@
+# ==========================
+# .NET Core / .NET 5-8 +
+# ==========================
+
+**/[Bb]in/
+**/[Oo]bj/
+**/[Ll]og/
+**/Logs/
+**/TestResults/
+**/*.user
+**/*.rsuser
+**/*.suo
+**/*.userosscache
+**/*.sln.docstates
+**/*.vsp
+**/*.vspx
+**/*.vspscc
+**/*.vssscc
+**/*.cache
+**/*.dbmdl
+**/*.bak
+**/*.orig
+**/*.tmp
+**/*.log
+**/*.dmp
+
+# ASP.NET Core
+**/appsettings.*.json
+!**/appsettings.json
+**/secrets.json
+
+# Entity Framework
+**/Migrations/
+
+# Rider
+.idea/
+
+# Visual Studio Code
+.vscode/
+
+# Visual Studio
+.vs/
+# LocalDB, if you use it
+**/*.mdf
+**/*.ldf
+**/*.ndf
+
+# NuGet
+**/packages/
+*.nupkg
+*.snupkg
+.project.assets.json
+project.lock.json
+project.fragment.lock.json
+
+# DotCover
+*.dotCover
+
+# Auto-generated files
+Generated_Code/
+
+# Local tools
+.localtoolmanifest.json
+
+# global.json (opcional, si no fijás versión de SDK)
+# global.json
+
+# node_modules (por si usás front-end con Node en alguna carpeta)
+**/node_modules/
+
+# wwwroot (si tenés archivos generados)
+# wwwroot/
+
+# Publicación Azure / Deploy
+**/*.PublishSettings
+**/*.pubxml
+**/*.pfx
