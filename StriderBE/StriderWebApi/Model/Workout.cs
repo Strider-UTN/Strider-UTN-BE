@@ -1,25 +1,15 @@
 namespace StriderWebApi.Model;
 
-public class Workout
+public class Workout(int id, string name, int distance, DateTime date, TimeSpan duration, List<Lap> laps)
 {
-    public int Id { get; set; }
-    public string Name { get; set; }
+    public int Id { get; set; } = id;
+    public string Name { get; set; } = name;
 
-    public int Distance { get; set; }
+    public int Distance { get; set; } = distance;
 
-    public DateTime Date { get; set; }
+    public DateTime Date { get; set; } = date;
 
-    public TimeSpan Duration { get; set; }
+    public TimeSpan Duration { get; set; } = duration;
 
-    public List<Lap> Laps { get; set; }
-
-    public Workout(int id, string name, int distance, DateTime date, TimeSpan duration, List<Lap> laps)
-    {
-        Id = id;
-        Name = name;
-        Distance = distance;
-        Date = date;
-        Duration = duration;
-        Laps = laps;
-    }
+    public List<Lap> Laps { get; set; } = laps;
 }

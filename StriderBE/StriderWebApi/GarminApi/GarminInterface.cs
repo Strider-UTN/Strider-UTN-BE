@@ -12,19 +12,10 @@ public class APIResponse
 
 }
 
-public class GarminInterface
+public class GarminInterface(string host, int port, IHttpClientHandler? client)
 {
 
-    private IHttpClientHandler Client;
-    private string Host;
-    private int Port;
-
-    public GarminInterface(string host, int port, IHttpClientHandler? client)
-    {
-        Client = client ?? new HttpClientHandler(host, port);
-        Host = host;
-        Port = port;
-    }
+    private readonly IHttpClientHandler _client = client ?? new HttpClientHandler(host, port);
 
     private static async Task HandleError(HttpResponseMessage response)
     {
@@ -45,13 +36,13 @@ public class GarminInterface
             garmin_mfa_code = mfaToken
         }), System.Text.Encoding.UTF8, "application/json");
 
-        var response = await Client.PostAsync("users/" + user.Id, content);
+        var response = await _client.PostAsync("users/" + user.Id, content);
         await HandleError(response);
     }
 
     public async Task DeleteUser(User user)
     {
-        var response = await Client.DeleteAsync("users/" + user.Id);
+        var response = await _client.DeleteAsync("users/" + user.Id);
         await HandleError(response);
     }
 
@@ -59,7 +50,7 @@ public class GarminInterface
     public async Task GetWorkouts(User user, DateTime start, DateTime end)
     {
 
-        HttpResponseMessage result = await Client.GetAsync("users/" + user.Id + "/workouts?" + "start_date=" + start.ToString("yyyy-MM-dd") + "&end_date=" + end.ToString("yyyy-MM-dd"));
+        HttpResponseMessage result = await _client.GetAsync("users/" + user.Id + "/workouts?" + "start_date=" + start.ToString("yyyy-MM-dd") + "&end_date=" + end.ToString("yyyy-MM-dd"));
 
         await HandleError(result);
 
