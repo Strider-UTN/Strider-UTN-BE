@@ -1,15 +1,34 @@
 namespace StriderWebApi.Model;
 
-public class Workout(int id, string name, int distance, DateTime date, TimeSpan duration, List<Lap> laps)
+
+public enum WorkoutState
 {
-    public int Id { get; set; } = id;
-    public string Name { get; set; } = name;
+    COMPLETED,
+    ABANDONED,
 
-    public int Distance { get; set; } = distance;
+}
 
-    public DateTime Date { get; set; } = date;
+public enum WorkoutType
+{
+    TRAINING,
+    COMPETITION
+}
 
-    public TimeSpan Duration { get; set; } = duration;
+public class Workout(int id, string name, int distance, DateTime date, double duration, List<Lap> laps)
+{
+    public int Id { get; } = id;
+    public string Name { get; } = name;
 
-    public List<Lap> Laps { get; set; } = laps;
+    public int Distance { get;  } = distance;
+
+    public DateTime Date { get;  } = date;
+
+    public double Duration { get;  } = duration;
+
+    public List<Lap> Laps { get;  } = laps;
+
+    public WorkoutState State { get; set; } = WorkoutState.COMPLETED;
+
+    public WorkoutType Type { get; set; } = WorkoutType.TRAINING;
+
 }
