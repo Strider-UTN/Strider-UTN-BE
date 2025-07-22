@@ -1,16 +1,12 @@
 namespace StriderWebApi.Model;
 
-public class Coach(string name, string address)
+public class Coach(User user)
 {
-    private string Name { get;} = name;
-    private string Address { get;  } = address;
 
-    private List<Team> Teams { get; } = [];
+    private User _user { get; } = user;
 
+    private List<Team> _teams { get; } = [];
 
-    public void AddTeam(Team team)
-    {
-        this.Teams.Add(team);
-    }
+    public void AddTeam(Team team) => _teams.Add(team);
 
 }

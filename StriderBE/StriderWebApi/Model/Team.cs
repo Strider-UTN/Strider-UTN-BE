@@ -1,35 +1,21 @@
 namespace StriderWebApi.Model;
 
-using StriderWebApi.Model;
-
-public class Team(int id, string name)
+public class Team(string name)
 {
-    public int Id { get; } = id;
-    public string Name { get; } = name;
+    private string _name { get; } = name;
 
-    private List<User> Users { get; } = [];
+    private List<Calendar> _calendar { get; } = [];
 
-    private List<Coach> Coaches { get; } = [];
+    private List<Athlete> _athletes { get; } = [];
 
-    public void AddUser(User user)
-    {
-        Users.Add(user);
-    }
+    private List<Coach> _coaches { get; } = [];
 
-    public void AddCoach(Coach coach)
-    {
-        Coaches.Add(coach);
-    }
+    public void AddAthlete(Athlete athlete) => _athletes.Add(athlete);
 
-    public void RemoveUser(User user)
-    {
-        Users.Remove(user);
-    }
+    public void AddCoach(Coach coach) => _coaches.Add(coach);
 
-    public void RemoveCoach(Coach coach)
-    {
-        Coaches.Remove(coach);
-    }
+    public void AddCalendar(Calendar calendar) => _calendar.Add(calendar);
 
-    
+    public void RemoveCalendar(Calendar calendar) => _calendar.Remove(calendar);
+ 
 }

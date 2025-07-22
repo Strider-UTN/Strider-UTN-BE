@@ -14,8 +14,10 @@ public class HttpClientHandler : IHttpClientHandler
 
     public HttpClientHandler(string host, int port)
     {
-        Client = new HttpClient();
-        Client.BaseAddress = new Uri($"http://{host}:{port}");
+        Client = new()
+        {
+            BaseAddress = new Uri($"http://{host}:{port}")
+        };
     }
 
     public Task<HttpResponseMessage> DeleteAsync(string url)

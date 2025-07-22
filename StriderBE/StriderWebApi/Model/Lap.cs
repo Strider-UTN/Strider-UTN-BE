@@ -1,11 +1,16 @@
 namespace StriderWebApi.Model;
 
-public class Lap(int index, DateTime startTime, double distance, double duration, double averageSpeed)
-{
-    public int Index { get; set; } = index;
 
-    public DateTime StartTime { get; set; } = startTime;
-    public double Distance { get; set; } = distance;
-    public double Duration { get; set; } = duration;
-    public double AverageSpeed { get; set; } = averageSpeed;
+public class Lap(double distance, double duration)
+{
+    private double _distance { get; set; } = distance;
+    private double _duration { get; set; } = duration;
+
+    public double Speed => _distance / _duration;
+
+    public double Distance => _distance;
+
+    public double Duration => _duration;
+
 }
+
