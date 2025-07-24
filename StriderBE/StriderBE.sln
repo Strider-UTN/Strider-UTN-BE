@@ -3,23 +3,49 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36203.30
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StriderWebApi", "StriderWebApi\StriderWebApi.csproj", "{160F2F7C-F649-4B89-8205-F108157F5447}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementos de la solución", "Elementos de la solución", "{D107F4C8-89CC-BEA8-D3D7-CA6B7733353D}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StriderWebApi", "StriderWebApi\StriderWebApi.csproj", "{F4594EE6-7997-4466-8345-7550D5062BC9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StriderWebApi.Test", "StriderWebApi.Test\StriderWebApi.Test.csproj", "{C9F83FB2-B550-4E55-B18E-0125390B4B84}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{160F2F7C-F649-4B89-8205-F108157F5447}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{160F2F7C-F649-4B89-8205-F108157F5447}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{160F2F7C-F649-4B89-8205-F108157F5447}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{160F2F7C-F649-4B89-8205-F108157F5447}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4594EE6-7997-4466-8345-7550D5062BC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4594EE6-7997-4466-8345-7550D5062BC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4594EE6-7997-4466-8345-7550D5062BC9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F4594EE6-7997-4466-8345-7550D5062BC9}.Debug|x64.Build.0 = Debug|Any CPU
+		{F4594EE6-7997-4466-8345-7550D5062BC9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F4594EE6-7997-4466-8345-7550D5062BC9}.Debug|x86.Build.0 = Debug|Any CPU
+		{F4594EE6-7997-4466-8345-7550D5062BC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4594EE6-7997-4466-8345-7550D5062BC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4594EE6-7997-4466-8345-7550D5062BC9}.Release|x64.ActiveCfg = Release|Any CPU
+		{F4594EE6-7997-4466-8345-7550D5062BC9}.Release|x64.Build.0 = Release|Any CPU
+		{F4594EE6-7997-4466-8345-7550D5062BC9}.Release|x86.ActiveCfg = Release|Any CPU
+		{F4594EE6-7997-4466-8345-7550D5062BC9}.Release|x86.Build.0 = Release|Any CPU
+		{C9F83FB2-B550-4E55-B18E-0125390B4B84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9F83FB2-B550-4E55-B18E-0125390B4B84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9F83FB2-B550-4E55-B18E-0125390B4B84}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C9F83FB2-B550-4E55-B18E-0125390B4B84}.Debug|x64.Build.0 = Debug|Any CPU
+		{C9F83FB2-B550-4E55-B18E-0125390B4B84}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C9F83FB2-B550-4E55-B18E-0125390B4B84}.Debug|x86.Build.0 = Debug|Any CPU
+		{C9F83FB2-B550-4E55-B18E-0125390B4B84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9F83FB2-B550-4E55-B18E-0125390B4B84}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9F83FB2-B550-4E55-B18E-0125390B4B84}.Release|x64.ActiveCfg = Release|Any CPU
+		{C9F83FB2-B550-4E55-B18E-0125390B4B84}.Release|x64.Build.0 = Release|Any CPU
+		{C9F83FB2-B550-4E55-B18E-0125390B4B84}.Release|x86.ActiveCfg = Release|Any CPU
+		{C9F83FB2-B550-4E55-B18E-0125390B4B84}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
