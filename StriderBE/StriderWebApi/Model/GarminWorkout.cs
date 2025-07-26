@@ -8,24 +8,16 @@ public enum WorkoutState
 
 }
 
-public enum WorkoutType
-{
-    TRAINING,
-    COMPETITION
-}
-
-public class WorkoutLap(int Index, double distance, double duration, double speed, DateTime startTime)
+public class Lap(int Index, double distance, double duration, double speed, DateTime startTime)  
 {
     public int Index { get; } = Index;
-    
     public double Distance { get; } = distance;
     public double Duration { get; } = duration;
     public double Speed { get; } = speed;
-
     public DateTime StartTime { get; } = startTime;
 }
 
-public class Workout(int id, string name, int distance, DateTime date, double duration, List<WorkoutLap> laps)
+public class GarminWorkout(int id, string name, int distance, DateTime date, double duration, List<Lap> intervals, Athlete athlete)
 {
 
     public int Id { get; } = id;
@@ -37,10 +29,14 @@ public class Workout(int id, string name, int distance, DateTime date, double du
 
     public double Duration { get; } = duration;
 
-    public List<WorkoutLap> Laps { get; } = laps;
+    public List<Lap> Intervals { get; } = intervals;
 
     public WorkoutState State { get; set; } = WorkoutState.COMPLETED;
 
     public WorkoutType Type { get; set; } = WorkoutType.TRAINING;
+
+    public Session? Session { get; set; } = null;
+
+    public Athlete Athlete { get; set; } = athlete;
 
 }

@@ -1,21 +1,27 @@
 namespace StriderWebApi.Model;
 
-public class Team(string name)
+public class Team(string name, List<TrainingLocation> trainingLocations, DateTime creationDate)
 {
-    private string _name { get; } = name;
 
-    private List<Calendar> _calendar { get; } = [];
+    public string Name { get; } = name;
 
-    private List<Athlete> _athletes { get; } = [];
+    public DateTime CreationDate { get; } = creationDate;
 
-    private List<Coach> _coaches { get; } = [];
+    public List<TrainingLocation> TrainingLocations { get; } = trainingLocations;
 
-    public void AddAthlete(Athlete athlete) => _athletes.Add(athlete);
+    public bool IsPublic { get; set; } = false;
 
-    public void AddCoach(Coach coach) => _coaches.Add(coach);
+    public bool AutomaticInscription { get; set; } = false;
 
-    public void AddCalendar(Calendar calendar) => _calendar.Add(calendar);
+    public bool RequiresManualApproval { get; set; } = false;
 
-    public void RemoveCalendar(Calendar calendar) => _calendar.Remove(calendar);
- 
+    public List<Athlete> Athletes { get; } = new();
+
+    public List<Coach> Coaches { get; } = new();
+
+    public void AddAthlete(Athlete athlete) => Athletes.Add(athlete);
+
+    public void AddCoach(Coach coach) => Coaches.Add(coach);
+
+    public Athlete? GetAthlete(User user) => Athletes.Find(a => a.User == user);
 }

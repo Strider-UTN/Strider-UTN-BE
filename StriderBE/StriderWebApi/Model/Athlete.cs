@@ -1,25 +1,34 @@
 namespace StriderWebApi.Model;
 
-public class Athlete(User user, double vO2Max, List<string> medicalConditions, List<Workout> workouts)
+public class Athlete(User user, double vO2Max, List<string> medicalConditions, List<GarminWorkout> workouts)
 {
-    private User _user { get; } = user;
+    public User User { get; } = user;
 
-    private Team? _team { get; set; } = null;
+    public Team? Team { get; set; } = null;
 
-    private double _vO2Max { get; set; } = vO2Max;
+    public double VO2Max { get; set; } = vO2Max;
 
-    private List<string> _medicalConditions { get; } = medicalConditions;
+    public List<string> MedicalConditions { get; } = medicalConditions;
 
-    private List<Workout> _workouts { get; } = workouts;
+    public List<InprogressInjury> InprogressInjuries { get; } = [];
 
-    public void AddWorkouts(List<Workout> workouts) => _workouts.AddRange(workouts);
+    public List<RecoveredInjury> RecoveredInjuries { get; } = [];
 
-    public void UpdateVO2Max(double vO2Max) => _vO2Max = vO2Max;
+    public List<GarminWorkout> Workouts { get; } = workouts;
 
-    public double Speed(int percentage) => _vO2Max * percentage / 100;
+    public void AddWorkouts(List<GarminWorkout> workouts) => Workouts.AddRange(workouts);
 
-    public void AddTeam(Team team) => _team = team;
+    public void UpdateVO2Max(double vO2Max) => VO2Max = vO2Max;
 
-    public void AddMedicalCondition(string medicalCondition) => _medicalConditions.Add(medicalCondition);
-    
+    public double Speed(int percentage) => VO2Max * percentage / 100;
+
+    public void AddMedicalCondition(string medicalCondition) => MedicalConditions.Add(medicalCondition);
+
+    public double WeeklyDistance()
+    {
+        DateTime today = DateTime.Now;
+        return Workouts.Where(w => w.Date > today.AddDays(-7)).Sum(w => w.Distance);
+    }
+
 }
+

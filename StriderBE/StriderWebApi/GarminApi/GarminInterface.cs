@@ -47,7 +47,7 @@ public class GarminInterface(string host, int port, IHttpClientHandler? client)
     }
 
 #pragma warning disable CS8604
-    public async Task<List<Workout>> GetWorkouts(User user, DateTime start, DateTime end)
+    public async Task<List<GarminWorkout>> GetWorkouts(User user, DateTime start, DateTime end)
     {
 
         HttpResponseMessage result = await _client.GetAsync("users/" + user.Id + "/workouts?" + "start_date=" + start.ToString("yyyy-MM-dd") + "&end_date=" + end.ToString("yyyy-MM-dd"));
@@ -57,7 +57,7 @@ public class GarminInterface(string host, int port, IHttpClientHandler? client)
         var response = JsonSerializer.Deserialize<APIResponse>(await result.Content.ReadAsStringAsync()) ?? throw new Exception("No activities found");
         object Data = response.Data ?? throw new Exception("No activities found");
 
-        var activities = JsonSerializer.Deserialize<List<Workout>>(Data.ToString()) ?? throw new Exception("No activities found");
+        var activities = JsonSerializer.Deserialize<List<GarminWorkout>>(Data.ToString()) ?? throw new Exception("No activities found");
 
         return activities;
         
