@@ -3,10 +3,20 @@ namespace StriderWebApi.Model;
 public class Coach(User user)
 {
 
-    private User _user { get; } = user;
+    public User User { get; } = user;
 
-    private List<Team> _teams { get; } = [];
+    public List<Team> Teams { get; } = [];
 
-    public void AddTeam(Team team) => _teams.Add(team);
+    public List<TrainingPlan> TrainingPlans { get; } = [];
+
+    public List<Session> Templates { get; } = [];
+
+    public void AddTeam(Team team) => Teams.Add(team);
+
+    public void AddTrainingPlan(TrainingPlan trainingPlan) => TrainingPlans.Add(trainingPlan);
+
+    public void RemoveTrainingPlan(TrainingPlan trainingPlan) => TrainingPlans.Remove(trainingPlan);
+
+    public void AddTemplate(Session template) => Templates.Add(template);
 
 }

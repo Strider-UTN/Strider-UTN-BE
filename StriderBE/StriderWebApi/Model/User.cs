@@ -8,14 +8,12 @@ public enum Gender
 
 public class User(int id, string username, string name, string password, string email, Gender gender, string address)
 {
-    private int _id = id;
-    private string _username = username;
-    private string _name = name;
-    private string _password = password;
-    private string _email = email;
-    private Gender _gender = gender;
-    private string _address = address;
-
-    public int Id => _id;
+    public int Id { get; } = id;
+    public string Username { get;  } = username;
+    public string Name { get;  } = name;
+    public string Password { get; } = password;
+    public string Email { get;} = email;
+    public Gender Gender { get;  } = gender;
+    public string Address { get; } = address;
 
 }
