@@ -91,7 +91,7 @@ public class GarminTests
         GarminInterface garminInterface = new("localhost", 8080, _mockService.Object);
         List<GarminWorkout> workouts = await garminInterface.GetWorkouts(_user, new DateTime(2022, 1, 1), new DateTime(2022, 1, 2));
 
-        Assert.Equal(3600, workouts[0].Intervals[0].Duration);
+        Assert.Equal(3600, workouts[0].Laps[0].Duration);
     }
 
     [Fact]

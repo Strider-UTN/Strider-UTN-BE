@@ -2,7 +2,7 @@ namespace StriderWebApi.Model;
 
 public class Coach(User user)
 {
-
+    
     public User User { get; } = user;
 
     public List<Team> Teams { get; } = [];
