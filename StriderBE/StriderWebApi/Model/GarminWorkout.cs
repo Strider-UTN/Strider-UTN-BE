@@ -17,7 +17,7 @@ public class Lap(int Index, double distance, double duration, double speed, Date
     public DateTime StartTime { get; } = startTime;
 }
 
-public class GarminWorkout(int id, string name, int distance, DateTime date, double duration, List<Lap> intervals, Athlete athlete)
+public class GarminWorkout(int id, string name, int distance, DateTime date, double duration, List<Lap> Laps, Athlete athlete)
 {
 
     public int Id { get; } = id;
@@ -29,7 +29,7 @@ public class GarminWorkout(int id, string name, int distance, DateTime date, dou
 
     public double Duration { get; } = duration;
 
-    public List<Lap> Intervals { get; } = intervals;
+    public List<Lap> Laps { get; } = Laps;
 
     public WorkoutState State { get; set; } = WorkoutState.COMPLETED;
 
