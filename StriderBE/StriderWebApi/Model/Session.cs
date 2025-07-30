@@ -1,7 +1,7 @@
 namespace StriderWebApi.Model;
 
 
-public class Session(DateTime date, string warmup, string coolDown, string description, string name, string category, string label, string comments, List<Athlete> athletes, List<IInterval> Intervals, WorkoutType sessionType = WorkoutType.TRAINING)
+public class Session(DateTime date, string warmup, string coolDown, string description, string name, string category, string label, string comments, List<Athlete> athletes, List<Interval> Intervals, WorkoutType sessionType = WorkoutType.TRAINING)
 {
     public DateTime Date { get; } = date;
     public string Warmup { get; } = warmup;
@@ -13,11 +13,11 @@ public class Session(DateTime date, string warmup, string coolDown, string descr
     public string Comments { get; } = comments;
     public WorkoutType SessionType { get; } = sessionType;
     public List<Athlete> Athletes { get; } = athletes;
-    public List<IInterval> Intervals { get; } = Intervals;
+    public List<Interval> Intervals { get; } = Intervals;
 
-    public double TotalDistance()
+    public double TotalDistance(Athlete athlete)
     {
-        return Intervals.Sum(l => l.Distance);
+        return Intervals.Sum(l => l.Distance(athlete));
     }
 
     public double TotalDuration(Athlete athlete)

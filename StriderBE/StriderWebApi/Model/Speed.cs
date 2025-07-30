@@ -2,16 +2,21 @@ namespace StriderWebApi.Model;
 
 public interface ISpeed
 {
-    public double Speed(Athlete athlete);
-
+    double Speed(Athlete athlete);
 }
 
-public class FixedSpeed(double speed) : ISpeed
+class FixedSpeed(double speed) : ISpeed
 {
-    public double Speed(Athlete athlete) => speed;
+
+    private double _speed = speed;
+
+    public double Speed(Athlete athlete) => _speed;
 }
 
-public class VO2MaxSpeed(int percentage) : ISpeed
+class PercentageSpeed(int percentage) : ISpeed
 {
-    public double Speed(Athlete athlete) => athlete.Speed(percentage);
+
+    private int _percentage = percentage;
+    public double Speed(Athlete athlete) => athlete.Speed(_percentage);
 }
+
