@@ -2,31 +2,37 @@ namespace StriderWebApi.Model;
 
 public interface IInterval
 {
-    public double Distance { get; }
-    public double Duration(Athlete athlete);
-    public double Speed(Athlete athlete) => Distance / Duration(athlete);
+    double Distance(Athlete athlete);
+    double Duration(Athlete athlete);
+    ISpeed Speed { get; }
 }
 
-public class Run(double distance, ISpeed pace) : IInterval
+public class FixedDistance(double distance, ISpeed speed) : IInterval
 {
-    public double Distance = distance;
 
-    public ISpeed Pace = pace;
+    public double distance = distance;
+    public ISpeed speed = speed;
 
-    double IInterval.Distance => Distance;
+    public double Distance(Athlete a) => distance;
+    public double Duration(Athlete a) => distance / speed.Speed(a);
+    public ISpeed Speed => speed;
 
-    public double Duration(Athlete athlete) => Distance / Pace.Speed(athlete);
+}
+
+public class FixedDuration(double duration, ISpeed speed) : IInterval
+{
+    public double Distance(Athlete athlete) => speed.Speed(athlete) * duration;
+    public double Duration(Athlete athlete) => duration;
+    public ISpeed Speed => speed;
 }
 
 public class Rest(double duration) : IInterval
 {
-    public double Duration = duration;
 
-    public double Distance => throw new NotImplementedException();
+    public double duration = duration;
 
-    double IInterval.Duration(Athlete athlete)
-    {
-        return Duration;
-    }
+    public double Distance(Athlete athlete) => 0;
+    public double Duration(Athlete athlete) => duration;
+    public ISpeed Speed => new FixedSpeed(0);
 }
 

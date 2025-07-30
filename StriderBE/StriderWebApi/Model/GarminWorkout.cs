@@ -37,4 +37,6 @@ public class GarminWorkout(int id, string name, int distance, DateTime date, dou
 
     public Athlete Athlete { get; set; } = athlete;
 
+    public Session? Session { get; set; }
+
 }
