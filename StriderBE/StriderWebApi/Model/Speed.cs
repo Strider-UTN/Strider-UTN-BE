@@ -15,7 +15,6 @@ class FixedSpeed(double speed) : ISpeed
 
 class PercentageSpeed(int percentage) : ISpeed
 {
-
     private int _percentage = percentage;
     public double Speed(Athlete athlete) => athlete.Speed(_percentage);
 }
