@@ -1,9 +1,7 @@
 namespace StriderWebApi.Model;
 
-public class Athlete(User user, double vO2Max, List<string> medicalConditions, List<GarminWorkout> workouts)
+public class Athlete(int id, string username, string name, string password, string email, Gender gender, string address, double vO2Max, List<string> medicalConditions, List<GarminWorkout> workouts) : User(id, username, name, password, email, gender, address)
 {
-    public User User { get; } = user;
-
     public Team? Team { get; set; } = null;
 
     public double VO2Max { get; set; } = vO2Max;
