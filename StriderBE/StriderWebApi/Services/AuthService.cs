@@ -1,5 +1,9 @@
-﻿using Microsoft.IdentityModel.Tokens;
-using StriderWebApi.Data;
+﻿using Google.Apis.Auth;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using StriderWebApi.Data.Repositories.Interfaces;
+using StriderWebApi.Domain.DomainClasses;
+using StriderWebApi.Domain.Enums;
 using StriderWebApi.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -10,23 +14,82 @@ namespace StriderWebApi.Services
     public class AuthService : IAuthService
     {
         private readonly IConfiguration _config;
-        private readonly StriderDbContext _dbContext;
-
-        public AuthService(IConfiguration config, StriderDbContext dbContext)
+        private readonly IUserRepository _userRepository;
+        private readonly IAthleteRepository _athleteRepository;
+        private readonly ICoachRepository _coachRepository;
+        private readonly IPasswordHasher<User> _passwordHasher;
+        public AuthService(IConfiguration config, IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IAthleteRepository athleteRepository, ICoachRepository coachRepository)
         {
-           _config = config ?? throw new ArgumentNullException(nameof(config));
-           _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            _config = config ?? throw new ArgumentNullException(nameof(config));
+            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _athleteRepository = athleteRepository ?? throw new ArgumentNullException(nameof(athleteRepository));
+            _coachRepository = coachRepository ?? throw new ArgumentNullException(nameof(coachRepository));
+            _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
         }
 
-        public async Task<string> HandleLogin(string? username, string? password)
+        public async Task<string> HandleGoogleLoginAsync(GoogleJsonWebSignature.Payload payload, UserTypeEnum userType)
         {
-            if (username != "admin" || password != "1234") //TODO: Replace with real user validation logic from db
+            var dbUser = await _userRepository.GetUserByEmailAsync(payload.Email);
+
+            if (dbUser == null)
+                dbUser = await CreateNewUserFromGooglePayload(payload, userType);
+
+            return GetToken(payload.Name, dbUser.Type);
+        }
+
+        private async Task<User?> CreateNewUserFromGooglePayload(GoogleJsonWebSignature.Payload payload, UserTypeEnum userType)
+        {
+            if (userType == UserTypeEnum.Athlete)
+            {
+                var newUser = new Athlete
+                {
+                    Username = payload.Email.Split('@')[0], // Use email prefix as username
+                    Email = payload.Email,
+                    FullName = payload.Name,
+                    Type = userType,
+                    Active = true, // Assuming Google users are automatically active
+                    CreatedBy = "Google SSO",
+                    CreatedDate = DateTime.UtcNow,
+                };
+
+                await _athleteRepository.AddAthleteAsync(newUser);
+                return newUser;
+            }
+            else
+            {
+                var newUser = new Coach
+                {
+                    Username = payload.Email.Split('@')[0], // Use email prefix as username
+                    Email = payload.Email,
+                    FullName = payload.Name,
+                    Type = userType,
+                    Active = true, // Assuming Google users are automatically active
+                    CreatedBy = "Google SSO",
+                    CreatedDate = DateTime.UtcNow,
+                };
+                await _coachRepository.AddCoachAsync(newUser);
+                return newUser;
+            }
+        }
+
+        public async Task<string> HandleLoginAsync(string username, string password)
+        {
+            var dbUser = await _userRepository.GetUserByUsernameAsync(username);
+
+            var passwordIsValid = dbUser != null && _passwordHasher.VerifyHashedPassword(dbUser, dbUser.PasswordHash, password) == PasswordVerificationResult.Success;
+
+            if (!passwordIsValid)
                 throw new UnauthorizedAccessException("Invalid username or password.");
 
+            return GetToken(username, dbUser.Type);
+        }
+
+        private string GetToken(string username, UserTypeEnum type)
+        {
             var claims = new[]
             {
                 new Claim(ClaimTypes.Name, username),
-                new Claim(ClaimTypes.Role, "Admin")
+                new Claim(ClaimTypes.Role, type.ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
