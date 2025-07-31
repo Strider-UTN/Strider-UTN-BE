@@ -1,7 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StriderWebApi.Data;
+using StriderWebApi.Data.Repositories;
+using StriderWebApi.Data.Repositories.Interfaces;
+using StriderWebApi.Domain.DomainClasses;
 using StriderWebApi.Services;
 using StriderWebApi.Services.Interfaces;
 using System.Text;
@@ -45,7 +49,18 @@ namespace StriderWebApi.Extensions
                 options.UseNpgsql(configuration.GetConnectionString("StriderConnectionString")));
 
             // Services
+            // Helpers
+            services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+            services.AddScoped<IEmailService, EmailService>();
+
+            // Service Registrations
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IUserService, UserService>();
+
+            // Repositories Registrations
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IAthleteRepository, AthleteRepository>();
+            services.AddScoped<ICoachRepository, CoachRepository>();
 
             return services;
         }
