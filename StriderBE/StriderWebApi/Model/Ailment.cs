@@ -36,7 +36,7 @@ public enum IllnessType
     STOMACH_PAIN
 }
 
-public class Ailment(AilmentSeverity severity, string description, string additionalNotes, string treatment, IAilmentState state)
+public abstract class Ailment(AilmentSeverity severity, string description, string additionalNotes, string treatment, IAilmentState state)
 {
     private readonly AilmentSeverity _severity = severity;
     private readonly string _description = description;
@@ -56,6 +56,9 @@ public class Ailment(AilmentSeverity severity, string description, string additi
     {
         return _state.IsRecovered();
     }
+
+    public abstract string GetName();
+    
 }
 
 public interface IAilmentState
@@ -103,15 +106,25 @@ public class Injury(InjuryType injuryType, InjuryLocation location, AilmentSever
         get => _location; 
         set => _location = value; 
     }
+
+    public override string GetName()
+    {
+        return _type.ToString() + " " + _location.ToString();
+    }
 }
 
 public class Illness(IllnessType type, AilmentSeverity severity, string description, string additionalNotes, string treatment, IAilmentState state) : Ailment(severity, description, additionalNotes, treatment, state)
 {
     private IllnessType _type = type;
 
-    public IllnessType Type 
-    { 
-        get => _type; 
-        set => _type = value; 
+    public IllnessType Type
+    {
+        get => _type;
+        set => _type = value;
+    }
+    
+    public override string GetName()
+    {
+        return _type.ToString();
     }
 }

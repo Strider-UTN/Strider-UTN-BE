@@ -1,6 +1,6 @@
 namespace StriderWebApi.Model;
 
-public class Athlete(int id, string username, string name, string password, string email, Gender gender, string address, double vO2Max, List<string> medicalConditions, List<string> objectives) : User(id, username, name, password, email, gender, address)
+public class Athlete(int id, string username, string name, string password, string email, Gender gender, string address, double vO2Max, List<string> medicalConditions, List<string> objectives, DateTime birthdate) : User(id, username, name, password, email, gender, address, birthdate)
 {
     private Team? _team;
     private double _vO2Max = vO2Max;
@@ -57,5 +57,9 @@ public class Athlete(int id, string username, string name, string password, stri
     {
         return _workouts.OrderBy(w => w.Date).Last().Date;
     }
+
+    public int TotalWorkoutsCompleted() => _workouts.Count;
+
+    public List<Ailment> GetActiveAilments() => [.. _ailments.Where(a => !a.IsRecovered())];
 }
 

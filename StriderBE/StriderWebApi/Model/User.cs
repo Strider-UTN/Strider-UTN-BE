@@ -6,7 +6,7 @@ public enum Gender
     FEMALE
 }
 
-public class User(int id, string username, string name, string password, string email, Gender gender, string address)
+public class User(int id, string username, string name, string password, string email, Gender gender, string address, DateTime birthdate)
 {
     private readonly int _id = id;
     private readonly string _username = username;
@@ -16,6 +16,8 @@ public class User(int id, string username, string name, string password, string 
     private readonly Gender _gender = gender;
     private readonly string _address = address;
 
+    private readonly DateTime _birthdate = birthdate;
+
     public int Id => _id;
     public string Username => _username;
     public string Name => _name;
@@ -23,4 +25,5 @@ public class User(int id, string username, string name, string password, string 
     public string Email => _email;
     public Gender Gender => _gender;
     public string Address => _address;
+    public DateTime BirthDate => _birthdate;
 }

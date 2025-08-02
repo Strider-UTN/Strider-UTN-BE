@@ -1,6 +1,6 @@
 namespace StriderWebApi.Model;
 
-public class Coach(int id, string username, string name, string password, string email, Gender gender, string address) : User(id, username, name, password, email, gender, address)
+public class Coach(int id, string username, string name, string password, string email, Gender gender, string address, DateTime birthDate) : User(id, username, name, password, email, gender, address, birthDate)
 {
     private readonly List<Team> _teams = [];
     private readonly List<TrainingPlan> _trainingPlans = [];
@@ -40,4 +40,6 @@ public class Coach(int id, string username, string name, string password, string
     public int AthletesInTeams() => _teams.Sum(t => t.TotalAthletes());
 
     public int TotalTrainingLocations() => _teams.Sum(t => t.TotalTrainingLocations());
+
+    public int TotalWorkoutsCompletedByIndividualAthletes() => _athletes.Sum(a => a.TotalWorkoutsCompleted());
 }
