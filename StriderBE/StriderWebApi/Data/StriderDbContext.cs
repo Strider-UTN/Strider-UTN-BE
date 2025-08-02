@@ -4,10 +4,10 @@ using StriderWebApi.Domain.Enums;
 
 namespace StriderWebApi.Data
 {
-    public class StriderDbContext : DbContext
+    public class StriderDbContext(DbContextOptions<StriderDbContext> options) : DbContext(options)
     {
+
         #region Constructors
-        public StriderDbContext(DbContextOptions<StriderDbContext> options) : base(options) {}
         #endregion
 
         #region DbSets

@@ -1,6 +1,9 @@
 
 namespace StriderWebApi.Model;
-public struct TrainingLocation
+
+public readonly struct TrainingLocation(string address)
 {
-    public string Address;
+    private readonly string _address = address;
+
+    public readonly string Address => _address;
 }

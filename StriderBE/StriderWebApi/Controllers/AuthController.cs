@@ -8,14 +8,9 @@ namespace StriderWebApi.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController : ControllerBase
+    public class AuthController(IAuthService authService) : ControllerBase
     {
-        private readonly IAuthService _authService;
-
-        public AuthController(IAuthService authService)
-        {
-           _authService = authService ?? throw new ArgumentNullException(nameof(authService));
-        }
+        private readonly IAuthService _authService = authService ?? throw new ArgumentNullException(nameof(authService));
 
         [HttpPost("Login")]
         [ProducesResponseType(StatusCodes.Status200OK)]
