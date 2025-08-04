@@ -1,6 +1,8 @@
-﻿namespace StriderWebApi.Domain.DomainClasses
+﻿
+namespace StriderWebApi.Domain.DomainClasses
 {
     public class Coach : User
     {
+
     }
 }

@@ -22,28 +22,9 @@ namespace StriderWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetIndividualAthletes(int coachId)
         {
-
             try
             {
-                Coach coach = await _coachService.GetCoachByIdAsync(coachId);
-
-                CoachResponseDTO coachResponse = new(
-                    coach.Name,
-                    coach.TotalIndividualAthletes(),
-                    coach.ActiveIndividualAthletes(),
-                    coach.InactiveIndividualAthletes(),
-                    coach.TotalWorkoutsCompletedByIndividualAthletes(),
-                    [.. coach.Athletes.Select(a => new CoachResponseAthleteDTO(
-                    a.Id,
-                    a.Name,
-                    DateTime.Today.Subtract(a.BirthDate).Days / 365,
-                    a.Objectives,
-                    a.TotalWorkoutsCompleted(),
-                    a.GetLastWorkoutDate(),
-                    a.IsActive(),
-                    [.. a.GetActiveAilments().Select(a => new CoachResponseAthleteAilmentDTO(a.GetName(), a.Treatment))]
-                    ))]
-                );
+                CoachResponseDTO coachResponse = await _coachService.GetCoachIndividualAthletes(coachId);
                 return Ok(coachResponse);
             }
             catch (CoachNotFoundException ex)
@@ -53,9 +34,21 @@ namespace StriderWebApi.Controllers
 
         }
 
-
+        [HttpPost("/Athlete/{athleteId}/Feedback/{workoutId}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> PostFeedbackAsync([FromRoute] int athleteId, [FromRoute] int workoutId, [FromBody] CoachFeedbackDTO feedback)
+        {
+            try
+            {
+                await _coachService.PostWorkoutFeedbackAsync(athleteId, workoutId, feedback);
+                return NoContent();
+            }
+            catch (AthleteNotFoundException e)
+            {
+                return NotFound(e.Message);
+            }
+        }
 
     }
 
-    
 }

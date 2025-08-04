@@ -1,11 +1,12 @@
-using StriderWebApi.Model;
+using StriderWebApi.Dto.Coach;
 
 namespace StriderWebApi.Services.Interfaces;
 
 
 public interface ICoachService
 {
-    Task<Coach> GetCoachByIdAsync(int coachId);
+    Task<CoachResponseDTO> GetCoachIndividualAthletes(int coachId);
+    Task PostWorkoutFeedbackAsync(int athleteId, int workoutId, CoachFeedbackDTO feedback);
 }
 
 

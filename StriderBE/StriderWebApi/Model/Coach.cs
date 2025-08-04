@@ -1,6 +1,6 @@
 namespace StriderWebApi.Model;
 
-public class Coach(int id, string username, string name, string password, string email, Gender gender, string address, DateTime birthDate) : User(id, username, name, password, email, gender, address, birthDate)
+public class Coach(int id, string username, string name, string email, Gender gender, string address, DateTime birthDate) : User(id, username, name, email, gender, address, birthDate)
 {
     private readonly List<Team> _teams = [];
     private readonly List<TrainingPlan> _trainingPlans = [];

@@ -1,9 +1,9 @@
 namespace StriderWebApi.Model;
 
-public class Athlete(int id, string username, string name, string password, string email, Gender gender, string address, double vO2Max, List<string> medicalConditions, List<string> objectives, DateTime birthdate) : User(id, username, name, password, email, gender, address, birthdate)
+public class Athlete(int id, string username, string name,  string email, Gender gender, string address, double? vO2Max, List<string> medicalConditions, List<string> objectives, DateTime birthdate) : User(id, username, name, email, gender, address, birthdate)
 {
     private Team? _team;
-    private double _vO2Max = vO2Max;
+    private double? _vO2Max = vO2Max;
     private readonly List<string> _objectives = objectives;
     private readonly List<string> _medicalConditions = medicalConditions;
     private readonly List<Ailment> _ailments = [];
@@ -15,7 +15,7 @@ public class Athlete(int id, string username, string name, string password, stri
         set => _team = value; 
     }
 
-    public double VO2Max 
+    public double? VO2Max 
     { 
         get => _vO2Max; 
         set => _vO2Max = value; 
@@ -33,7 +33,7 @@ public class Athlete(int id, string username, string name, string password, stri
 
     public void UpdateVO2Max(double vO2Max) => _vO2Max = vO2Max;
 
-    public double Speed(int percentage) => _vO2Max * percentage / 100;
+    public double Speed(int percentage) => (_vO2Max ?? 0) * percentage / 100;
 
     public void AddMedicalCondition(string medicalCondition) => _medicalConditions.Add(medicalCondition);
 
@@ -59,7 +59,10 @@ public class Athlete(int id, string username, string name, string password, stri
     }
 
     public int TotalWorkoutsCompleted() => _workouts.Count;
-
     public List<Ailment> GetActiveAilments() => [.. _ailments.Where(a => !a.IsRecovered())];
+    public List<Workout> WorkoutsPendingFeedback() => [.. _workouts.Where(w => w.HasLinkedSession() && !w.HasFeedback())];
+    public List<Workout> WorkoutsWithFeedback() => [.. _workouts.Where(w => w.HasLinkedSession() && w.HasFeedback())];
+    public List<Workout> WorkoutsThisWeek() => [.. _workouts.Where(w => w.Date > DateTime.Now.AddDays(-7))];
+    public Workout GetWorkoutById(int workoutId) => _workouts.First(w => w.Id == workoutId);
 }
 
