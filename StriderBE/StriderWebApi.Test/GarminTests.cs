@@ -4,13 +4,26 @@ using System.Net;
 using Moq;
 using StriderWebApi.GarminApi;
 using StriderWebApi.Model;
+using StriderWebApi.Domain.Enums;
 
 public class GarminTests
 {
 
     private readonly Mock<IHttpClientHandler> _mockService;
 
-    private readonly Athlete _user = new(1, "Test User", "test", "test", "test", Gender.MALE, "test", 0, new(), new());
+    private readonly Athlete _user = new() 
+    { 
+        Id = 1, 
+        Username = "Test User", 
+        Name = "test", 
+        Email = "test", 
+        Gender = Gender.MALE, 
+        Address = "test", 
+        VO2Max = 0, 
+        MedicalConditions = new(), 
+        Objectives = new(), 
+        BirthDate = DateTime.Now 
+    };
 
     private string _sampleResponse = @"
     {

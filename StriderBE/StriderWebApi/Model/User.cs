@@ -1,25 +1,24 @@
+using StriderWebApi.Domain.Enums;
+
 namespace StriderWebApi.Model;
 
-public enum Gender
+public abstract class User
 {
-    MALE,
-    FEMALE
-}
-
-public class User(int id, string username, string name, string email, Gender gender, string address, DateTime birthdate)
-{
-    private readonly int _id = id;
-    private readonly string _username = username;
-    private readonly string _name = name;
-    private readonly string _email = email;
-    private readonly Gender _gender = gender;
-    private readonly string _address = address;
-    private readonly DateTime _birthdate = birthdate;
-    public int Id => _id;
-    public string Username => _username;
-    public string Name => _name;
-    public string Email => _email;
-    public Gender Gender => _gender;
-    public string Address => _address;
-    public DateTime BirthDate => _birthdate;
+    public int Id { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public DateTime BirthDate { get; set; }
+    public Gender Gender { get; set; }
+    public string Address { get; set; } = string.Empty;
+    public string? PasswordHash { get; set; }
+    public bool Active { get; set; }
+    public string? ActivationToken { get; set; }
+    public DateTime? ActivationTokenExpires { get; set; }
+    public UserTypeEnum Type { get; set; }
+    public string? ProfilePictureUrl { get; set; }
+    public string CreatedBy { get; set; } = "System";
+    public string? UpdatedBy { get; set; }
+    public DateTime? UpdatedDate { get; set; }
+    public DateTime CreatedDate { get; set; }
 }

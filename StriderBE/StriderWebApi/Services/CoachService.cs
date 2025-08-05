@@ -3,6 +3,7 @@ using StriderWebApi.Dto.Coach;
 using StriderWebApi.Exceptions.Coach;
 using StriderWebApi.Model;
 using StriderWebApi.Services.Interfaces;
+using StriderWebApi.Domain.Enums;
 
 namespace StriderWebApi.Services;
 
@@ -15,37 +16,44 @@ public class CoachService(CoachRepository coachRepository, AthleteService athlet
     public async Task<Coach> GetCoachById(int id)
     {
         Domain.DomainClasses.Coach coach = await _coachRepository.GetCoachByIdAsync(id) ?? throw new CoachNotFoundException();
-        return new Coach(
-            coach.Id,
-            coach.Username,
-            coach.FullName,
-            coach.Email,
-            coach.Gender,
-            coach.Address,
-            coach.BirthDate
-        );
+        return new Coach
+        {
+            Id = coach.Id,
+            Username = coach.Username,
+            Name = coach.FullName,
+            Email = coach.Email,
+            Gender = (Gender)coach.Gender,
+            Address = coach.Address,
+            BirthDate = coach.BirthDate
+        };
     }
 
     public async Task<CoachResponseDTO> GetCoachIndividualAthletes(int coachId)
     {
         Coach coach = await GetCoachById(coachId);
-        return new(
-                    coach.Name,
-                    coach.TotalIndividualAthletes(),
-                    coach.ActiveIndividualAthletes(),
-                    coach.InactiveIndividualAthletes(),
-                    coach.TotalWorkoutsCompletedByIndividualAthletes(),
-                    [.. coach.Athletes.Select(a => new CoachResponseDTO.Athlete(
-                    a.Id,
-                    a.Name,
-                    DateTime.Today.Subtract(a.BirthDate).Days / 365,
-                    a.Objectives,
-                    a.TotalWorkoutsCompleted(),
-                    a.GetLastWorkoutDate(),
-                    a.IsActive(),
-                    [.. a.GetActiveAilments().Select(a => new CoachResponseDTO.Athlete.Ailment(a.GetName(), a.Treatment))]
-                    ))]
-                );
+        return new CoachResponseDTO
+        {
+            Name = coach.Name,
+            TotalAthletes = coach.TotalIndividualAthletes(),
+            ActiveAthletes = coach.ActiveIndividualAthletes(),
+            InactiveAthletes = coach.InactiveIndividualAthletes(),
+            WorkoutsCompleted = coach.TotalWorkoutsCompletedByIndividualAthletes(),
+            Athletes = coach.Athletes.Select(a => new CoachResponseDTO.Athlete
+            {
+                Id = a.Id,
+                Name = a.Name,
+                Age = DateTime.Today.Subtract(a.BirthDate).Days / 365,
+                Objectives = a.Objectives,
+                TotalWorkouts = a.TotalWorkoutsCompleted(),
+                LastWorkoutDate = a.GetLastWorkoutDate(),
+                IsActive = a.IsActive(),
+                Ailments = a.GetActiveAilments().Select(ailment => new CoachResponseDTO.Athlete.Ailment
+                {
+                    Name = ailment.GetName(),
+                    Treatment = ailment.Treatment
+                }).ToList()
+            }).ToList()
+        };
     }
 
     public Task PostWorkoutFeedbackAsync(int athleteId, int workoutId, CoachFeedbackDTO feedback)

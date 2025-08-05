@@ -1,52 +1,48 @@
 namespace StriderWebApi.Dto.Athlete
 {
-    public class AthleteFeedbackResponseDTO(int workoutsPendingFeedback, int workoutsWithFeedback, int workoutsThisWeek, List<AthleteFeedbackResponseDTO.Workout> workouts)
+    public class AthleteFeedbackResponseDTO
     {
+        public int WorkoutsPendingFeedback { get; set; }
+        public int WorkoutsWithFeedback { get; set; }
+        public int WorkoutsThisWeek { get; set; }
+        public List<Workout> Workouts { get; set; } = [];
 
-        public int WorkoutsPendingFeedback = workoutsPendingFeedback;
-        readonly int WorkoutsWithFeedback = workoutsWithFeedback;
-        readonly int WorkoutsThisWeek = workoutsThisWeek;
-        readonly List<Workout> workouts = workouts;
-
-        public class Workout(int id, string name, DateTime date, double duration, double averageHR, string comments, int count, int activeIntervalCount, int value, List<Workout.Interval> intervals)
+        public class Workout
         {
-            public int Id { get; } = id;
-            public string Name { get; } = name;
-            public DateTime Date { get; } = date;
-            public string Comments { get; } = comments;
-            public double Duration { get; } = duration;
-            public double AverageHR { get; } = averageHR;
-            public int Count { get; } = count;
-            public int ActiveIntervalCount { get; } = activeIntervalCount;
-            public int Value { get; } = value;
-            public List<Interval> Intervals { get; } = intervals;
+            public int Id { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public DateTime Date { get; set; }
+            public string Comments { get; set; } = string.Empty;
+            public double Duration { get; set; }
+            public double AverageHR { get; set; }
+            public int Count { get; set; }
+            public int ActiveIntervalCount { get; set; }
+            public int Value { get; set; }
+            public List<Interval> Intervals { get; set; } = [];
 
-            public class Interval(int index, bool isActive, Interval.Planned plannedInterval, Interval.Actual actualInterval, int matchPercentage)
+            public class Interval
             {
-                public int Index { get; } = index;
-                public bool IsActive { get; } = isActive;
-                public Planned PlannedInterval { get; } = plannedInterval;
-                public Actual ActualInterval { get; } = actualInterval;
-                public int MatchPercentage { get; } = matchPercentage;
+                public int Index { get; set; }
+                public bool IsActive { get; set; }
+                public Planned PlannedInterval { get; set; } = null!;
+                public Actual ActualInterval { get; set; } = null!;
+                public int MatchPercentage { get; set; }
 
-                public class Planned(double distance, double duration, double speed)
+                public class Planned
                 {
-                    public double Distance { get; } = distance;
-                    public double Duration { get; } = duration;
-                    public double Speed { get; } = speed;
+                    public double Distance { get; set; }
+                    public double Duration { get; set; }
+                    public double Speed { get; set; }
                 }
 
-                public class Actual(double distance, double duration, double speed, double hR)
+                public class Actual
                 {
-                    public double Distance { get; } = distance;
-                    public double Duration { get; } = duration;
-                    public double Speed { get; } = speed;
-                    public double HR { get; } = hR;
+                    public double Distance { get; set; }
+                    public double Duration { get; set; }
+                    public double Speed { get; set; }
+                    public double HR { get; set; }
                 }
             }
-
-
         }
-
     }
 }

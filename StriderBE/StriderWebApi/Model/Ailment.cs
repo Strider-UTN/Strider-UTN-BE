@@ -1,130 +1,52 @@
+using StriderWebApi.Domain.Enums;
+
 namespace StriderWebApi.Model;
 
-public enum AilmentSeverity
+public abstract class Ailment
 {
-    MINOR,
-    MODERATE,
-    SERIOUS
-}
-
-public enum InjuryType
-{
-    TEAR,
-    INJURY,
-    SPRAIN
-}
-
-public enum InjuryLocation
-{
-    HIP,
-    THIGH,
-    KNEE,
-    CALF,
-    ANKLE,
-    FOOT
-}
-
-public enum IllnessType
-{
-    FLU,
-    PNEUMONIA,
-    DIARRHEA,
-    COLD,
-    VOMITING,
-    HEADACHE,
-    CHEST_PAIN,
-    STOMACH_PAIN
-}
-
-public abstract class Ailment(AilmentSeverity severity, string description, string additionalNotes, string treatment, IAilmentState state)
-{
-    private readonly AilmentSeverity _severity = severity;
-    private readonly string _description = description;
-    private readonly string _additionalNotes = additionalNotes;
-    private readonly string _treatment = treatment;
-    private readonly DateTime _startDate = DateTime.Now;
-    private readonly IAilmentState _state = state;
-
-    public AilmentSeverity Severity => _severity;
-    public string Description => _description;
-    public string AdditionalNotes => _additionalNotes;
-    public string Treatment => _treatment;
-    public DateTime StartDate => _startDate;
-    public IAilmentState State => _state;
-
-    public bool IsRecovered()
-    {
-        return _state.IsRecovered();
-    }
-
+    public int Id { get; set; }
+    public AilmentSeverity Severity { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public string AdditionalNotes { get; set; } = string.Empty;
+    public string Treatment { get; set; } = string.Empty;
+    public DateTime StartDate { get; set; }
+    public DateTime? RecoveryDate { get; set; }
+    public DateTime? ExpectedRecoveryDate { get; set; }
+    public bool IsRecovered => RecoveryDate != null;
+    
     public abstract string GetName();
-    
-}
 
-public interface IAilmentState
-{
-    public bool IsRecovered();
-}
-
-public class InProgress(DateTime expectedEndTime) : IAilmentState
-{
-    private readonly DateTime _expectedEndTime = expectedEndTime;
-
-    public DateTime ExpectedEndTime => _expectedEndTime;
-
-    bool IAilmentState.IsRecovered()
+    public void FinishRecovery()
     {
-        return false;
+        RecoveryDate = DateTime.Now;
+        ExpectedRecoveryDate = null;
     }
+
+    public void StartRecovery(DateTime expectedRecoveryDate)
+    {
+        RecoveryDate = null;
+        ExpectedRecoveryDate = expectedRecoveryDate;
+    }
+
 }
 
-public class Recovered(DateTime recoveryDate) : IAilmentState
+public class Injury : Ailment
 {
-    private readonly DateTime _recoveryDate = recoveryDate;
-
-    public DateTime RecoveryDate => _recoveryDate;
-
-    bool IAilmentState.IsRecovered()
-    {
-        return true;
-    }
-}
-
-public class Injury(InjuryType injuryType, InjuryLocation location, AilmentSeverity severity, string description, string additionalNotes, string treatment, IAilmentState state) : Ailment(severity, description, additionalNotes, treatment, state)
-{
-    private InjuryType _type = injuryType;
-    private InjuryLocation _location = location;
-
-    public InjuryType Type 
-    { 
-        get => _type; 
-        set => _type = value; 
-    }
-    
-    public InjuryLocation Location 
-    { 
-        get => _location; 
-        set => _location = value; 
-    }
-
-    public override string GetName()
-    {
-        return _type.ToString() + " " + _location.ToString();
-    }
-}
-
-public class Illness(IllnessType type, AilmentSeverity severity, string description, string additionalNotes, string treatment, IAilmentState state) : Ailment(severity, description, additionalNotes, treatment, state)
-{
-    private IllnessType _type = type;
-
-    public IllnessType Type
-    {
-        get => _type;
-        set => _type = value;
-    }
+    public InjuryType Type { get; set; }
+    public InjuryLocation Location { get; set; }
     
     public override string GetName()
     {
-        return _type.ToString();
+        return Type.ToString() + " " + Location.ToString();
+    }
+}
+
+public class Illness : Ailment
+{
+    public IllnessType Type { get; set; }
+    
+    public override string GetName()
+    {
+        return Type.ToString();
     }
 }

@@ -1,38 +1,30 @@
 namespace StriderWebApi.Dto.Coach
 {
-    public class CoachResponseDTO(string name, int totalAthletes, int activeAthletes, int inactiveAthletes, int workoutsCompleted, List<CoachResponseDTO.Athlete> coachResponseAthleteDTOs)
+    public class CoachResponseDTO
     {
+        public string Name { get; set; } = string.Empty;
+        public int TotalAthletes { get; set; }
+        public int ActiveAthletes { get; set; }
+        public int InactiveAthletes { get; set; }
+        public int WorkoutsCompleted { get; set; }
+        public List<Athlete> Athletes { get; set; } = [];
 
-        public class Athlete(int id, string name, int age, List<string> objectives, int totalWorkouts, DateTime lastWorkoutDate, bool isActive, List<Athlete.Ailment> ailments)
+        public class Athlete
         {
+            public int Id { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public int Age { get; set; }
+            public List<string> Objectives { get; set; } = [];
+            public int TotalWorkouts { get; set; }
+            public DateTime LastWorkoutDate { get; set; }
+            public bool IsActive { get; set; }
+            public List<Ailment> Ailments { get; set; } = [];
 
-            public class Ailment(string name, string treatment)
+            public class Ailment
             {
-                public string Name { get; } = name;
-                public string Treatment { get; } = treatment;
+                public string Name { get; set; } = string.Empty;
+                public string Treatment { get; set; } = string.Empty;
             }
-
-            public int Id { get; } = id;
-            public string Name { get; } = name;
-            public int Age { get; } = age;
-            public List<string> Objectives { get; } = objectives;
-            public int TotalWorkouts { get; } = totalWorkouts;
-            public DateTime LastWorkoutDate { get; } = lastWorkoutDate;
-            public bool IsActive { get; } = isActive;
-            public List<Ailment> Ailments { get; } = ailments;
-
         }
-
-        
-        private readonly List<Athlete> coachResponseAthleteDTOs = coachResponseAthleteDTOs;
-
-        public string Name { get; } = name;
-        public int TotalAthletes { get; } = totalAthletes;
-        public int ActiveAthletes { get; } = activeAthletes;
-        public int InactiveAthletes { get; } = inactiveAthletes;
-        public int WorkoutsCompleted { get; } = workoutsCompleted;
     }
-
-   
-   
 }

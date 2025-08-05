@@ -29,7 +29,7 @@ namespace StriderWebApi.Controllers
             }
             catch (CoachNotFoundException ex)
             {
-                return NotFound(ex.Message);
+                return NotFound("Coach not found: " + ex.Message);
             }
 
         }
@@ -45,7 +45,7 @@ namespace StriderWebApi.Controllers
             }
             catch (AthleteNotFoundException e)
             {
-                return NotFound(e.Message);
+                return NotFound("Athlete not found: " + e.Message);
             }
         }
 

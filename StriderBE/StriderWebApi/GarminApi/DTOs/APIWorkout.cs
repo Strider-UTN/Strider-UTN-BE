@@ -1,7 +1,8 @@
 using StriderWebApi.Model;
-
+namespace StriderWebApi.GarminApi.DTOs;
 public class APIWorkout
 {
+    public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public double Distance { get; set; }
     public DateTime Date { get; set; }
@@ -11,7 +12,29 @@ public class APIWorkout
 
     public Workout ToWorkout(Athlete athlete)
     {
-        return new Workout(Name, Distance, Date, Duration, AverageHR, [.. Laps.Select(l => new Lap(l.Index, l.Distance, l.Duration,l.Speed,l.AverageHR, l.StartTime))], string.Empty, athlete);
+        var workout = new Workout
+        {
+            Id = Id,
+            Name = Name,
+            Distance = Distance,
+            Date = Date,
+            Duration = Duration,
+            AverageHR = AverageHR,
+            Comments = string.Empty,
+            Athlete = athlete,
+        };
+        
+        workout.Laps = Laps.Select(l => new Lap
+        {
+            Index = l.Index,
+            Distance = l.Distance,
+            Duration = l.Duration,
+            Speed = l.Speed,
+            HR = l.AverageHR,
+            StartTime = l.StartTime,
+        }).ToList();
+        
+        return workout;
     }
 }
 

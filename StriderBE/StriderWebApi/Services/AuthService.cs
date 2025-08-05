@@ -46,6 +46,9 @@ namespace StriderWebApi.Services
                     Username = payload.Email.Split('@')[0], // Use email prefix as username
                     Email = payload.Email,
                     FullName = payload.Name,
+                    Address = "Not provided", // Default address for Google users
+                    Gender = Domain.Enums.Gender.MALE, // Default gender for Google users
+                    BirthDate = DateTime.UtcNow.AddYears(-18), // Default birth date for Google users
                     Type = userType,
                     Active = true, // Assuming Google users are automatically active
                     CreatedBy = "Google SSO",
@@ -62,6 +65,9 @@ namespace StriderWebApi.Services
                     Username = payload.Email.Split('@')[0], // Use email prefix as username
                     Email = payload.Email,
                     FullName = payload.Name,
+                    Address = "Not provided", // Default address for Google users
+                    Gender = Domain.Enums.Gender.MALE, // Default gender for Google users
+                    BirthDate = DateTime.UtcNow.AddYears(-18), // Default birth date for Google users
                     Type = userType,
                     Active = true, // Assuming Google users are automatically active
                     CreatedBy = "Google SSO",

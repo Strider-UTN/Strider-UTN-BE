@@ -1,43 +1,29 @@
+using StriderWebApi.Model;
+
 namespace StriderWebApi.Model;
 
-public interface IInterval
+public class Interval
 {
-    double Distance(Athlete athlete);
-    double Duration(Athlete athlete);
-    bool IsActive();
+    public int Id { get; set; }
+    public double Distance { get; set; }
+    public double Duration { get; set; }
+    public double Speed { get; set; }
+    public int Percentage { get; set; }
+    public bool IsActive { get; set; }
+    public string? Description { get; set; }
+    public IIntervalType Type { get; set; } = null!;
+    public IIntervalSpeed SpeedType { get; set; } = null!;
 
-    ISpeed Speed { get; }
+    public double GetDistance(Athlete athlete)
+    {
+        return Type.GetDistance(Distance, Duration, SpeedType.GetSpeed(athlete, Speed, Percentage));
+    }
+
+    public double GetDuration(Athlete athlete)
+    {
+        return Type.GetDuration(Distance, Duration, SpeedType.GetSpeed(athlete, Speed, Percentage));
+    }
 }
 
-public class FixedDistance(double distance, ISpeed speed) : IInterval
-{
-    private readonly double _distance = distance;
-    private readonly ISpeed _speed = speed;
 
-    public double Distance(Athlete a) => _distance;
-    public double Duration(Athlete a) => _distance / _speed.Speed(a);
-    public bool IsActive() => true;
-    public ISpeed Speed => _speed;
-}
-
-public class FixedDuration(double duration, ISpeed speed) : IInterval
-{
-    private readonly double _duration = duration;
-    private readonly ISpeed _speed = speed;
-
-    public double Distance(Athlete athlete) => _speed.Speed(athlete) * _duration;
-    public double Duration(Athlete athlete) => _duration;
-    public bool IsActive() => true;
-    public ISpeed Speed => _speed;
-}
-
-public class Rest(double duration) : IInterval
-{
-    private readonly double _duration = duration;
-
-    public double Distance(Athlete athlete) => 0;
-    public double Duration(Athlete athlete) => _duration;
-    public bool IsActive() => false;
-    public ISpeed Speed => new FixedSpeed(0);
-}
 

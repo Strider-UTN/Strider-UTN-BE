@@ -3,6 +3,7 @@ using StriderWebApi.Data.Repositories;
 using StriderWebApi.Dto.Athlete;
 using StriderWebApi.Model;
 using StriderWebApi.Services.Interfaces;
+using StriderWebApi.Domain.Enums;
 
 
 namespace StriderWebApi.Services
@@ -15,18 +16,19 @@ namespace StriderWebApi.Services
         public async Task<Athlete> GetAthleteById(int athleteId)
         {
             Domain.DomainClasses.Athlete athlete = await _athleteRepository.GetAthleteByIdAsync(athleteId) ?? throw new AthleteNotFoundException();
-            return new Athlete(
-                athlete.Id,
-                athlete.Username,
-                athlete.FullName,
-                athlete.Email,
-                athlete.Gender,
-                athlete.Address,
-                athlete.VO2Max,
-                athlete.MedicalConditions,
-                athlete.Objectives,
-                athlete.BirthDate
-            );
+            return new Athlete
+            {
+                Id = athlete.Id,
+                Username = athlete.Username,
+                Name = athlete.FullName,
+                Email = athlete.Email,
+                Gender = (Gender)athlete.Gender,
+                Address = athlete.Address,
+                VO2Max = athlete.VO2Max,
+                MedicalConditions = athlete.MedicalConditions,
+                Objectives = athlete.Objectives,
+                BirthDate = athlete.BirthDate
+            };
         }
 
         public async Task<AthleteFeedbackResponseDTO> GetAthleteFeedback(int athleteId)
@@ -37,49 +39,54 @@ namespace StriderWebApi.Services
             List<Workout> workoutsPendingFeedback = athlete.WorkoutsPendingFeedback();
                     List<Workout> workoutsWithFeedback = athlete.WorkoutsWithFeedback();
                     List<Workout> workoutsThisWeek = athlete.WorkoutsThisWeek();
-                    AthleteFeedbackResponseDTO responseDTO = new(
-                        workoutsPendingFeedback.Count,
-                        workoutsWithFeedback.Count,
-                        workoutsThisWeek.Count,
-                        [.. workoutsPendingFeedback.Select(w =>
+                    AthleteFeedbackResponseDTO responseDTO = new()
+                    {
+                        WorkoutsPendingFeedback = workoutsPendingFeedback.Count,
+                        WorkoutsWithFeedback = workoutsWithFeedback.Count,
+                        WorkoutsThisWeek = workoutsThisWeek.Count,
+                        Workouts = workoutsPendingFeedback.Select(w =>
                             {
-                                if (w.LinkedSession == null) {
+                                if (w.Session == null) {
                                     throw new Exception("Workout does not have linked session");
                                 }
                                 Comparer comparer = new();
-                                return new AthleteFeedbackResponseDTO.Workout(
-                                w.Id,
-                                w.Name,
-                                w.Date,
-                                w.Duration,
-                                w.AverageHR,
-                                w.Comments,
-                                w.LinkedSession.IntervalCount(),
-                                w.LinkedSession.ActiveIntervalCount(),
-                                comparer.AverageCompletionPercentage(athlete,w,w.LinkedSession),
-                                [.. w.LinkedSession.Intervals.Select((interval,index) => {
-                                    Lap lap = w.GetLap(index);
-                                    return new AthleteFeedbackResponseDTO.Workout.Interval(
-                                        index,
-                                        interval.IsActive(),
-                                        new AthleteFeedbackResponseDTO.Workout.Interval.Planned(
-                                            interval.Distance(athlete),
-                                            interval.Duration(athlete),
-                                            interval.Speed.Speed(athlete)
-                                        ),
-                                        new AthleteFeedbackResponseDTO.Workout.Interval.Actual(
-                                            lap.Distance,
-                                            lap.Duration,
-                                            lap.Speed,
-                                            lap.HR
-                                        ),
-                                        comparer.MatchPercentage(athlete,lap, interval)
-                                    );
-                                })]
-                            );
+                                return new AthleteFeedbackResponseDTO.Workout
+                                {
+                                    Id = w.Id,
+                                    Name = w.Name,
+                                    Date = w.Date,
+                                    Duration = w.Duration,
+                                    AverageHR = w.AverageHR,
+                                    Comments = w.Comments ?? string.Empty,
+                                    Count = w.Session.IntervalCount(),
+                                    ActiveIntervalCount = w.Session.ActiveIntervalCount(),
+                                    Value = comparer.AverageCompletionPercentage(athlete, w, w.Session),
+                                    Intervals = w.Session.Intervals.Select((interval, index) => {
+                                        Lap lap = w.GetLap(index);
+                                        return new AthleteFeedbackResponseDTO.Workout.Interval
+                                        {
+                                            Index = index,
+                                            IsActive = interval.IsActive,
+                                            PlannedInterval = new AthleteFeedbackResponseDTO.Workout.Interval.Planned
+                                            {
+                                                Distance = interval.GetDistance(athlete),
+                                                Duration = interval.GetDuration(athlete),
+                                                Speed = interval.SpeedType.GetSpeed(athlete, interval.Speed, interval.Percentage)
+                                            },
+                                            ActualInterval = new AthleteFeedbackResponseDTO.Workout.Interval.Actual
+                                            {
+                                                Distance = lap.Distance,
+                                                Duration = lap.Duration,
+                                                Speed = lap.Speed,
+                                                HR = lap.HR
+                                            },
+                                            MatchPercentage = comparer.MatchPercentage(athlete, lap, interval)
+                                        };
+                                    }).ToList()
+                                };
                             }
-                        )]
-                    );
+                        ).ToList()
+                    };
             return responseDTO;
         }
 
