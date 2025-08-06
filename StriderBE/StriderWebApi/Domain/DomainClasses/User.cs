@@ -9,7 +9,7 @@ namespace StriderWebApi.Domain.DomainClasses
         public required string Username { get; set; }
         public required string FullName { get; set; }
         public required string Email { get; set; }
-        public required string PhoneNumber { get; set; }
+        public string PhoneNumber { get; set; } = string.Empty; // Default to empty if not provided
         public DateTime BirthDate { get; set; }
         public Gender Gender { get; set; }
         public required string Address { get; set; }
@@ -18,7 +18,7 @@ namespace StriderWebApi.Domain.DomainClasses
         public string? ActivationToken { get; set; }
         public DateTime? ActivationTokenExpires { get; set; }
 
-        public UserTypeEnum Type { get; set; }
+        public UserTypeEnum UserType { get; set; }
 
         public string? ProfilePictureUrl { get; set; }
         public string CreatedBy { get; set; } = "System"; // Default to System for initial creation

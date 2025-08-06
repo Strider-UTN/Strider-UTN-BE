@@ -7,4 +7,5 @@ public interface IAthleteService
 {
     Task<AthleteFeedbackResponseDTO> GetAthleteFeedback(int athleteId);
     Task UpdateAthlete(Athlete athlete);
+    Task<Athlete> GetAthleteByIdAsync(int athleteId);
 }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using StriderWebApi.Domain.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace StriderWebApi.Domain.DomainClasses
 {
@@ -11,11 +12,14 @@ namespace StriderWebApi.Domain.DomainClasses
         public string EmergencyContactRelationship { get; set; } = string.Empty;
         public string Country { get; set; } = string.Empty;
         public double? VO2Max { get; set; }
+        public int YearsOfExperience { get; set; } = 0; // Default to 0 if not provided
+        public TrainingVolumeType TrainingVolumeType { get; set; } = TrainingVolumeType.Weekly; // Default to Weekly if not provided
+        public int TrainingVolumeKm { get; set; } = 0; // Default to 0 if not provided
         public List<string> MedicalConditions { get; set; } = [];
         public List<string> Objectives { get; set; } = [];
         public int? TeamId { get; set; }
         public Team? Team { get; set; }
-        public List<Ailment> Ailments { get; set; } = [];
-        public List<Workout> Workouts { get; set; } = [];
+        public virtual List<Ailment> Ailments { get; set; } = [];
+        public virtual List<Workout> Workouts { get; set; } = [];
     }
 }

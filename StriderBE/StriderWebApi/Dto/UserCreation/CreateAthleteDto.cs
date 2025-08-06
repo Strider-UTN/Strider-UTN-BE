@@ -14,5 +14,11 @@ namespace StriderWebApi.Dto.UserCreation
         public double HeightCm { get; set; }
         public double WeightKg { get; set; }
         public required string Country { get; set; }
+        public int YearsOfExperience { get; set; } = 0; // Default to 0 if not provided
+        public TrainingVolumeType VolumeType { get; set; } = TrainingVolumeType.Weekly; // Default to Weekly if not provided
+        public int TrainingVolumeKm { get; set; } = 0; // Default to 0 if not provided
+        public string EmergencyContactName { get; set; } = string.Empty; // Default to empty if not provided
+        public string EmergencyContactPhone { get; set; } = string.Empty; // Default to empty if not provided
+        public string EmergencyContactRelationship { get; set; } = string.Empty; // Default to empty if not provided
     }
 }

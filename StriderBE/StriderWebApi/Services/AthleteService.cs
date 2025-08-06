@@ -1,19 +1,18 @@
 using StriderWebApi.Controllers;
-using StriderWebApi.Data.Repositories;
 using StriderWebApi.Dto.Athlete;
 using StriderWebApi.Model;
 using StriderWebApi.Services.Interfaces;
-using StriderWebApi.Domain.Enums;
+using StriderWebApi.Data.Repositories.Interfaces;
 
 
 namespace StriderWebApi.Services
 {
-    public class AthleteService(AthleteRepository athleteRepository) : IAthleteService
+    public class AthleteService(IAthleteRepository athleteRepository) : IAthleteService
     {
 
-        private readonly AthleteRepository _athleteRepository = athleteRepository;
+        private readonly IAthleteRepository _athleteRepository = athleteRepository;
 
-        public async Task<Athlete> GetAthleteById(int athleteId)
+        public async Task<Athlete> GetAthleteByIdAsync(int athleteId)
         {
             Domain.DomainClasses.Athlete athlete = await _athleteRepository.GetAthleteByIdAsync(athleteId) ?? throw new AthleteNotFoundException();
             return new Athlete
@@ -40,7 +39,7 @@ namespace StriderWebApi.Services
         public async Task<AthleteFeedbackResponseDTO> GetAthleteFeedback(int athleteId)
         {
 
-            Athlete athlete = await GetAthleteById(athleteId);
+            Athlete athlete = await GetAthleteByIdAsync(athleteId);
         
             List<Workout> workoutsPendingFeedback = athlete.WorkoutsPendingFeedback();
                     List<Workout> workoutsWithFeedback = athlete.WorkoutsWithFeedback();

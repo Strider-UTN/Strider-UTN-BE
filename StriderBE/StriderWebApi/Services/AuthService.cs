@@ -34,7 +34,7 @@ namespace StriderWebApi.Services
             if (dbUser == null)
                 dbUser = await CreateNewUserFromGooglePayload(payload, userType);
 
-            return GetToken(payload.Name, dbUser.Type);
+            return GetToken(dbUser.Id, payload.Name, dbUser.UserType);
         }
 
         private async Task<User?> CreateNewUserFromGooglePayload(GoogleJsonWebSignature.Payload payload, UserTypeEnum userType)
@@ -49,7 +49,7 @@ namespace StriderWebApi.Services
                     Address = "Not provided", // Default address for Google users
                     Gender = Domain.Enums.Gender.MALE, // Default gender for Google users
                     BirthDate = DateTime.UtcNow.AddYears(-18), // Default birth date for Google users
-                    Type = userType,
+                    UserType = userType,
                     Active = true, // Assuming Google users are automatically active
                     CreatedBy = "Google SSO",
                     CreatedDate = DateTime.UtcNow,
@@ -68,7 +68,7 @@ namespace StriderWebApi.Services
                     Address = "Not provided", // Default address for Google users
                     Gender = Domain.Enums.Gender.MALE, // Default gender for Google users
                     BirthDate = DateTime.UtcNow.AddYears(-18), // Default birth date for Google users
-                    Type = userType,
+                    UserType = userType,
                     Active = true, // Assuming Google users are automatically active
                     CreatedBy = "Google SSO",
                     CreatedDate = DateTime.UtcNow,
@@ -87,15 +87,16 @@ namespace StriderWebApi.Services
             if (!passwordIsValid)
                 throw new UnauthorizedAccessException("Invalid username or password.");
 
-            return GetToken(username, dbUser.Type);
+            return GetToken(dbUser.Id, username, dbUser.UserType);
         }
 
-        private string GetToken(string username, UserTypeEnum type)
+        private string GetToken(int userId, string username, UserTypeEnum type)
         {
             var claims = new[]
             {
-                new Claim(ClaimTypes.Name, username),
-                new Claim(ClaimTypes.Role, type.ToString())
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim("Name", username),
+                new Claim("Role", type.ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));

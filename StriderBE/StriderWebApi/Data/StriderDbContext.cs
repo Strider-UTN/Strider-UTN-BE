@@ -22,6 +22,7 @@ namespace StriderWebApi.Data
         public DbSet<TrainingLocation> TrainingLocations => Set<TrainingLocation>();
         public DbSet<TrainingPlan> TrainingPlans => Set<TrainingPlan>();
         public DbSet<Ailment> Ailments => Set<Ailment>();
+        public DbSet<Notification> Notifications => Set<Notification>();
         #endregion
 
         #region Overrides
@@ -75,8 +76,39 @@ namespace StriderWebApi.Data
                 .ValueGeneratedOnAdd();
 
             modelBuilder.Entity<Ailment>()
-                .Property(a => a.Id)
+                .HasDiscriminator<string>("AilmentType")
+                .HasValue<Injury>(nameof(Injury))
+                .HasValue<Illness>(nameof(Illness));
+
+            modelBuilder.Entity<Ailment>()
+                .HasOne(a => a.Athlete)
+                .WithMany(a => a.Ailments)
+                .HasForeignKey(a => a.AthleteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Ailment>()
+                .Property(a => a.Severity)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Injury>()
+                .Property(i => i.Type)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Injury>()
+                .Property(i => i.Location)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Illness>()
+                .Property(i => i.Type)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Notification>()
+                .Property(n => n.Id)
                 .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<Notification>()
+                .Property(n => n.Type)
+                .HasConversion<string>();
         }
         #endregion
     }

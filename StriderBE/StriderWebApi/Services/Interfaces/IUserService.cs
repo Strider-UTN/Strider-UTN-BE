@@ -6,5 +6,6 @@ namespace StriderWebApi.Services.Interfaces
     {
         Task CreateCoachAsync(CreateCoachDto dto);
         Task CreateAthleteAsync(CreateAthleteDto dto);
+        Task ActivateAccountAsync(ActivateAccountDto dto);
     }
 }
