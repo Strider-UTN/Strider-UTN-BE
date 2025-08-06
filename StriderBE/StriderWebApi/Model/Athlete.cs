@@ -1,25 +1,42 @@
+using StriderWebApi.Domain.Enums;
+
 namespace StriderWebApi.Model;
 
-public class Athlete(User user, double vO2Max, List<string> medicalConditions, List<Workout> workouts)
+public class Athlete : User
 {
-    private User _user { get; } = user;
-
-    private Team? _team { get; set; } = null;
-
-    private double _vO2Max { get; set; } = vO2Max;
-
-    private List<string> _medicalConditions { get; } = medicalConditions;
-
-    private List<Workout> _workouts { get; } = workouts;
-
-    public void AddWorkouts(List<Workout> workouts) => _workouts.AddRange(workouts);
-
-    public void UpdateVO2Max(double vO2Max) => _vO2Max = vO2Max;
-
-    public double Speed(int percentage) => _vO2Max * percentage / 100;
-
-    public void AddTeam(Team team) => _team = team;
-
-    public void AddMedicalCondition(string medicalCondition) => _medicalConditions.Add(medicalCondition);
+    public double Height { get; set; }
+    public double Weight { get; set; }
+    public string Country { get; set; } = string.Empty;
+    public string EmergencyContactName { get; set; } = string.Empty;
+    public string EmergencyContactPhone { get; set; } = string.Empty;
+    public string EmergencyContactRelationship { get; set; } = string.Empty;
+    public DateTime DateStartedRunning { get; set; }
+    public double? VO2Max { get; set; }
+    public List<string> MedicalConditions { get; set; } = [];
+    public List<string> Objectives { get; set; } = [];
+    public List<Ailment> Ailments { get; set; } = [];
+    public List<Workout> Workouts { get; set; } = [];
+    public void AddWorkouts(List<Workout> workouts) => Workouts.AddRange(workouts);
+    public void UpdateVO2Max(double vO2Max) => VO2Max = vO2Max;
+    public double Speed(int percentage) => (VO2Max ?? 0) * percentage / 100;
+    public void AddMedicalCondition(string medicalCondition) => MedicalConditions.Add(medicalCondition);
+    public double WeeklyDistance() => Workouts.Where(w => w.Date > DateTime.Now.AddDays(-7)).Sum(w => w.TotalDistance());
+    public double MonthlyDistance() => Workouts.Where(w => w.Date > DateTime.Now.AddDays(-30)).Sum(w => w.TotalDistance());
+    public bool IsActive() => Ailments.Any(a => !a.IsRecovered);
+    public bool IsInactive() => !IsActive();
     
+    public DateTime GetLastWorkoutDate()
+    {
+        return Workouts.OrderBy(w => w.Date).Last().Date;
+    }
+    
+    public int TotalWorkoutsCompleted() => Workouts.Count;
+    public List<Ailment> GetActiveAilments() => [.. Ailments.Where(a => !a.IsRecovered)];
+    public List<Workout> WorkoutsPendingFeedback() => [.. Workouts.Where(w => w.HasLinkedSession() && !w.HasFeedback())];
+    public List<Workout> WorkoutsWithFeedback() => [.. Workouts.Where(w => w.HasLinkedSession() && w.HasFeedback())];
+    public List<Workout> WorkoutsThisWeek() => [.. Workouts.Where(w => w.Date > DateTime.Now.AddDays(-7))];
+    public Workout GetWorkoutById(int workoutId) => Workouts.First(w => w.Id == workoutId);
+    public int Age() => DateTime.Now.Year - BirthDate.Year;
+    public int YearsOfExperience() => DateTime.Now.Year - DateStartedRunning.Year;
 }
+

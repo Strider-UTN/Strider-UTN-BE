@@ -1,46 +1,68 @@
+using StriderWebApi.Domain.Enums;
+
 namespace StriderWebApi.Model;
 
-
-public enum WorkoutState
+public class Lap
 {
-    COMPLETED,
-    ABANDONED,
-
-}
-
-public enum WorkoutType
-{
-    TRAINING,
-    COMPETITION
-}
-
-public class WorkoutLap(int Index, double distance, double duration, double speed, DateTime startTime)
-{
-    public int Index { get; } = Index;
+    public int Id { get; set; }
+    public int Index { get; set; }
+    public double Distance { get; set; }
+    public double Duration { get; set; }
+    public double Speed { get; set; }
+    public double HR { get; set; }
+    public DateTime StartTime { get; set; }
+    public string? CoachFeedback { get; set; }
     
-    public double Distance { get; } = distance;
-    public double Duration { get; } = duration;
-    public double Speed { get; } = speed;
-
-    public DateTime StartTime { get; } = startTime;
 }
 
-public class Workout(int id, string name, int distance, DateTime date, double duration, List<WorkoutLap> laps)
+public class Workout
 {
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public double Distance { get; set; }
+    public DateTime Date { get; set; }
+    public double Duration { get; set; }
+    public double AverageHR { get; set; }
+    public WorkoutState State { get; set; }
+    public WorkoutType Type { get; set; }
+    public string? Comments { get; set; }
+    public string? CoachFeedback { get; set; }
+    public bool IsReviewed { get; set; }
+    
+    public Athlete Athlete { get; set; } = null!;
+    public Session? Session { get; set; }
+    public List<Lap> Laps { get; set; } = [];
 
-    public int Id { get; } = id;
-    public string Name { get; } = name;
+    public bool HasLinkedSession() => Session != null;
+    public double TotalDistance() => Laps.Sum(l => l.Distance);
+    public double AverageSpeed() => Laps.Average(l => l.Speed);
+    public Lap GetLap(int index) => Laps[index];
+    public bool HasFeedback() => !string.IsNullOrEmpty(CoachFeedback);
+}
 
-    public int Distance { get; } = distance;
+public class WorkoutComparer
+{
+    readonly double _durationWeight = 0.2;
+    readonly double _distanceWeight = 0.2;
+    readonly double _speedWeight = 0.6;
+    readonly double _reductionParameter = 0.001;
 
-    public DateTime Date { get; } = date;
+    public int MatchPercentage(Athlete athlete, Lap lap, Interval interval)
+    {
+        double durationDiff = Math.Abs(lap.Duration - interval.GetDuration(athlete));
+        double distanceDiff = Math.Abs(lap.Distance - interval.GetDistance(athlete));
+        double speedDiff = Math.Abs(lap.Speed - interval.SpeedType.GetSpeed(athlete, interval.Speed, interval.Percentage));
+        double totalDiff = durationDiff * _durationWeight + distanceDiff * _distanceWeight + speedDiff * _speedWeight;
+        return (int)(Math.Exp(-1 * totalDiff * _reductionParameter) * 100);
+    }
 
-    public double Duration { get; } = duration;
-
-    public List<WorkoutLap> Laps { get; } = laps;
-
-    public WorkoutState State { get; set; } = WorkoutState.COMPLETED;
-
-    public WorkoutType Type { get; set; } = WorkoutType.TRAINING;
-
+    public int AverageCompletionPercentage(Athlete athlete, Workout workout, Session session)
+    {
+        int total = 0;
+        foreach (Lap lap in workout.Laps)
+        {
+            total += MatchPercentage(athlete, lap, session.GetInterval(lap.Index));
+        }
+        return total / workout.Laps.Count;
+    }
 }

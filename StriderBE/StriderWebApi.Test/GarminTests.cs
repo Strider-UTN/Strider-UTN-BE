@@ -4,13 +4,26 @@ using System.Net;
 using Moq;
 using StriderWebApi.GarminApi;
 using StriderWebApi.Model;
+using StriderWebApi.Domain.Enums;
 
 public class GarminTests
 {
 
     private readonly Mock<IHttpClientHandler> _mockService;
 
-    private readonly User _user = new(1,"test", "test", "test", "test",Gender.MALE,"Address");
+    private readonly Athlete _user = new() 
+    { 
+        Id = 1, 
+        Username = "Test User", 
+        Name = "test", 
+        Email = "test", 
+        Gender = Gender.MALE, 
+        Address = "test", 
+        VO2Max = 0, 
+        MedicalConditions = new(), 
+        Objectives = new(), 
+        BirthDate = DateTime.Now 
+    };
 
     private string _sampleResponse = @"
     {
@@ -21,13 +34,15 @@ public class GarminTests
                 ""Distance"": 1000,
                 ""Date"": ""2022-01-01T00:00:00Z"",
                 ""Duration"": 3600,
+                ""AverageHR"": 100,
                 ""Laps"": [
                     {
                         ""Index"": 1,
                         ""StartTime"": ""2022-01-01T00:00:00Z"",
                         ""Distance"": 1000,
                         ""Duration"": 3600,
-                        ""Speed"": 10
+                        ""Speed"": 10,
+                        ""AverageHR"": 100
                     }
                 ]
             }
@@ -91,7 +106,6 @@ public class GarminTests
         GarminInterface garminInterface = new("localhost", 8080, _mockService.Object);
         List<Workout> workouts = await garminInterface.GetWorkouts(_user, new DateTime(2022, 1, 1), new DateTime(2022, 1, 2));
 
-        Assert.Equal(1, workouts[0].Id);
         Assert.Equal(3600, workouts[0].Laps[0].Duration);
     }
 

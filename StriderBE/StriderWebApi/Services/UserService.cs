@@ -34,8 +34,10 @@ namespace StriderWebApi.Services
                 FullName = dto.FullName,
                 Email = dto.Email,
                 BirthDate = dto.BirthDate,
-                HeightCm = dto.HeightCm,
-                WeightKg = dto.WeightKg,
+                Address = dto.Address,
+                Gender = dto.Gender,
+                Height = dto.HeightCm,
+                Weight = dto.WeightKg,
                 Country = dto.Country,
                 Active = false, // Default to false, until account is verified
                 CreatedBy = "Athlete Creation",
@@ -59,14 +61,17 @@ namespace StriderWebApi.Services
             // Validate if user already exists based on username or email
             await ValidateUserUniquenessAsync(dto.Email, dto.Username);
 
-            // Create a new athlete instance
+            // Create a new coach instance
             var newCoach = new Coach
             {
                 Username = dto.Username,
                 FullName = dto.FullName,
                 Email = dto.Email,
+                BirthDate = dto.BirthDate,
+                Address = dto.Address,
+                Gender = dto.Gender,
                 Active = false, // Default to false, until account is verified
-                CreatedBy = "Athlete Creation",
+                CreatedBy = "Coach Creation",
                 CreatedDate = DateTime.UtcNow,
                 ActivationToken = Guid.NewGuid().ToString(),
                 ActivationTokenExpires = DateTime.UtcNow.AddDays(1), // Token valid for 1 day

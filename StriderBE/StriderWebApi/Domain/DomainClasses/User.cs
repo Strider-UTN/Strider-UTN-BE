@@ -6,9 +6,13 @@ namespace StriderWebApi.Domain.DomainClasses
     {
         public int Id { get; set; }
 
-        public string? Username { get; set; }
+        public required string Username { get; set; }
         public required string FullName { get; set; }
         public required string Email { get; set; }
+        public required string PhoneNumber { get; set; }
+        public DateTime BirthDate { get; set; }
+        public Gender Gender { get; set; }
+        public required string Address { get; set; }
         public string? PasswordHash { get; set; }
         public bool Active { get; set; }
         public string? ActivationToken { get; set; }
