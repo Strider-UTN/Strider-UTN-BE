@@ -13,18 +13,21 @@ namespace StriderWebApi.Dto.Coach
         {
             public int Id { get; set; }
             public string Name { get; set; } = string.Empty;
+            public string Email { get; set; } = string.Empty;
+            public string PhoneNumber { get; set; } = string.Empty;
+            public int Experience { get; set; }
+            public double WeeklyDistance { get; set; }
             public int Age { get; set; }
-            public List<string> Objectives { get; set; } = [];
-            public int TotalWorkouts { get; set; }
-            public DateTime LastWorkoutDate { get; set; }
-            public bool IsActive { get; set; }
-            public List<Ailment> Ailments { get; set; } = [];
+            public int BirthYear { get; set; }
+            public double Height { get; set; }
+            public double Weight { get; set; }
+            public double MonthlyDistance { get; set; }
+            public string EmergencyContactName { get; set; } = string.Empty;
+            public string EmergencyContactPhone { get; set; } = string.Empty;
+            public string EmergencyContactRelationship { get; set; } = string.Empty;
+            public DateTime RegistrationDate { get; set; }
+            public DateTime LastActivityDate { get; set; }
 
-            public class Ailment
-            {
-                public string Name { get; set; } = string.Empty;
-                public string Treatment { get; set; } = string.Empty;
-            }
         }
     }
 }

@@ -4,9 +4,13 @@ namespace StriderWebApi.Model;
 
 public class Athlete : User
 {
-    public double HeightCm { get; set; }
-    public double WeightKg { get; set; }
+    public double Height { get; set; }
+    public double Weight { get; set; }
     public string Country { get; set; } = string.Empty;
+    public string EmergencyContactName { get; set; } = string.Empty;
+    public string EmergencyContactPhone { get; set; } = string.Empty;
+    public string EmergencyContactRelationship { get; set; } = string.Empty;
+    public DateTime DateStartedRunning { get; set; }
     public double? VO2Max { get; set; }
     public List<string> MedicalConditions { get; set; } = [];
     public List<string> Objectives { get; set; } = [];
@@ -16,12 +20,8 @@ public class Athlete : User
     public void UpdateVO2Max(double vO2Max) => VO2Max = vO2Max;
     public double Speed(int percentage) => (VO2Max ?? 0) * percentage / 100;
     public void AddMedicalCondition(string medicalCondition) => MedicalConditions.Add(medicalCondition);
-    
-    public double TotalDistance(DateTime start, DateTime end)
-    {
-        return Workouts.Where(w => w.Date >= start && w.Date <= end).Sum(w => w.Distance);
-    }
-    
+    public double WeeklyDistance() => Workouts.Where(w => w.Date > DateTime.Now.AddDays(-7)).Sum(w => w.TotalDistance());
+    public double MonthlyDistance() => Workouts.Where(w => w.Date > DateTime.Now.AddDays(-30)).Sum(w => w.TotalDistance());
     public bool IsActive() => Ailments.Any(a => !a.IsRecovered);
     public bool IsInactive() => !IsActive();
     
@@ -36,5 +36,7 @@ public class Athlete : User
     public List<Workout> WorkoutsWithFeedback() => [.. Workouts.Where(w => w.HasLinkedSession() && w.HasFeedback())];
     public List<Workout> WorkoutsThisWeek() => [.. Workouts.Where(w => w.Date > DateTime.Now.AddDays(-7))];
     public Workout GetWorkoutById(int workoutId) => Workouts.First(w => w.Id == workoutId);
+    public int Age() => DateTime.Now.Year - BirthDate.Year;
+    public int YearsOfExperience() => DateTime.Now.Year - DateStartedRunning.Year;
 }
 

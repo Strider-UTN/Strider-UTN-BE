@@ -40,7 +40,7 @@ public class Workout
     public bool HasFeedback() => !string.IsNullOrEmpty(CoachFeedback);
 }
 
-public class Comparer
+public class WorkoutComparer
 {
     readonly double _durationWeight = 0.2;
     readonly double _distanceWeight = 0.2;

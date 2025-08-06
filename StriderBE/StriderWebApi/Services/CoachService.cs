@@ -19,10 +19,12 @@ public class CoachService(CoachRepository coachRepository, AthleteService athlet
         return new Coach
         {
             Id = coach.Id,
+            CreatedBy = coach.CreatedBy,
+            PhoneNumber = coach.PhoneNumber,
             Username = coach.Username,
             Name = coach.FullName,
             Email = coach.Email,
-            Gender = (Gender)coach.Gender,
+            Gender = coach.Gender,
             Address = coach.Address,
             BirthDate = coach.BirthDate
         };
@@ -42,21 +44,26 @@ public class CoachService(CoachRepository coachRepository, AthleteService athlet
             {
                 Id = a.Id,
                 Name = a.Name,
-                Age = DateTime.Today.Subtract(a.BirthDate).Days / 365,
-                Objectives = a.Objectives,
-                TotalWorkouts = a.TotalWorkoutsCompleted(),
-                LastWorkoutDate = a.GetLastWorkoutDate(),
-                IsActive = a.IsActive(),
-                Ailments = a.GetActiveAilments().Select(ailment => new CoachResponseDTO.Athlete.Ailment
-                {
-                    Name = ailment.GetName(),
-                    Treatment = ailment.Treatment
-                }).ToList()
+                Email = a.Email,
+                PhoneNumber = a.PhoneNumber,
+                Experience = a.YearsOfExperience(),
+                WeeklyDistance = a.WeeklyDistance(),
+                Age = a.Age(),
+                BirthYear = a.BirthDate.Year,
+                Height = a.Height,
+                Weight = a.Weight,
+                MonthlyDistance = a.MonthlyDistance(),
+                EmergencyContactName = a.EmergencyContactName,
+                EmergencyContactPhone = a.EmergencyContactPhone,
+                EmergencyContactRelationship = a.EmergencyContactRelationship,
+                RegistrationDate = a.CreatedDate,
+                LastActivityDate = a.GetLastWorkoutDate()
+
             }).ToList()
         };
     }
 
-    public Task PostWorkoutFeedbackAsync(int athleteId, int workoutId, CoachFeedbackDTO feedback)
+    public async Task PostWorkoutFeedbackAsync(int athleteId, int workoutId, CoachFeedbackDTO feedback)
     {
         Athlete athlete = _athleteService.GetAthleteById(athleteId).Result;
         Workout workout = athlete.GetWorkoutById(workoutId);
@@ -65,7 +72,6 @@ public class CoachService(CoachRepository coachRepository, AthleteService athlet
             Lap lap = workout.GetLap(index);
             lap.CoachFeedback = feedback.LapFeedbacks[index];
         }
-        _athleteService.UpdateAthlete(athlete);
-        return Task.CompletedTask;
+        await _athleteService.UpdateAthlete(athlete);
     }
 }

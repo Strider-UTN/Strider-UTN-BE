@@ -19,15 +19,21 @@ namespace StriderWebApi.Services
             return new Athlete
             {
                 Id = athlete.Id,
+                PhoneNumber = athlete.PhoneNumber,
+                CreatedBy = athlete.CreatedBy,
                 Username = athlete.Username,
                 Name = athlete.FullName,
                 Email = athlete.Email,
-                Gender = (Gender)athlete.Gender,
+                Gender = athlete.Gender,
                 Address = athlete.Address,
                 VO2Max = athlete.VO2Max,
                 MedicalConditions = athlete.MedicalConditions,
                 Objectives = athlete.Objectives,
-                BirthDate = athlete.BirthDate
+                BirthDate = athlete.BirthDate,
+                EmergencyContactName = athlete.EmergencyContactName,
+                EmergencyContactPhone = athlete.EmergencyContactPhone,
+                EmergencyContactRelationship = athlete.EmergencyContactRelationship
+                
             };
         }
 
@@ -49,7 +55,7 @@ namespace StriderWebApi.Services
                                 if (w.Session == null) {
                                     throw new Exception("Workout does not have linked session");
                                 }
-                                Comparer comparer = new();
+                                WorkoutComparer comparer = new();
                                 return new AthleteFeedbackResponseDTO.Workout
                                 {
                                     Id = w.Id,
@@ -90,10 +96,52 @@ namespace StriderWebApi.Services
             return responseDTO;
         }
 
-        public void UpdateAthlete(Athlete athlete)
+        public async Task UpdateAthlete(Athlete athlete)
         {
-            // TODO
-            throw new NotImplementedException();
+            Domain.DomainClasses.Athlete domainAthlete = new()
+            {
+                Id = athlete.Id,
+                Username = athlete.Username,
+                FullName = athlete.Name,
+                PhoneNumber = athlete.PhoneNumber,
+                Email = athlete.Email,
+                Gender = athlete.Gender,
+                Address = athlete.Address,
+                VO2Max = athlete.VO2Max,
+                MedicalConditions = athlete.MedicalConditions,
+                Objectives = athlete.Objectives,
+                BirthDate = athlete.BirthDate,
+                Workouts = athlete.Workouts.Select(w => new Domain.DomainClasses.Workout
+                {
+                    Id = w.Id,
+                    Name = w.Name,
+                    Distance = w.Distance,
+                    Date = w.Date,
+                    Duration = w.Duration,
+                    AverageHR = w.AverageHR,
+                    State = w.State,
+                    Type = w.Type,
+                    Comments = w.Comments,
+                    CoachFeedback = w.CoachFeedback,
+                    IsReviewed = w.IsReviewed,
+                    AthleteId = w.Athlete.Id,
+                    SessionId = w.Session?.Id,
+                    Laps = w.Laps.Select(l => new Domain.DomainClasses.Lap
+                    {
+                        Id = l.Id,
+                        Index = l.Index,
+                        Distance = l.Distance,
+                        Duration = l.Duration,
+                        Speed = l.Speed,
+                        HR = l.HR,
+                        StartTime = l.StartTime,
+                        CoachFeedback = l.CoachFeedback,
+                        WorkoutId = w.Id
+                    }).ToList()
+                }).ToList()
+            };
+            
+            await _athleteRepository.UpdateAthleteAsync(domainAthlete);
         }
     }
 }

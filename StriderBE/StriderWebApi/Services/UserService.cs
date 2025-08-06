@@ -36,8 +36,8 @@ namespace StriderWebApi.Services
                 BirthDate = dto.BirthDate,
                 Address = dto.Address,
                 Gender = dto.Gender,
-                HeightCm = dto.HeightCm,
-                WeightKg = dto.WeightKg,
+                Height = dto.HeightCm,
+                Weight = dto.WeightKg,
                 Country = dto.Country,
                 Active = false, // Default to false, until account is verified
                 CreatedBy = "Athlete Creation",
