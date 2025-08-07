@@ -1,17 +1,16 @@
-using StriderWebApi.Data.Repositories;
+using StriderWebApi.Data.Repositories.Interfaces;
 using StriderWebApi.Dto.Coach;
 using StriderWebApi.Exceptions.Coach;
 using StriderWebApi.Model;
 using StriderWebApi.Services.Interfaces;
-using StriderWebApi.Domain.Enums;
 
 namespace StriderWebApi.Services;
 
-public class CoachService(CoachRepository coachRepository, AthleteService athleteService) : ICoachService
+public class CoachService(ICoachRepository coachRepository, IAthleteService athleteService) : ICoachService
 {
 
-    private readonly CoachRepository _coachRepository = coachRepository;
-    private readonly AthleteService _athleteService = athleteService;
+    private readonly ICoachRepository _coachRepository = coachRepository;
+    private readonly IAthleteService _athleteService = athleteService;
 
     public async Task<Coach> GetCoachById(int id)
     {
@@ -65,7 +64,7 @@ public class CoachService(CoachRepository coachRepository, AthleteService athlet
 
     public async Task PostWorkoutFeedbackAsync(int athleteId, int workoutId, CoachFeedbackDTO feedback)
     {
-        Athlete athlete = _athleteService.GetAthleteById(athleteId).Result;
+        Athlete athlete = await _athleteService.GetAthleteByIdAsync(athleteId);
         Workout workout = athlete.GetWorkoutById(workoutId);
         workout.CoachFeedback = feedback.Feedback;
         foreach (int index in feedback.LapFeedbacks.Keys) {

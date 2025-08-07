@@ -21,7 +21,8 @@ public class GarminTests
         Address = "test", 
         VO2Max = 0, 
         MedicalConditions = new(), 
-        Objectives = new(), 
+        Objectives = new(),
+        CreatedBy = "test",
         BirthDate = DateTime.Now 
     };
 

@@ -9,5 +9,6 @@ namespace StriderWebApi.Data.Repositories.Interfaces
         Task<User?> GetUserByUsernameAsync(string username);
         Task<bool> UserExistsByEmailAsync(string email);
         Task<bool> UserExistsByUsernameAsync(string username);
+        Task<bool> UpdateUserAsync(User user);
     }
 }

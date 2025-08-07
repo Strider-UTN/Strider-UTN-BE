@@ -31,9 +31,13 @@ namespace StriderWebApi.Controllers
             {
                 return NotFound("Coach not found: " + ex.Message);
             }
-
+            catch (Exception ex)
+            {
+                return Problem("An error occurred while retrieving the coach's athletes: " + ex.Message);
+            }
         }
 
+        [Authorize]
         [HttpPost("/Athlete/{athleteId}/Feedback/{workoutId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> PostFeedbackAsync([FromRoute] int athleteId, [FromRoute] int workoutId, [FromBody] CoachFeedbackDTO feedback)
@@ -46,6 +50,10 @@ namespace StriderWebApi.Controllers
             catch (AthleteNotFoundException e)
             {
                 return NotFound("Athlete not found: " + e.Message);
+            }
+            catch (Exception e)
+            {
+                return Problem("An error occurred while posting feedback: " + e.Message);
             }
         }
 

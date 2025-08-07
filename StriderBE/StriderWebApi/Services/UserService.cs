@@ -2,6 +2,7 @@
 using StriderWebApi.Data.Repositories.Interfaces;
 using StriderWebApi.Domain.DomainClasses;
 using StriderWebApi.Dto.UserCreation;
+using StriderWebApi.Exceptions.AccountActivation;
 using StriderWebApi.Exceptions.User;
 using StriderWebApi.Services.Interfaces;
 
@@ -22,6 +23,27 @@ namespace StriderWebApi.Services
             _passwordHasher = passwordHasher;
             _emailService = emailService;
         }
+
+        public async Task ActivateAccountAsync(ActivateAccountDto dto)
+        {
+            var userToActivate = await _userRepository.GetUserByIdAsync(dto.UserId) ?? throw new UserNotFoundException("No pudimos encontrar un usuario con el Id indicado.");
+
+            // Check if the activation token is valid and not expired
+            if (userToActivate.ActivationToken != dto.ActivationToken || userToActivate.ActivationTokenExpires < DateTime.UtcNow)
+            {
+                throw new ActivationTokenInvalidOrExpiredException("El token de activación es inválido o ha expirado.");
+            }
+
+            userToActivate.Active = true; // Activate the user account
+            userToActivate.ActivationToken = null; // Clear the activation token
+            userToActivate.ActivationTokenExpires = null; // Clear the expiration date
+            userToActivate.UpdatedBy = "Account Activation";
+            userToActivate.UpdatedDate = DateTime.UtcNow;
+
+            // Save the updated user to the repository
+            await _userRepository.UpdateUserAsync(userToActivate);
+        }
+
         public async Task CreateAthleteAsync(CreateAthleteDto dto)
         {
             // Validate if user already exists based on username or email
@@ -44,6 +66,12 @@ namespace StriderWebApi.Services
                 CreatedDate = DateTime.UtcNow,
                 ActivationToken = Guid.NewGuid().ToString(),
                 ActivationTokenExpires = DateTime.UtcNow.AddDays(1), // Token valid for 1 day
+                EmergencyContactName = dto.EmergencyContactName,
+                EmergencyContactPhone = dto.EmergencyContactPhone,
+                EmergencyContactRelationship = dto.EmergencyContactRelationship,
+                YearsOfExperience = dto.YearsOfExperience,
+                TrainingVolumeType = dto.VolumeType,
+                TrainingVolumeKm = dto.TrainingVolumeKm,
             };
 
             // Hash the password
@@ -53,8 +81,7 @@ namespace StriderWebApi.Services
             await _athleteRepository.AddAthleteAsync(newAthlete);
 
             // Add email notification for account activation
-            // Comentado por ahora hasta que se testee la funcionalidad de envío de emails
-            //await _emailService.SendAccountActivationEmailAsync(newAthlete.Email, newAthlete.ActivationToken, newAthlete.Username);
+            await _emailService.SendAccountActivationEmailAsync(newAthlete.Email, newAthlete.Username, newAthlete.ActivationToken);
         }
         public async Task CreateCoachAsync(CreateCoachDto dto)
         {
@@ -84,8 +111,7 @@ namespace StriderWebApi.Services
             await _coachRepository.AddCoachAsync(newCoach);
 
             // Send email notification for account activation
-            // Comentado por ahora hasta que se testee la funcionalidad de envío de emails
-            //await _emailService.SendAccountActivationEmailAsync(newCoach.Email, newCoach.ActivationToken, newCoach.Username);
+            await _emailService.SendAccountActivationEmailAsync(newCoach.Email, newCoach.Username, newCoach.ActivationToken);
         }
 
         private async Task ValidateUserUniquenessAsync(string email, string username)

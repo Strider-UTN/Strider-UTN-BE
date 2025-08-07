@@ -23,15 +23,37 @@ namespace StriderWebApi.Services
             message.To.Add(new MailboxAddress(username, email));
             message.Subject = "Activá tu cuenta en Strider";
 
-            message.Body = new TextPart("plain")
+            message.Body = new TextPart("html")
             {
-                Text = $@"Hola {username},
-
-                Gracias por registrarte en Strider. Activá tu cuenta con este enlace:
-
-                {activationUrl}
-
-                Este link es válido por 24 horas. Si no creaste esta cuenta, podés ignorar este mensaje."
+                Text = $@"
+                    <html>
+                    <body style='background-color: #f4f4f4; padding: 30px 0; font-family: Arial, sans-serif;'>
+                        <div style='max-width: 600px; margin: 0 auto; padding: 24px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);'>
+                            <h2 style='margin-top: 0; color: #222;'>Hola {username},</h2>
+                            <p style='font-size: 16px; color: #555;'>
+                                Gracias por registrarte en <strong>Strider</strong>. Para activar tu cuenta, hacé clic en el botón a continuación:
+                            </p>
+                            <div style='text-align: center; margin: 24px 0;'>
+                                <a href='{activationUrl}' style='
+                                    background-color: #1a73e8;
+                                    color: #ffffff;
+                                    padding: 12px 24px;
+                                    border-radius: 8px;
+                                    text-decoration: none;
+                                    font-weight: bold;
+                                    display: inline-block;
+                                '>Activar Cuenta</a>
+                            </div>
+                            <p style='font-size: 14px; color: #777;'>
+                                Este enlace estará disponible por 24 horas. Si no creaste esta cuenta, podés ignorar este mensaje.
+                            </p>
+                            <hr style='border: none; border-top: 1px solid #eee; margin: 32px 0;'>
+                            <p style='font-size: 12px; color: #aaa; text-align: center;'>
+                                © {DateTime.UtcNow.Year} Strider — Todos los derechos reservados.
+                            </p>
+                        </div>
+                    </body>
+                    </html>"
             };
 
             using var client = new SmtpClient();

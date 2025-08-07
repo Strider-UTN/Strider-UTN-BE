@@ -8,7 +8,7 @@ public abstract class User
     public required string Username { get; set; }
     public required string Name { get; set; }
     public required string Email { get; set; }
-    public required string PhoneNumber { get; set; }
+    public string? PhoneNumber { get; set; }
     public DateTime BirthDate { get; set; }
     public Gender Gender { get; set; }
     public required string Address { get; set; }

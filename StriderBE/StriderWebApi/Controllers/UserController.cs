@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using StriderWebApi.Domain.Enums;
 using StriderWebApi.Dto.UserCreation;
+using StriderWebApi.Exceptions.AccountActivation;
 using StriderWebApi.Exceptions.User;
 using StriderWebApi.Services.Interfaces;
 
@@ -57,6 +56,28 @@ namespace StriderWebApi.Controllers
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Algo salió mal al crear un nuevo Atleta: " + ex.Message);
+            }
+        }
+
+        [HttpPost("Activate")]
+        public async Task<IActionResult> ActivateAccount([FromBody] ActivateAccountDto dto)
+        {
+            try
+            {
+                await _userService.ActivateAccountAsync(dto);
+                return Ok("Cuenta activada exitosamente.");
+            }
+            catch (UserNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (ActivationTokenInvalidOrExpiredException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Algo salió mal al activar la cuenta: " + ex.Message);
             }
         }
     }

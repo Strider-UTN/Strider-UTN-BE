@@ -37,6 +37,25 @@ namespace StriderWebApi.Extensions
                     ValidAudience = jwtSettings["Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+
+                        // Ruta del hub
+                        var path = context.HttpContext.Request.Path;
+
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            path.StartsWithSegments("/hub/notifications")) // <- debe coincidir con el MapHub
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
             return services;
@@ -44,6 +63,9 @@ namespace StriderWebApi.Extensions
 
         public static IServiceCollection AddProjectServices(this IServiceCollection services, IConfiguration configuration)
         {
+            // SignalR
+            services.AddSignalR();
+
             // DbContext
             services.AddDbContext<StriderDbContext>(options =>
                 options.UseNpgsql(configuration.GetConnectionString("StriderConnectionString")));
@@ -56,11 +78,15 @@ namespace StriderWebApi.Extensions
             // Service Registrations
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IAthleteService, AthleteService>();
+            services.AddScoped<ICoachService, CoachService>();
+            services.AddScoped<INotificationService, NotificationService>();
 
             // Repositories Registrations
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IAthleteRepository, AthleteRepository>();
             services.AddScoped<ICoachRepository, CoachRepository>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
 
             return services;
         }

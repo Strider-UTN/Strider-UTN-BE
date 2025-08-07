@@ -1,6 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StriderWebApi.Dto.Athlete;
-using StriderWebApi.Model;
 using StriderWebApi.Services.Interfaces;
 
 namespace StriderWebApi.Controllers
@@ -13,6 +13,7 @@ namespace StriderWebApi.Controllers
 
         private readonly IAthleteService _athleteService = athleteService;
 
+        [Authorize]
         [HttpGet("athletes/{athleteId}/feedback")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -27,11 +28,11 @@ namespace StriderWebApi.Controllers
             {
                 return NotFound("Athlete not found: " + e.Message);
             }
+            catch (Exception e)
+            {
+                return Problem("An error occurred while retrieving athlete feedback: " + e.Message);
+            }
         }
-
-
-
-
     }
 
     
