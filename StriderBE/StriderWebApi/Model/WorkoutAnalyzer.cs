@@ -6,7 +6,7 @@ public class WorkoutAnalyzer
 {
 
     private const double THRESHOLD_SPEED = 0.1;
-    private const double INDEX_FACTOR = 20;
+    private const double INDEX_DIFFERENCE_WEIGHT = 2.5;
 
     public struct IntervalInfo
     {
@@ -65,17 +65,33 @@ public class WorkoutAnalyzer
 
     }
 
+    public double calculateMaxArea(List<IntervalInfo> sessionIntervals, List<IntervalInfo> workoutIntervals)
+    {
+
+        double area = 0;
+        for (int i = 0; i < sessionIntervals.Count; i++)
+        {
+            for (int j = 0; j < workoutIntervals.Count; j++)
+            {
+                area = Math.Max(area, Math.Pow(sessionIntervals[i].Duration * sessionIntervals[i].Speed - workoutIntervals[j].Duration * workoutIntervals[j].Speed, 2));
+            }
+        }
+        return area;
+    }
+
     public List<IntervalInfo> LinkSessionToWorkout(List<IntervalInfo> sessionIntervals, List<IntervalInfo> workoutIntervals)
     {
 
         var minCostFlow = new MinCostFlow();
 
-        int SessionIndex(int i) => i + 1;
-        int WorkoutIndex(int i) => i + 1 + sessionIntervals.Count;
-        long Cost(int i, int j) => (long)Math.Round(Math.Pow(sessionIntervals[i].Duration * sessionIntervals[i].Speed - workoutIntervals[j].Duration * workoutIntervals[j].Speed, 2) + Math.Pow((i - j) * INDEX_FACTOR, 2));
-
+        double areaNormalization = calculateMaxArea(sessionIntervals, workoutIntervals);
         int n = sessionIntervals.Count;
         int m = workoutIntervals.Count;
+
+        int SessionIndex(int i) => i + 1;
+        int WorkoutIndex(int i) => i + 1 + sessionIntervals.Count;
+        long Cost(int i, int j) => (long)Math.Round(Math.Pow(sessionIntervals[i].Duration * sessionIntervals[i].Speed - workoutIntervals[j].Duration * workoutIntervals[j].Speed,2) / areaNormalization + INDEX_DIFFERENCE_WEIGHT * Math.Pow(i-j,2) / Math.Pow(Math.Max(n-1,m-1),2));
+
         int max = n + m + 1;
         int sink = max + 1;
 
@@ -84,14 +100,14 @@ public class WorkoutAnalyzer
         for (int i = 0; i < n; i++)
         {
             minCostFlow.AddArcWithCapacityAndUnitCost(0, SessionIndex(i), 1, 0);
-            
+
         }
 
         if (m < n)
         {
             for (int i = 0; i < n; i++)
             {
-                minCostFlow.AddArcWithCapacityAndUnitCost(SessionIndex(i), sink, 1, (long)Math.Round(Math.Pow(sessionIntervals[i].Duration * sessionIntervals[i].Speed, 2)));
+                minCostFlow.AddArcWithCapacityAndUnitCost(SessionIndex(i), sink, 1, (long)Math.Round(Math.Pow(sessionIntervals[i].Duration * sessionIntervals[i].Speed,2) / areaNormalization));
             }
             minCostFlow.AddArcWithCapacityAndUnitCost(sink, max, n - m, 0);
         }
@@ -110,14 +126,12 @@ public class WorkoutAnalyzer
             minCostFlow.AddArcWithCapacityAndUnitCost(WorkoutIndex(j), max, 1, 0);
         }
 
-
-
         minCostFlow.SetNodeSupply(0, n);
         minCostFlow.SetNodeSupply(max, -n);
 
         var status = minCostFlow.Solve();
 
-        if (status != MinCostFlow.Status.OPTIMAL)
+        if (status != MinCostFlowBase.Status.OPTIMAL)
         {
             throw new Exception("Optimization failed");
         }
@@ -126,7 +140,7 @@ public class WorkoutAnalyzer
 
         for (int i = 0; i < Math.Max(n, m); i++)
         {
-            intervals.Add(new IntervalInfo { Duration = 0, Speed = 0});
+            intervals.Add(new IntervalInfo { Duration = 0, Speed = 0 });
         }
 
         for (int i = 0; i < n; i++)
@@ -134,14 +148,14 @@ public class WorkoutAnalyzer
             for (int j = 0; j < m; j++)
             {
                 if (minCostFlow.Flow(indices[i, j]) == 1)
-                { 
-                    intervals[j] = new IntervalInfo { Duration = sessionIntervals[i].Duration, Speed = sessionIntervals[i].Speed }; 
+                {
+                    intervals[j] = new IntervalInfo { Duration = sessionIntervals[i].Duration, Speed = sessionIntervals[i].Speed };
                 }
             }
         }
 
         return intervals;
-        
+
     }
 
     public List<AnalyzedInterval> Analyze(Athlete a, Workout w, Session s)
