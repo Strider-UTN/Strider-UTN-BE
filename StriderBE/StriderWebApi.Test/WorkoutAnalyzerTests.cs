@@ -157,70 +157,11 @@ namespace StriderWebApi.Test
             var result = _analyzer.Analyze(_athlete, workout, session);
 
             // Assert
-            Assert.Equal(4, result.Count); // Session has 2 intervals, workout has 4 intervals after parsing (some laps merged)
+            Assert.Equal(4, result.Count); // Session has 3 intervals, workout has 4 intervals after parsing (some laps merged)
 
             // Should find optimal shift to align workouts
             // The workout starts with a warmup lap, so the first interval should be padded
             Assert.True(result[0].ExpectedDistance == 0.0);// First interval should be padded
-        }
-
-        [Fact]
-        public void L2Distance_SameIntervals_ReturnsZero()
-        {
-            // Arrange
-            var intervals = new List<WorkoutAnalyzer.IntervalInfo>
-            {
-                new() { Duration = 60.0, Speed = 60.0 },
-                new() { Duration = 30.0, Speed = 0.0 }
-            };
-
-            // Act
-            var result = _analyzer.L2Distance(intervals, intervals, 0);
-
-            // Assert
-            Assert.Equal(0.0, result, 6); // Should be exactly 0
-        }
-
-        [Fact]
-        public void L2Distance_DifferentIntervals_ReturnsPositiveValue()
-        {
-            // Arrange
-            var intervals1 = new List<WorkoutAnalyzer.IntervalInfo>
-            {
-                new() { Duration = 60.0, Speed = 60.0 }
-            };
-            var intervals2 = new List<WorkoutAnalyzer.IntervalInfo>
-            {
-                new() { Duration = 60.0, Speed = 30.0 }
-            };
-
-            // Act
-            var result = _analyzer.L2Distance(intervals1, intervals2, 0);
-
-            // Assert
-            Assert.True(result > 0); // Should be positive
-        }
-
-        [Fact]
-        public void FindOptimalShift_ShiftedIntervals_FindsCorrectShift()
-        {
-            // Arrange
-            var intervals1 = new List<WorkoutAnalyzer.IntervalInfo>
-            {
-                new() { Duration = 60.0, Speed = 60.0 },
-                new() { Duration = 30.0, Speed = 0.0 }
-            };
-            var intervals2 = new List<WorkoutAnalyzer.IntervalInfo>
-            {
-                new() { Duration = 30.0, Speed = 0.0 },
-                new() { Duration = 60.0, Speed = 60.0 }
-            };
-
-            // Act
-            var result = _analyzer.FindOptimalShift(intervals1, intervals2);
-
-            // Assert
-            Assert.Equal(-2, result); // Should shift intervals1 left by 2 for optimal alignment
         }
 
         [Fact]

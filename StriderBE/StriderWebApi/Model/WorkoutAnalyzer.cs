@@ -1,10 +1,12 @@
 namespace StriderWebApi.Model;
 
+using Google.OrTools.Graph;
+
 public class WorkoutAnalyzer
 {
 
     private const double THRESHOLD_SPEED = 0.1;
-    private const double DT = 20;
+    private const double INDEX_FACTOR = 20;
 
     public struct IntervalInfo
     {
@@ -63,58 +65,83 @@ public class WorkoutAnalyzer
 
     }
 
-    public double L2Distance(List<IntervalInfo> a, List<IntervalInfo> b, int shift)
+    public List<IntervalInfo> LinkSessionToWorkout(List<IntervalInfo> sessionIntervals, List<IntervalInfo> workoutIntervals)
     {
-        double timeShift = shift >= 0 ? a.Take(shift).Sum(i => i.Duration) : b.Take(-shift).Sum(i => i.Duration);
 
-        double dt = DT;
-        double time = Math.Min(timeShift, b.Sum(i => i.Duration));
-        double max = Math.Max(a.Sum(i => i.Duration), b.Sum(i => i.Duration) + timeShift);
-        double diff = 0;
+        var minCostFlow = new MinCostFlow();
 
-        while (time < max)
+        int SessionIndex(int i) => i + 1;
+        int WorkoutIndex(int i) => i + 1 + sessionIntervals.Count;
+        long Cost(int i, int j) => (long)Math.Round(Math.Pow(sessionIntervals[i].Duration * sessionIntervals[i].Speed - workoutIntervals[j].Duration * workoutIntervals[j].Speed, 2) + Math.Pow((i - j) * INDEX_FACTOR, 2));
+
+        int n = sessionIntervals.Count;
+        int m = workoutIntervals.Count;
+        int max = n + m + 1;
+        int sink = max + 1;
+
+        var indices = new int[n, m];
+
+        for (int i = 0; i < n; i++)
         {
-
-            double aSpeed = GetSpeedAt(a, time);
-            double bSpeed = GetSpeedAt(b, time - timeShift);
-
-            diff += (aSpeed - bSpeed) * (aSpeed - bSpeed) * dt;
-            time += dt;
-
+            minCostFlow.AddArcWithCapacityAndUnitCost(0, SessionIndex(i), 1, 0);
+            
         }
 
-        return Math.Sqrt(diff);
-        
-    }
-
-    private static double GetSpeedAt(List<IntervalInfo> intervals, double time) {
-        if (time < 0) return 0;
-        if (time > intervals.Sum(i => i.Duration)) return 0;
-
-        double acum = 0;
-        for (int i = 0; i < intervals.Count; i++)
+        if (m < n)
         {
-            acum += intervals[i].Duration;
-            if (acum > time) return intervals[i].Speed;
-        }
-        return 0;
-    }
-
-
-    public int FindOptimalShift(List<IntervalInfo> a, List<IntervalInfo> b) {
-        double minDiff = double.MaxValue;
-        int minShift = 0;
-        int c = Math.Max(a.Count, b.Count); 
-        for (int shift = -c; shift < c; shift++)
-        {
-            double diff = L2Distance(a, b, shift);
-            if (diff < minDiff)
+            for (int i = 0; i < n; i++)
             {
-                minDiff = diff;
-                minShift = shift;
+                minCostFlow.AddArcWithCapacityAndUnitCost(SessionIndex(i), sink, 1, (long)Math.Round(Math.Pow(sessionIntervals[i].Duration * sessionIntervals[i].Speed, 2)));
+            }
+            minCostFlow.AddArcWithCapacityAndUnitCost(sink, max, n - m, 0);
+        }
+
+
+        for (int i = 0; i < n; i++)
+        {
+            for (int j = 0; j < m; j++)
+            {
+                indices[i, j] = minCostFlow.AddArcWithCapacityAndUnitCost(SessionIndex(i), WorkoutIndex(j), 1, Cost(i, j));
             }
         }
-        return minShift;
+
+        for (int j = 0; j < m; j++)
+        {
+            minCostFlow.AddArcWithCapacityAndUnitCost(WorkoutIndex(j), max, 1, 0);
+        }
+
+
+
+        minCostFlow.SetNodeSupply(0, n);
+        minCostFlow.SetNodeSupply(max, -n);
+
+        var status = minCostFlow.Solve();
+
+        if (status != MinCostFlow.Status.OPTIMAL)
+        {
+            throw new Exception("Optimization failed");
+        }
+
+        List<IntervalInfo> intervals = new List<IntervalInfo>();
+
+        for (int i = 0; i < Math.Max(n, m); i++)
+        {
+            intervals.Add(new IntervalInfo { Duration = 0, Speed = 0});
+        }
+
+        for (int i = 0; i < n; i++)
+        {
+            for (int j = 0; j < m; j++)
+            {
+                if (minCostFlow.Flow(indices[i, j]) == 1)
+                { 
+                    intervals[j] = new IntervalInfo { Duration = sessionIntervals[i].Duration, Speed = sessionIntervals[i].Speed }; 
+                }
+            }
+        }
+
+        return intervals;
+        
     }
 
     public List<AnalyzedInterval> Analyze(Athlete a, Workout w, Session s)
@@ -123,48 +150,18 @@ public class WorkoutAnalyzer
         List<IntervalInfo> sessionIntervals = ParseSession(a, s);
         List<IntervalInfo> workoutIntervals = ParseWorkout(w);
 
-        int optimalShift = FindOptimalShift(sessionIntervals, workoutIntervals);
-
-        if (optimalShift < 0)
-        {
-            for (int i = 0; i < -optimalShift; i++)
-            {
-                workoutIntervals.Insert(0, new IntervalInfo { Duration = 0, Speed = 0 });
-            }
-        }
-        else
-        {
-            for (int i = 0; i < optimalShift; i++)
-            {
-                sessionIntervals.Insert(0, new IntervalInfo { Duration = 0, Speed = 0 });
-            }
-        }
-
-        if (workoutIntervals.Count < sessionIntervals.Count)
-        {
-            for (int i = 0; i <= sessionIntervals.Count - workoutIntervals.Count; i++)
-            {
-                workoutIntervals.Add(new IntervalInfo { Duration = 0, Speed = 0 });
-            }
-        }
-        else if (workoutIntervals.Count > sessionIntervals.Count)
-        {
-            for (int i = 0; i <= workoutIntervals.Count - sessionIntervals.Count; i++)
-            {
-                sessionIntervals.Add(new IntervalInfo { Duration = 0, Speed = 0 });
-            }
-        }
+        List<IntervalInfo> optimizedSessionIntervals = LinkSessionToWorkout(sessionIntervals, workoutIntervals);
 
         List<AnalyzedInterval> intervals = new List<AnalyzedInterval>();
 
-        for (int i = 0; i < sessionIntervals.Count; i++)
+        for (int i = 0; i < workoutIntervals.Count; i++)
         {
 
             intervals.Add(new AnalyzedInterval
             {
-                ExpectedDistance = sessionIntervals[i].Duration * sessionIntervals[i].Speed,
-                ExpectedDuration = sessionIntervals[i].Duration,
-                ExpectedVelocity = sessionIntervals[i].Speed,
+                ExpectedDistance = optimizedSessionIntervals[i].Duration * optimizedSessionIntervals[i].Speed,
+                ExpectedDuration = optimizedSessionIntervals[i].Duration,
+                ExpectedVelocity = optimizedSessionIntervals[i].Speed,
                 ActualDistance = workoutIntervals[i].Duration * workoutIntervals[i].Speed,
                 ActualDuration = workoutIntervals[i].Duration,
                 ActualVelocity = workoutIntervals[i].Speed
