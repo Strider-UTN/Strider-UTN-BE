@@ -39,30 +39,3 @@ public class Workout
     public Lap GetLap(int index) => Laps[index];
     public bool HasFeedback() => !string.IsNullOrEmpty(CoachFeedback);
 }
-
-public class WorkoutComparer
-{
-    readonly double _durationWeight = 0.2;
-    readonly double _distanceWeight = 0.2;
-    readonly double _speedWeight = 0.6;
-    readonly double _reductionParameter = 0.001;
-
-    public int MatchPercentage(Athlete athlete, Lap lap, Interval interval)
-    {
-        double durationDiff = Math.Abs(lap.Duration - interval.GetDuration(athlete));
-        double distanceDiff = Math.Abs(lap.Distance - interval.GetDistance(athlete));
-        double speedDiff = Math.Abs(lap.Speed - interval.SpeedType.GetSpeed(athlete, interval.Speed, interval.Percentage));
-        double totalDiff = durationDiff * _durationWeight + distanceDiff * _distanceWeight + speedDiff * _speedWeight;
-        return (int)(Math.Exp(-1 * totalDiff * _reductionParameter) * 100);
-    }
-
-    public int AverageCompletionPercentage(Athlete athlete, Workout workout, Session session)
-    {
-        int total = 0;
-        foreach (Lap lap in workout.Laps)
-        {
-            total += MatchPercentage(athlete, lap, session.GetInterval(lap.Index));
-        }
-        return total / workout.Laps.Count;
-    }
-}

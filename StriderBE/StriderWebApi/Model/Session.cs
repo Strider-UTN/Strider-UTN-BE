@@ -13,22 +13,10 @@ public class Session
     public string Category { get; set; } = string.Empty;
     public string Label { get; set; } = string.Empty;
     public string? Comments { get; set; }
-    public WorkoutType SessionType { get; set; }    
-    public List<Interval> Intervals { get; set; } = [];
-    public List<Workout> Workouts { get; set; } = [];
+    public WorkoutType SessionType { get; set; }
+    public List<Serie> Series { get; set; } = [];
 
-    public double TotalDistance(Athlete athlete)
-    {
-        return Intervals.Sum(l => l.GetDistance(athlete));
-    }
-
-    public double TotalDuration(Athlete athlete)
-    {
-        return Intervals.Sum(l => l.GetDuration(athlete));
-    }
-    
-    public int IntervalCount() => Intervals.Count;
-    public int ActiveIntervalCount() => Intervals.FindAll(i => i.IsActive).Count;
+    public double TotalDistance(Athlete athlete) => Series.Sum(l => l.TotalDistance(athlete));
     public Session Clone() => new() 
     { 
         Date = Date, 
@@ -39,8 +27,8 @@ public class Session
         Category = Category, 
         Label = Label, 
         Comments = Comments, 
-        Intervals = Intervals, 
+        Series = new List<Serie>(Series.Select(i => i.Clone())), 
         SessionType = SessionType 
     };
-    public Interval GetInterval(int index) => Intervals[index];
+    
 }
