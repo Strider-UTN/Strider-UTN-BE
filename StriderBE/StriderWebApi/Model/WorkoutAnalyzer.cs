@@ -144,14 +144,14 @@ public class WorkoutAnalyzer
         {
             for (int i = 0; i <= sessionIntervals.Count - workoutIntervals.Count; i++)
             {
-                workoutIntervals.Add(new IntervalInfo { Duration = sessionIntervals[i].Duration, Speed = 0 });
+                workoutIntervals.Add(new IntervalInfo { Duration = 0, Speed = 0 });
             }
         }
         else if (workoutIntervals.Count > sessionIntervals.Count)
         {
             for (int i = 0; i <= workoutIntervals.Count - sessionIntervals.Count; i++)
             {
-                sessionIntervals.Add(new IntervalInfo { Duration = workoutIntervals[i].Duration, Speed = 0 });
+                sessionIntervals.Add(new IntervalInfo { Duration = 0, Speed = 0 });
             }
         }
 

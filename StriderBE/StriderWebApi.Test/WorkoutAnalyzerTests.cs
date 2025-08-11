@@ -118,7 +118,7 @@ namespace StriderWebApi.Test
             // Extra laps should be handled by padding
             // The last interval should have zero values for expected
             Assert.Equal(0.0, result[4].ExpectedDistance);
-            Assert.Equal(30.0, result[4].ExpectedDuration); // This should be padding from workout
+            Assert.Equal(0, result[4].ExpectedDuration); // This should be padding from workout
             Assert.Equal(0.0, result[4].ExpectedVelocity);
         }
 
