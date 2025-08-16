@@ -33,7 +33,7 @@ public abstract class Ailment
 public class Injury : Ailment
 {
     public InjuryType Type { get; set; }
-    public InjuryLocation Location { get; set; }
+    public BodyPart Location { get; set; }
     
     public override string GetName()
     {
