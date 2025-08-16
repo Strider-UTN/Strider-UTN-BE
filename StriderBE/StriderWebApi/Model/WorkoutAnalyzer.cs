@@ -65,32 +65,32 @@ public class WorkoutAnalyzer
 
     }
 
-    public double calculateMaxArea(List<IntervalInfo> sessionIntervals, List<IntervalInfo> workoutIntervals)
+    private double CalculateMaxArea(List<IntervalInfo> baseIntervals, List<IntervalInfo> toMatchIntervals)
     {
 
         double area = 0;
-        for (int i = 0; i < sessionIntervals.Count; i++)
+        for (int i = 0; i < baseIntervals.Count; i++)
         {
-            for (int j = 0; j < workoutIntervals.Count; j++)
+            for (int j = 0; j < toMatchIntervals.Count; j++)
             {
-                area = Math.Max(area, Math.Pow(sessionIntervals[i].Duration * sessionIntervals[i].Speed - workoutIntervals[j].Duration * workoutIntervals[j].Speed, 2));
+                area = Math.Max(area, Math.Pow(baseIntervals[i].Duration * baseIntervals[i].Speed - toMatchIntervals[j].Duration * toMatchIntervals[j].Speed, 2));
             }
         }
         return area;
     }
 
-    public List<IntervalInfo> LinkSessionToWorkout(List<IntervalInfo> sessionIntervals, List<IntervalInfo> workoutIntervals)
+    public List<IntervalInfo> AnalyzeIntervals(List<IntervalInfo> baseIntervals, List<IntervalInfo> toMatchIntervals)
     {
 
         var minCostFlow = new MinCostFlow();
 
-        double areaNormalization = calculateMaxArea(sessionIntervals, workoutIntervals);
-        int n = sessionIntervals.Count;
-        int m = workoutIntervals.Count;
+        double areaNormalization = CalculateMaxArea(baseIntervals, toMatchIntervals);
+        int n = baseIntervals.Count;
+        int m = toMatchIntervals.Count;
 
         int SessionIndex(int i) => i + 1;
-        int WorkoutIndex(int i) => i + 1 + sessionIntervals.Count;
-        long Cost(int i, int j) => (long)Math.Round(Math.Pow(sessionIntervals[i].Duration * sessionIntervals[i].Speed - workoutIntervals[j].Duration * workoutIntervals[j].Speed,2) / areaNormalization + INDEX_DIFFERENCE_WEIGHT * Math.Pow(i-j,2) / Math.Pow(Math.Max(n-1,m-1),2));
+        int WorkoutIndex(int i) => i + 1 + baseIntervals.Count;
+        long Cost(int i, int j) => (long)Math.Round(Math.Pow(baseIntervals[i].Duration * baseIntervals[i].Speed - toMatchIntervals[j].Duration * toMatchIntervals[j].Speed,2) / areaNormalization + INDEX_DIFFERENCE_WEIGHT * Math.Pow(i-j,2) / Math.Pow(Math.Max(n-1,m-1),2));
 
         int max = n + m + 1;
         int sink = max + 1;
@@ -107,7 +107,7 @@ public class WorkoutAnalyzer
         {
             for (int i = 0; i < n; i++)
             {
-                minCostFlow.AddArcWithCapacityAndUnitCost(SessionIndex(i), sink, 1, (long)Math.Round(Math.Pow(sessionIntervals[i].Duration * sessionIntervals[i].Speed,2) / areaNormalization));
+                minCostFlow.AddArcWithCapacityAndUnitCost(SessionIndex(i), sink, 1, (long)Math.Round(Math.Pow(baseIntervals[i].Duration * baseIntervals[i].Speed,2) / areaNormalization));
             }
             minCostFlow.AddArcWithCapacityAndUnitCost(sink, max, n - m, 0);
         }
@@ -149,7 +149,7 @@ public class WorkoutAnalyzer
             {
                 if (minCostFlow.Flow(indices[i, j]) == 1)
                 {
-                    intervals[j] = new IntervalInfo { Duration = sessionIntervals[i].Duration, Speed = sessionIntervals[i].Speed };
+                    intervals[j] = new IntervalInfo { Duration = baseIntervals[i].Duration, Speed = baseIntervals[i].Speed };
                 }
             }
         }
@@ -158,13 +158,13 @@ public class WorkoutAnalyzer
 
     }
 
-    public List<AnalyzedInterval> Analyze(Athlete a, Workout w, Session s)
+    public Analysis Analyze(Athlete a, Workout w, Session s)
     {
 
         List<IntervalInfo> sessionIntervals = ParseSession(a, s);
         List<IntervalInfo> workoutIntervals = ParseWorkout(w);
 
-        List<IntervalInfo> optimizedSessionIntervals = LinkSessionToWorkout(sessionIntervals, workoutIntervals);
+        List<IntervalInfo> optimizedSessionIntervals = AnalyzeIntervals(sessionIntervals, workoutIntervals);
 
         List<AnalyzedInterval> intervals = new List<AnalyzedInterval>();
 
@@ -178,12 +178,13 @@ public class WorkoutAnalyzer
                 ExpectedVelocity = optimizedSessionIntervals[i].Speed,
                 ActualDistance = workoutIntervals[i].Duration * workoutIntervals[i].Speed,
                 ActualDuration = workoutIntervals[i].Duration,
-                ActualVelocity = workoutIntervals[i].Speed
+                ActualVelocity = workoutIntervals[i].Speed,
+                HR = w.Laps[i].HR
             });
 
         }
 
-        return intervals;
+        return new Analysis { Intervals = intervals };
     }
 
 
@@ -197,6 +198,17 @@ public class AnalyzedInterval
     public double ActualDistance { get; set; }
     public double ActualDuration { get; set; }
     public double ActualVelocity { get; set; }
+    public double HR { get; set; }
+    
+}
+
+public class Analysis
+{
+    public List<AnalyzedInterval> Intervals { get; set; } = [];
+
+    public List<double> SpeedDifferences => Intervals.Where(i => i.ExpectedVelocity > 0).Select(i => i.ActualVelocity - i.ExpectedVelocity).ToList();
+
+
 }
 
 

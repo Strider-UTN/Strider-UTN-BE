@@ -88,7 +88,7 @@ namespace StriderWebApi.Test
             var workout = CreateMatchingWorkout();
 
             // Act
-            var result = _analyzer.Analyze(_athlete, workout, session);
+            var result = _analyzer.Analyze(_athlete, workout, session).Intervals;
 
             // Assert
             Assert.Equal(3, result.Count); // Session has 2 intervals, workout has 4 intervals after parsing
@@ -110,7 +110,7 @@ namespace StriderWebApi.Test
             var workout = CreateWorkoutWithExtraLaps();
 
             // Act
-            var result = _analyzer.Analyze(_athlete, workout, session);
+            var result = _analyzer.Analyze(_athlete, workout, session).Intervals;
 
             // Assert
             Assert.Equal(5, result.Count); // Session has 3 intervals, workout has 5 intervals after parsing
@@ -130,7 +130,7 @@ namespace StriderWebApi.Test
             var workout = CreateWorkoutWithSplitInterval();
 
             // Act
-            var result = _analyzer.Analyze(_athlete, workout, session);
+            var result = _analyzer.Analyze(_athlete, workout, session).Intervals;
 
             // Assert
             Assert.Single(result); // Session has 1 interval, workout has 1 interval as it should be merged
@@ -154,7 +154,7 @@ namespace StriderWebApi.Test
             var workout = CreateWorkoutCloseToSession();
 
             // Act
-            var result = _analyzer.Analyze(_athlete, workout, session);
+            var result = _analyzer.Analyze(_athlete, workout, session).Intervals;
 
             // Assert
             Assert.Equal(4, result.Count); // Session has 3 intervals, workout has 4 intervals after parsing (some laps merged)
@@ -172,7 +172,7 @@ namespace StriderWebApi.Test
             var workout = CreateWorkoutWithLongerLaps();
 
             // Act
-            var result = _analyzer.Analyze(_athlete, workout, session);
+            var result = _analyzer.Analyze(_athlete, workout, session).Intervals;
 
             // Assert
             Assert.Equal(3, result.Count); // Session has 3 intervals, workout has 3 intervals
@@ -202,7 +202,7 @@ namespace StriderWebApi.Test
             var workout = CreateWorkoutWithLongerDistance();
 
             // Act
-            var result = _analyzer.Analyze(_athlete, workout, session);
+            var result = _analyzer.Analyze(_athlete, workout, session).Intervals;
 
             // Assert
             Assert.Single(result); // Session has 1 interval, workout has 1 interval
@@ -225,7 +225,7 @@ namespace StriderWebApi.Test
             var workout = CreateWorkoutWithMixedOverruns();
 
             // Act
-            var result = _analyzer.Analyze(_athlete, workout, session);
+            var result = _analyzer.Analyze(_athlete, workout, session).Intervals;
 
             // Assert
             Assert.Equal(5, result.Count); // Session has 3 intervals, workout has 4 intervals after parsing
@@ -247,6 +247,140 @@ namespace StriderWebApi.Test
             Assert.Equal(60.0, result[2].ExpectedDuration);   // 60 units of time
             Assert.Equal(3900.0, result[2].ActualDistance);   // 65 × 60 = 3900 units
             Assert.Equal(65.0, result[2].ActualDuration);     // 65 units of time
+
+        }
+
+
+      [Fact]
+        public void Analyze_RealisticWorkout()
+        {
+            var session = new Session
+            {
+                Series =
+                [
+                    new Serie
+                    {
+                        Intervals =
+                        [
+                            new Interval
+                            {
+                                Distance = 2000,
+                                Duration = null,
+                                Speed = 5,
+                                Repetitions = 4,
+                                Rest = 60 + 30,
+                                Type = new FixedDistance(),
+                                SpeedType = new FixedSpeed()
+                            }
+                        ],
+                        Repetitions = 1,
+                        Rest = 0,
+                    }
+                ]
+            };
+
+            var workout = new Workout
+            {
+                Laps =
+                [
+                    new Lap
+                    {
+                        Distance = 2140,
+                        Duration = 6 * 60 + 36.8, // 396.8 sec
+                        Speed = 2140 / 396.8      // ≈ 5.39 m/s
+                    },
+                    new Lap
+                    {
+                        Distance = 120,
+                        Duration = 60 + 38.6,     // 98.6 sec
+                        Speed = 120 / 98.6        // ≈ 1.22 m/s
+                    },
+                    new Lap
+                    {
+                        Distance = 2080,
+                        Duration = 7 * 60 + 1.2,  // 421.2 sec
+                        Speed = 2080 / 421.2      // ≈ 4.94 m/s
+                    },
+                    new Lap
+                    {
+                        Distance = 130,
+                        Duration = 60 + 46.7,     // 106.7 sec
+                        Speed = 130 / 106.7       // ≈ 1.22 m/s
+                    },
+                    new Lap
+                    {
+                        Distance = 2110,
+                        Duration = 7 * 60 + 5.5,  // 425.5 sec
+                        Speed = 2110 / 425.5      // ≈ 4.96 m/s
+                    },
+                    new Lap
+                    {
+                        Distance = 160,
+                        Duration = 60 + 48.8,     // 108.8 sec
+                        Speed = 160 / 108.8       // ≈ 1.47 m/s
+                    },
+                    new Lap
+                    {
+                        Distance = 2090,
+                        Duration = 7 * 60 + 20.7, // 440.7 sec
+                        Speed = 2090 / 440.7      // ≈ 4.74 m/s
+                    },
+                    new Lap
+                    {
+                        Distance = 10,
+                        Duration = 0 * 60 + 0.8,  // 0.8 sec
+                        Speed = 10 / 0.8          // ≈ 12.50 m/s
+                    }
+                ]
+            };
+
+            var analyzer = new WorkoutAnalyzer();
+
+            var result = analyzer.Analyze(_athlete, workout, session).Intervals;
+
+            // First interval
+
+            Assert.Equal(2000.0, result[0].ExpectedDistance);
+            Assert.Equal(2140.0, result[0].ActualDistance);
+
+            // Second interval
+
+            Assert.Equal(0, result[1].ExpectedDistance);
+            Assert.Equal(120, result[1].ActualDistance);
+
+            // Third interval
+
+            Assert.Equal(2000.0, result[2].ExpectedDistance);
+            Assert.Equal(2080.0, result[2].ActualDistance);
+
+            // Fourth interval
+
+            Assert.Equal(0, result[3].ExpectedDistance);
+            Assert.Equal(130, result[3].ActualDistance);
+
+            // Fifth interval
+
+            Assert.Equal(2000.0, result[4].ExpectedDistance);
+            Assert.Equal(2110.0, result[4].ActualDistance);
+
+
+            // Sixth interval
+
+            Assert.Equal(0, result[5].ExpectedDistance);
+            Assert.Equal(160, result[5].ActualDistance);
+
+
+            // Seventh interval
+
+            Assert.Equal(2000.0, result[6].ExpectedDistance);
+            Assert.Equal(2090.0, result[6].ActualDistance);
+
+
+            // Eighth interval
+
+            Assert.Equal(0, result[7].ExpectedDistance);
+            Assert.Equal(10, result[7].ActualDistance);
+
 
         }
 
@@ -280,7 +414,7 @@ namespace StriderWebApi.Test
 
             var serie = new Serie
             {
-                Intervals = new List<Interval> { interval1, interval2 },
+                Intervals = [interval1, interval2],
                 Repetitions = 1,
                 Rest = 0 // 120 units of time rest between series
             };
@@ -289,7 +423,7 @@ namespace StriderWebApi.Test
             {
                 Id = 1,
                 Name = "Simple Session",
-                Series = new List<Serie> { serie }
+                Series = [serie]
             };
         }
 
@@ -299,12 +433,12 @@ namespace StriderWebApi.Test
             {
                 Id = 1,
                 Name = "Simple Workout",
-                Laps = new List<Lap>
-                {
+                Laps =
+                [
                     new() { Duration = 60.0, Speed = 60.0, Distance = 3600.0 },
                     new() { Duration = 60.0, Speed = 60.0, Distance = 3600.0 },
                     new() { Duration = 60.0, Speed = 60.0, Distance = 3600.0 }
-                }
+                ]
             };
         }
 
@@ -314,12 +448,12 @@ namespace StriderWebApi.Test
             {
                 Id = 2,
                 Name = "Speed Variations Workout",
-                Laps = new List<Lap>
-                {
+                Laps =
+                [
                     new() { Duration = 60.0, Speed = 60.0, Distance = 3600.0 },
                     new() { Duration = 60.0, Speed = 30.0, Distance = 1800.0 },
                     new() { Duration = 60.0, Speed = 60.0, Distance = 3600.0 }
-                }
+                ]
             };
         }
 
@@ -329,12 +463,12 @@ namespace StriderWebApi.Test
             {
                 Id = 3,
                 Name = "Matching Workout",
-                Laps = new List<Lap>
-                {
+                Laps =
+                [
                     new() { Duration = 60.0, Speed = 60.0, Distance = 3600.0 },
                     new() { Duration = 30.0, Speed = 0.0, Distance = 0.0 },
                     new() { Duration = 60.0, Speed = 60.0, Distance = 3600.0 }
-                }
+                ]
             };
         }
 
@@ -344,14 +478,14 @@ namespace StriderWebApi.Test
             {
                 Id = 4,
                 Name = "Extra Laps Workout",
-                Laps = new List<Lap>
-                {
+                Laps =
+                [
                     new() { Duration = 60.0, Speed = 60.0, Distance = 3600.0 },
                     new() { Duration = 30.0, Speed = 0.0, Distance = 0.0 },
                     new() { Duration = 60.0, Speed = 60.0, Distance = 3600.0 },
                     new() { Duration = 45.0, Speed = 45.0, Distance = 45 * 45 }, // Extra lap
                     new() { Duration = 30.0, Speed = 0.0, Distance = 0.0 }  // Extra rest
-                }
+                ]
             };
         }
 
@@ -371,7 +505,7 @@ namespace StriderWebApi.Test
 
             var serie = new Serie
             {
-                Intervals = new List<Interval> { longInterval },
+                Intervals = [longInterval],
                 Repetitions = 1,
                 Rest = 0.0
             };
@@ -380,7 +514,7 @@ namespace StriderWebApi.Test
             {
                 Id = 2,
                 Name = "Long Interval Session",
-                Series = new List<Serie> { serie }
+                Series = [serie]
             };
         }
 
@@ -390,11 +524,11 @@ namespace StriderWebApi.Test
             {
                 Id = 5,
                 Name = "Split Interval Workout",
-                Laps = new List<Lap>
-                {
+                Laps =
+                [
                     new() { Duration = 60.0, Speed = 60.0, Distance = 3600.0 }, // First half of long interval
                     new() { Duration = 60.0, Speed = 60.0, Distance = 3600.0 }, // Second half of long interval
-                }
+                ]
             };
         }
 
@@ -404,13 +538,13 @@ namespace StriderWebApi.Test
             {
                 Id = 6,
                 Name = "Close to Session Workout",
-                Laps = new List<Lap>
-                {
+                Laps =
+                [
                     new() { Duration = 30.0, Speed = 30.0, Distance = 900.0 },  // 30 × 30 = 900 units (Warmup lap)
                     new() { Duration = 60.0, Speed = 60.0, Distance = 3600.0 }, // 60 × 60 = 3600 units
                     new() { Duration = 30.0, Speed = 0.0, Distance = 0.0 },     // 30 × 0 = 0 units
                     new() { Duration = 60.0, Speed = 60.0, Distance = 3600.0 }  // 60 × 60 = 3600 units
-                }
+                ]
             };
         }
 
@@ -420,12 +554,12 @@ namespace StriderWebApi.Test
             {
                 Id = 7,
                 Name = "Longer Laps Workout",
-                Laps = new List<Lap>
-                {
+                Laps =
+                [
                     new() { Duration = 75.0, Speed = 60.0, Distance = 4500.0 }, // 75 × 60 = 4500 units (25% longer than planned)
                     new() { Duration = 40.0, Speed = 0.0, Distance = 0.0 },     // 40 × 0 = 0 units (33% longer rest than planned)
                     new() { Duration = 75.0, Speed = 60.0, Distance = 4500.0 }  // 75 × 60 = 4500 units (25% longer than planned)
-                }
+                ]
             };
         }
 
@@ -435,10 +569,10 @@ namespace StriderWebApi.Test
             {
                 Id = 8,
                 Name = "Longer Distance Workout",
-                Laps = new List<Lap>
-                {
+                Laps =
+                [
                     new() { Duration = 150.0, Speed = 60.0, Distance = 9000.0 } // 150 × 60 = 9000 units (25% longer than planned)
-                }
+                ]
             };
         }
 
@@ -470,7 +604,7 @@ namespace StriderWebApi.Test
 
             var serie = new Serie
             {
-                Intervals = new List<Interval> { interval1, interval2 },
+                Intervals = [interval1, interval2],
                 Repetitions = 1,
                 Rest = 0.0 // No rest between series (only 1 series)
             };
@@ -479,7 +613,7 @@ namespace StriderWebApi.Test
             {
                 Id = 3,
                 Name = "Multiple Intervals Session",
-                Series = new List<Serie> { serie }
+                Series = [serie]
             };
         }
 
@@ -489,14 +623,14 @@ namespace StriderWebApi.Test
             {
                 Id = 9,
                 Name = "Mixed Overruns Workout",
-                Laps = new List<Lap>
-                {
+                Laps =
+                [
                     new() { Duration = 70.0, Speed = 60.0, Distance = 4200.0 }, // 70 × 60 = 4200 units (17% longer than planned)
                     new() { Duration = 35.0, Speed = 0.0, Distance = 0.0 },     // 35 × 0 = 0 units (17% longer rest than planned)
                     new() { Duration = 65.0, Speed = 60.0, Distance = 3900.0 }, // 65 × 60 = 3900 units (8% longer than planned)
                     new() { Duration = 40.0, Speed = 0.0, Distance = 0.0 },     // 40 × 0 = 0 units (33% longer rest than planned)
                     new() { Duration = 70.0, Speed = 60.0, Distance = 4200.0 }  // 70 × 60 = 4200 units (17% longer than planned)
-                }
+                ]
             };
         }
 

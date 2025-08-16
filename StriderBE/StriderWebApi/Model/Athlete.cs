@@ -12,6 +12,10 @@ public class Athlete : User
     public string EmergencyContactRelationship { get; set; } = string.Empty;
     public DateTime DateStartedRunning { get; set; }
     public double? VO2Max { get; set; }
+    // TODO :: These must be calculated at some point, or initial estimates provided
+    public int MinHeartRate { get; set; }
+    public int MaxHeartRate { get; set; }
+    public int ThresholdHeartRate { get; set; }
     public List<string> MedicalConditions { get; set; } = [];
     public List<string> Objectives { get; set; } = [];
     public List<Ailment> Ailments { get; set; } = [];
@@ -24,12 +28,7 @@ public class Athlete : User
     public double MonthlyDistance() => Workouts.Where(w => w.Date > DateTime.Now.AddDays(-30)).Sum(w => w.TotalDistance());
     public bool IsActive() => Ailments.Any(a => !a.IsRecovered);
     public bool IsInactive() => !IsActive();
-    
-    public DateTime GetLastWorkoutDate()
-    {
-        return Workouts.OrderBy(w => w.Date).Last().Date;
-    }
-    
+    public DateTime GetLastWorkoutDate() => Workouts.OrderBy(w => w.Date).Last().Date;
     public int TotalWorkoutsCompleted() => Workouts.Count;
     public List<Ailment> GetActiveAilments() => [.. Ailments.Where(a => !a.IsRecovered)];
     public List<Workout> WorkoutsPendingFeedback() => [.. Workouts.Where(w => w.HasLinkedSession() && !w.HasFeedback())];
@@ -38,5 +37,11 @@ public class Athlete : User
     public Workout GetWorkoutById(int workoutId) => Workouts.First(w => w.Id == workoutId);
     public int Age() => DateTime.Now.Year - BirthDate.Year;
     public int YearsOfExperience() => DateTime.Now.Year - DateStartedRunning.Year;
+    public bool HasCompleted(Session s) => Workouts.Any(w => w.HasLinkedSession() && w.Session == s);
+    public List<Workout> WorkoutsFromPastDays(int lookbackInDays) => [.. Workouts.Where(w => w.Date > DateTime.Now.AddDays(-lookbackInDays))];
+    public double HeartRateReserveFraction(int heartRate) => (heartRate - MinHeartRate) / (MaxHeartRate - MinHeartRate);
+    public double TrainingLoadFrom(Workout workout) => workout.Laps.Sum(l => l.Duration * HeartRateReserveFraction(l.HR) * 0.64 * Math.Exp((Gender == Gender.MALE ? 1.92 : 1.67) * HeartRateReserveFraction(l.HR))) / (3600 * 0.64 * HeartRateReserveFraction(ThresholdHeartRate) * Math.Exp((Gender == Gender.MALE ? 1.92 : 1.67) * HeartRateReserveFraction(ThresholdHeartRate)));
+    public double MaxTrainingLoad() => Workouts.Max(w => TrainingLoadFrom(w));
+
 }
 

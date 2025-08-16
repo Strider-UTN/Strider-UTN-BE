@@ -15,6 +15,7 @@ public class Session
     public string? Comments { get; set; }
     public WorkoutType SessionType { get; set; }
     public List<Serie> Series { get; set; } = [];
+    public List<Athlete> Athletes { get; set; } = [];
 
     public double TotalDistance(Athlete athlete) => Series.Sum(l => l.TotalDistance(athlete));
     public Session Clone() => new() 
@@ -30,5 +31,6 @@ public class Session
         Series = new List<Serie>(Series.Select(i => i.Clone())), 
         SessionType = SessionType 
     };
-    
+
+    public bool HasAthlete(Athlete athlete) => Athletes.Contains(athlete);
 }

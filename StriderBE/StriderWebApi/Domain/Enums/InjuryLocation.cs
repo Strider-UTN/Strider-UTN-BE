@@ -1,6 +1,7 @@
 namespace StriderWebApi.Domain.Enums
 {
-    public enum InjuryLocation
+    // TODO :: This name sucks please change :)
+    public enum BodyPart
     {
         HIP,
         THIGH,
