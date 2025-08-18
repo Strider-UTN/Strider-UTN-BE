@@ -133,7 +133,7 @@ public class WorkoutAnalyzer
 
         if (status != MinCostFlowBase.Status.OPTIMAL)
         {
-            throw new Exception("Optimization failed");
+            throw new Exception("Unable to match session intervals with workout intervals");
         }
 
         List<IntervalInfo> intervals = new List<IntervalInfo>();
@@ -206,9 +206,32 @@ public class Analysis
 {
     public List<AnalyzedInterval> Intervals { get; set; } = [];
 
-    public List<double> SpeedDifferences => Intervals.Where(i => i.ExpectedVelocity > 0).Select(i => i.ActualVelocity - i.ExpectedVelocity).ToList();
 
+    public int AveragePaceDifferencePerThousandMetersInSeconds()
+    {
+        double difference = 0;
+        foreach (var interval in Intervals)
+        {
+            if (interval.ActualVelocity == 0) continue;
+            double actualPace = 1 / interval.ActualVelocity * 1000 / 60;
+            double expectedPace = 1 / interval.ExpectedVelocity * 1000 / 60;
+            difference += Math.Abs(actualPace - expectedPace) * interval.ActualDistance / 1000;
+        }
+        return (int) (difference / Intervals.Count);
+    }
 
+    public int MaxPaceDifferencePerThousandMetersInSeconds()
+    {
+        double difference = 0;
+        foreach (var interval in Intervals)
+        {
+            if (interval.ActualVelocity == 0) continue;
+            double actualPace = 1 / interval.ActualVelocity * 1000 / 60;
+            double expectedPace = 1 / interval.ExpectedVelocity * 1000 / 60;
+            difference = Math.Max(difference, Math.Abs(actualPace - expectedPace) * interval.ActualDistance / 1000);
+        }
+        return (int) difference;
+    }
 }
 
 

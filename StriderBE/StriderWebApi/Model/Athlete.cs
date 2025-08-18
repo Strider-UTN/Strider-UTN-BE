@@ -40,8 +40,7 @@ public class Athlete : User
     public bool HasCompleted(Session s) => Workouts.Any(w => w.HasLinkedSession() && w.Session == s);
     public List<Workout> WorkoutsFromPastDays(int lookbackInDays) => [.. Workouts.Where(w => w.Date > DateTime.Now.AddDays(-lookbackInDays))];
     public double HeartRateReserveFraction(int heartRate) => (heartRate - MinHeartRate) / (MaxHeartRate - MinHeartRate);
-    public double TrainingLoadFrom(Workout workout) => workout.Laps.Sum(l => l.Duration * HeartRateReserveFraction(l.HR) * 0.64 * Math.Exp((Gender == Gender.MALE ? 1.92 : 1.67) * HeartRateReserveFraction(l.HR))) / (3600 * 0.64 * HeartRateReserveFraction(ThresholdHeartRate) * Math.Exp((Gender == Gender.MALE ? 1.92 : 1.67) * HeartRateReserveFraction(ThresholdHeartRate)));
-    public double MaxTrainingLoad() => Workouts.Max(w => TrainingLoadFrom(w));
+
 
 }
 
