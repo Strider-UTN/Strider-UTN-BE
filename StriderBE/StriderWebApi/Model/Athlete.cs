@@ -11,8 +11,7 @@ public class Athlete : User
     public string EmergencyContactPhone { get; set; } = string.Empty;
     public string EmergencyContactRelationship { get; set; } = string.Empty;
     public DateTime DateStartedRunning { get; set; }
-    public double? VO2Max { get; set; }
-    // TODO :: These must be calculated at some point, or initial estimates provided
+    public double VO2Max { get; set; }
     public int MinHeartRate { get; set; }
     public int MaxHeartRate { get; set; }
     public int ThresholdHeartRate { get; set; }
@@ -22,7 +21,7 @@ public class Athlete : User
     public List<Workout> Workouts { get; set; } = [];
     public void AddWorkouts(List<Workout> workouts) => Workouts.AddRange(workouts);
     public void UpdateVO2Max(double vO2Max) => VO2Max = vO2Max;
-    public double Speed(int percentage) => (VO2Max ?? 0) * percentage / 100;
+    public double Speed(int percentage) => VO2Max * percentage / 100;
     public void AddMedicalCondition(string medicalCondition) => MedicalConditions.Add(medicalCondition);
     public double WeeklyDistance() => Workouts.Where(w => w.Date > DateTime.Now.AddDays(-7)).Sum(w => w.TotalDistance());
     public double MonthlyDistance() => Workouts.Where(w => w.Date > DateTime.Now.AddDays(-30)).Sum(w => w.TotalDistance());
@@ -40,7 +39,6 @@ public class Athlete : User
     public bool HasCompleted(Session s) => Workouts.Any(w => w.HasLinkedSession() && w.Session == s);
     public List<Workout> WorkoutsFromPastDays(int lookbackInDays) => [.. Workouts.Where(w => w.Date > DateTime.Now.AddDays(-lookbackInDays))];
     public double HeartRateReserveFraction(int heartRate) => (heartRate - MinHeartRate) / (MaxHeartRate - MinHeartRate);
-
 
 }
 

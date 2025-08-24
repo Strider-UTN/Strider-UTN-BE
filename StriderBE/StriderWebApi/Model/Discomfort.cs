@@ -1,8 +1,10 @@
-using MailKit;
+using StriderWebApi.Domain.Enums;
+namespace StriderWebApi.Model;
 
 public class Discomfort
 {
-    public required BodyPart BodyPart { get; set; }
+    public BodyPart? BodyPart { get; set; }
+    public DiscomfortSource DiscomfortSource { get; set; }
     public required DiscomfortLevel Level { get; set; }
 }
 

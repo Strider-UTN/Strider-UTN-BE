@@ -1,18 +1,15 @@
 using StriderWebApi.Domain.Enums;
-namespace StriderWebApi.Model;
+namespace StriderWebApi.Model.TrainingPlanAnalyzers;
 
 public class InjuryPreventionAnalyzer : ITrainingPlanAnalyzer
 {
-
 	public int MildDiscomfortsThreshold { get; set; } = 3;
 	public int ModerateDiscomfortsThreshold { get; set; } = 2;
 	public int SevereDiscomfortsThreshold { get; set; } = 1;
-
 	public string DISCOMFORTS_LAST_WEEK_TITLE = "Discomforts Last Week";
 	public string MILD_DISCOMFORTS_LAST_WEEK_TITLE = "Mild Discomforts Last Week";
 	public string MODERATE_DISCOMFORTS_LAST_WEEK_TITLE = "Moderate Discomforts Last Week";
 	public string SEVERE_DISCOMFORTS_LAST_WEEK_TITLE = "Severe Discomforts Last Week";
-
 
 	public override List<Notification> Analyze(TrainingPlan trainingPlan, Athlete athlete)
 	{
@@ -58,7 +55,6 @@ public class InjuryPreventionAnalyzer : ITrainingPlanAnalyzer
 
 	public override List<Metric<dynamic>> GetMetrics(TrainingPlan trainingPlan, Athlete athlete)
 	{
-
 		return new List<Metric<dynamic>>()
 		{
 			new() { Name = DISCOMFORTS_LAST_WEEK_TITLE, Value = GetDiscomfortsInLastWeek(trainingPlan, athlete).Count() },
@@ -66,7 +62,6 @@ public class InjuryPreventionAnalyzer : ITrainingPlanAnalyzer
 			new() { Name = MODERATE_DISCOMFORTS_LAST_WEEK_TITLE, Value = GetDiscomfortsInLastWeek(trainingPlan, athlete).FindAll(d => d.Level == DiscomfortLevel.Moderate).Count() },
 			new() { Name = SEVERE_DISCOMFORTS_LAST_WEEK_TITLE, Value = GetDiscomfortsInLastWeek(trainingPlan, athlete).FindAll(d => d.Level == DiscomfortLevel.Severe).Count() }
 		};
-
 	}
 
 	private List<Discomfort> GetDiscomfortsInLastWeek(TrainingPlan trainingPlan, Athlete athlete)
@@ -76,7 +71,7 @@ public class InjuryPreventionAnalyzer : ITrainingPlanAnalyzer
 
 	private Dictionary<BodyPart, int> GetMildDiscomfortsByBodyPartThatAre(TrainingPlan trainingPlan, Athlete athlete, DiscomfortLevel discomfortLevel)
 	{
-		List<Discomfort> discomfortsInLastWeek = GetDiscomfortsInLastWeek(trainingPlan, athlete);
+		List<Discomfort> discomfortsInLastWeek = GetDiscomfortsInLastWeek(trainingPlan, athlete).Where(d => d.DiscomfortSource == DiscomfortSource.MUSCULAR).ToList();
 
 		Dictionary<BodyPart, int> discomfortsByBodyPart = new();
 
