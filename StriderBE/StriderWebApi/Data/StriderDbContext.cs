@@ -40,11 +40,11 @@ namespace StriderWebApi.Data
                 .ValueGeneratedOnAdd();
 
             modelBuilder.Entity<User>()
-                .HasIndex(u => u.Email)
+                .HasIndex(u => new { u.Email, u.UserType })
                 .IsUnique();
 
             modelBuilder.Entity<User>()
-                .HasIndex(u => u.Username)
+                .HasIndex(u => new { u.Username, u.UserType })
                 .IsUnique();
 
             modelBuilder.Entity<Session>()

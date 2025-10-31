@@ -6,6 +6,6 @@ namespace StriderWebApi.Services.Interfaces
     public interface IAuthService
     {
         Task<string> HandleGoogleLoginAsync(GoogleJsonWebSignature.Payload payload, UserTypeEnum userType);
-        Task<string> HandleLoginAsync(string username, string password);
+        Task<string> HandleLoginAsync(string email, string password, UserTypeEnum userType);
     }
 }

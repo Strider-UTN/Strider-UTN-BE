@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using StriderWebApi.Data.Repositories.Interfaces;
 using StriderWebApi.Domain.DomainClasses;
+using StriderWebApi.Domain.Enums;
 using StriderWebApi.Dto.UserCreation;
 using StriderWebApi.Exceptions.AccountActivation;
 using StriderWebApi.Exceptions.User;
@@ -47,7 +48,7 @@ namespace StriderWebApi.Services
         public async Task CreateAthleteAsync(CreateAthleteDto dto)
         {
             // Validate if user already exists based on username or email
-            await ValidateUserUniquenessAsync(dto.Email, dto.Username);
+            await ValidateUserUniquenessAsync(dto.Email, dto.Username, UserTypeEnum.Athlete);
 
             // Create a new athlete instance
             var newAthlete = new Athlete
@@ -61,7 +62,7 @@ namespace StriderWebApi.Services
                 Height = dto.HeightCm,
                 Weight = dto.WeightKg,
                 Country = dto.Country,
-                Active = false, // Default to false, until account is verified
+                Active = true, // Default to false, until account is verified
                 CreatedBy = "Athlete Creation",
                 CreatedDate = DateTime.UtcNow,
                 ActivationToken = Guid.NewGuid().ToString(),
@@ -81,12 +82,12 @@ namespace StriderWebApi.Services
             await _athleteRepository.AddAthleteAsync(newAthlete);
 
             // Add email notification for account activation
-            await _emailService.SendAccountActivationEmailAsync(newAthlete.Email, newAthlete.Username, newAthlete.ActivationToken);
+            //await _emailService.SendAccountActivationEmailAsync(newAthlete.Email, newAthlete.Username, newAthlete.ActivationToken);
         }
         public async Task CreateCoachAsync(CreateCoachDto dto)
         {
             // Validate if user already exists based on username or email
-            await ValidateUserUniquenessAsync(dto.Email, dto.Username);
+            await ValidateUserUniquenessAsync(dto.Email, dto.Username, UserTypeEnum.Coach);
 
             // Create a new coach instance
             var newCoach = new Coach
@@ -97,7 +98,7 @@ namespace StriderWebApi.Services
                 BirthDate = dto.BirthDate,
                 Address = dto.Address,
                 Gender = dto.Gender,
-                Active = false, // Default to false, until account is verified
+                Active = true, // Default to false, until account is verified
                 CreatedBy = "Coach Creation",
                 CreatedDate = DateTime.UtcNow,
                 ActivationToken = Guid.NewGuid().ToString(),
@@ -111,19 +112,19 @@ namespace StriderWebApi.Services
             await _coachRepository.AddCoachAsync(newCoach);
 
             // Send email notification for account activation
-            await _emailService.SendAccountActivationEmailAsync(newCoach.Email, newCoach.Username, newCoach.ActivationToken);
+            //await _emailService.SendAccountActivationEmailAsync(newCoach.Email, newCoach.Username, newCoach.ActivationToken);
         }
 
-        private async Task ValidateUserUniquenessAsync(string email, string username)
+        private async Task ValidateUserUniquenessAsync(string email, string username, UserTypeEnum userType)
         {
-            if (await _userRepository.UserExistsByEmailAsync(email))
+            if (await _userRepository.UserExistsByEmailAsync(email, userType))
             {
-                throw new UserAlreadyExistsException("Ya existe un usuario con el email indicado...");
+                throw new UserAlreadyExistsException($"Ya existe un usuario {userType} con el email indicado");
             }
 
-            if (await _userRepository.UserExistsByUsernameAsync(username))
+            if (await _userRepository.UserExistsByUsernameAsync(username, userType))
             {
-                throw new UserAlreadyExistsException("Ya existe un usuario con el nombre de usuario indicado...");
+                throw new UserAlreadyExistsException($"Ya existe un usuario {userType} con el nombre de usuario indicado");
             }
         }
     }

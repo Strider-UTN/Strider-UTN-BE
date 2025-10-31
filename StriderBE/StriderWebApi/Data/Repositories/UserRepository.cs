@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StriderWebApi.Data.Repositories.Interfaces;
 using StriderWebApi.Domain.DomainClasses;
+using StriderWebApi.Domain.Enums;
 
 namespace StriderWebApi.Data.Repositories
 {
@@ -18,9 +19,10 @@ namespace StriderWebApi.Data.Repositories
             return await _context.Users.FindAsync(id);
         }
 
-        public async Task<User?> GetUserByEmailAsync(string email)
+        public async Task<User?> GetUserByEmailAsync(string email, UserTypeEnum? userType = null)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email && 
+                                                                 (userType == null || u.UserType == userType));
         }
 
         public async Task<User?> GetUserByUsernameAsync(string username)
@@ -28,14 +30,14 @@ namespace StriderWebApi.Data.Repositories
             return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
         }
 
-        public async Task<bool> UserExistsByEmailAsync(string email)
+        public async Task<bool> UserExistsByEmailAsync(string email, UserTypeEnum userType)
         {
-            return await _context.Users.AnyAsync(u => u.Email == email);
+            return await _context.Users.AnyAsync(u => u.Email == email && u.UserType == userType);
         }
 
-        public async Task<bool> UserExistsByUsernameAsync(string username)
+        public async Task<bool> UserExistsByUsernameAsync(string username, UserTypeEnum userType)
         {
-            return await _context.Users.AnyAsync(u => u.Username == username);
+            return await _context.Users.AnyAsync(u => u.Username == username && u.UserType == userType);
         }
 
         public async Task<bool> UpdateUserAsync(User user)
