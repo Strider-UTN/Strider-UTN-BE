@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StriderWebApi.Data;
@@ -12,9 +13,11 @@ using StriderWebApi.Data;
 namespace StriderWebApi.Migrations
 {
     [DbContext(typeof(StriderDbContext))]
-    partial class StriderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251101025307_AgregarTrainingTemplates")]
+    partial class AgregarTrainingTemplates
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,66 +39,6 @@ namespace StriderWebApi.Migrations
                     b.HasIndex("TeamsId");
 
                     b.ToTable("CoachTeam");
-                });
-
-            modelBuilder.Entity("StriderWebApi.Domain.CoachAthleteRelationship", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AthleteId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CoachId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("InvitationMessage")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<DateTime>("InvitedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<DateTime?>("LinkedSince")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("RespondedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AthleteId");
-
-                    b.HasIndex("CoachId");
-
-                    b.HasIndex("Status");
-
-                    b.HasIndex("AthleteId", "Status");
-
-                    b.HasIndex("CoachId", "AthleteId")
-                        .IsUnique();
-
-                    b.HasIndex("CoachId", "Status");
-
-                    b.ToTable("CoachAthleteRelationships", (string)null);
                 });
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Ailment", b =>
@@ -422,10 +365,7 @@ namespace StriderWebApi.Migrations
                     b.Property<string>("TrainingMode")
                         .HasColumnType("text");
 
-                    b.Property<int?>("TrainingSessionId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TrainingTemplateId")
+                    b.Property<int>("TrainingTemplateId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Type")
@@ -441,18 +381,11 @@ namespace StriderWebApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TrainingSessionId");
-
                     b.HasIndex("TrainingTemplateId");
-
-                    b.HasIndex("TrainingSessionId", "OrderIndex");
 
                     b.HasIndex("TrainingTemplateId", "OrderIndex");
 
-                    b.ToTable("TrainingIntervals", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_TrainingInterval_SingleParent", "((\"TrainingTemplateId\" IS NULL AND \"TrainingSessionId\" IS NOT NULL) OR (\"TrainingTemplateId\" IS NOT NULL AND \"TrainingSessionId\" IS NULL))");
-                        });
+                    b.ToTable("TrainingIntervals", (string)null);
                 });
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingLocation", b =>
@@ -519,127 +452,6 @@ namespace StriderWebApi.Migrations
                     b.HasIndex("CoachId");
 
                     b.ToTable("TrainingPlans");
-                });
-
-            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingSession", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<int?>("TemplateId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Category");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("Date");
-
-                    b.HasIndex("TemplateId");
-
-                    b.HasIndex("CreatedByUserId", "Date");
-
-                    b.ToTable("TrainingSessions", (string)null);
-                });
-
-            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingSessionAthlete", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("ActualAvgHR")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ActualAvgPace")
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<double?>("ActualDistance")
-                        .HasColumnType("double precision");
-
-                    b.Property<int?>("ActualDuration")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("ActualMaxHR")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("AssignedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<int>("AthleteId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<int>("TrainingSessionId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AthleteId");
-
-                    b.HasIndex("CompletedAt");
-
-                    b.HasIndex("Status");
-
-                    b.HasIndex("AthleteId", "Status");
-
-                    b.HasIndex("TrainingSessionId", "AthleteId")
-                        .IsUnique();
-
-                    b.HasIndex("TrainingSessionId", "Status");
-
-                    b.ToTable("TrainingSessionAthletes", (string)null);
                 });
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingTemplate", b =>
@@ -1008,25 +820,6 @@ namespace StriderWebApi.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("StriderWebApi.Domain.CoachAthleteRelationship", b =>
-                {
-                    b.HasOne("StriderWebApi.Domain.DomainClasses.User", "Athlete")
-                        .WithMany()
-                        .HasForeignKey("AthleteId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("StriderWebApi.Domain.DomainClasses.User", "Coach")
-                        .WithMany()
-                        .HasForeignKey("CoachId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Athlete");
-
-                    b.Navigation("Coach");
-                });
-
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Ailment", b =>
                 {
                     b.HasOne("StriderWebApi.Domain.DomainClasses.Athlete", "Athlete")
@@ -1086,17 +879,11 @@ namespace StriderWebApi.Migrations
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingInterval", b =>
                 {
-                    b.HasOne("StriderWebApi.Domain.DomainClasses.TrainingSession", "TrainingSession")
-                        .WithMany("Intervals")
-                        .HasForeignKey("TrainingSessionId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
                     b.HasOne("StriderWebApi.Domain.DomainClasses.TrainingTemplate", "TrainingTemplate")
                         .WithMany("Intervals")
                         .HasForeignKey("TrainingTemplateId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("TrainingSession");
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("TrainingTemplate");
                 });
@@ -1117,43 +904,6 @@ namespace StriderWebApi.Migrations
                         .IsRequired();
 
                     b.Navigation("Coach");
-                });
-
-            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingSession", b =>
-                {
-                    b.HasOne("StriderWebApi.Domain.DomainClasses.User", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("StriderWebApi.Domain.DomainClasses.TrainingTemplate", "Template")
-                        .WithMany("Sessions")
-                        .HasForeignKey("TemplateId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("CreatedBy");
-
-                    b.Navigation("Template");
-                });
-
-            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingSessionAthlete", b =>
-                {
-                    b.HasOne("StriderWebApi.Domain.DomainClasses.User", "Athlete")
-                        .WithMany()
-                        .HasForeignKey("AthleteId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("StriderWebApi.Domain.DomainClasses.TrainingSession", "TrainingSession")
-                        .WithMany("Athletes")
-                        .HasForeignKey("TrainingSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Athlete");
-
-                    b.Navigation("TrainingSession");
                 });
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Workout", b =>
@@ -1205,18 +955,9 @@ namespace StriderWebApi.Migrations
                     b.Navigation("Sessions");
                 });
 
-            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingSession", b =>
-                {
-                    b.Navigation("Athletes");
-
-                    b.Navigation("Intervals");
-                });
-
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingTemplate", b =>
                 {
                     b.Navigation("Intervals");
-
-                    b.Navigation("Sessions");
                 });
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Workout", b =>

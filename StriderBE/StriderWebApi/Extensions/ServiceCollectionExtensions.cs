@@ -74,6 +74,7 @@ namespace StriderWebApi.Extensions
             // Helpers
             services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddHttpContextAccessor();
 
             // Service Registrations
             services.AddScoped<IAuthService, AuthService>();
@@ -81,12 +82,19 @@ namespace StriderWebApi.Extensions
             services.AddScoped<IAthleteService, AthleteService>();
             services.AddScoped<ICoachService, CoachService>();
             services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<ITrainingTemplateService, TrainingTemplateService>();
+            services.AddScoped<IJwtService, JwtService>();
+            services.AddScoped<ITrainingSessionsService, TrainingSessionsService>();
+            services.AddScoped<ICoachAthleteRelationshipService, CoachAthleteRelationshipService>();
 
             // Repositories Registrations
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IAthleteRepository, AthleteRepository>();
             services.AddScoped<ICoachRepository, CoachRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<ITrainingTemplateRepository, TrainingTemplateRepository>();
+            services.AddScoped<ITrainingSessionsRepository, TrainingSessionsRepository>();
+            services.AddScoped<ICoachAthleteRelationshipRepository, CoachAthleteRelationshipRepository>();
 
             return services;
         }

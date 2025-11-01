@@ -11,21 +11,13 @@ using System.Text;
 
 namespace StriderWebApi.Services
 {
-    public class AuthService : IAuthService
+    public class AuthService(IConfiguration config, IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IAthleteRepository athleteRepository, ICoachRepository coachRepository) : IAuthService
     {
-        private readonly IConfiguration _config;
-        private readonly IUserRepository _userRepository;
-        private readonly IAthleteRepository _athleteRepository;
-        private readonly ICoachRepository _coachRepository;
-        private readonly IPasswordHasher<User> _passwordHasher;
-        public AuthService(IConfiguration config, IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IAthleteRepository athleteRepository, ICoachRepository coachRepository)
-        {
-            _config = config ?? throw new ArgumentNullException(nameof(config));
-            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-            _athleteRepository = athleteRepository ?? throw new ArgumentNullException(nameof(athleteRepository));
-            _coachRepository = coachRepository ?? throw new ArgumentNullException(nameof(coachRepository));
-            _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
-        }
+        private readonly IConfiguration _config = config ?? throw new ArgumentNullException(nameof(config));
+        private readonly IUserRepository _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        private readonly IAthleteRepository _athleteRepository = athleteRepository ?? throw new ArgumentNullException(nameof(athleteRepository));
+        private readonly ICoachRepository _coachRepository = coachRepository ?? throw new ArgumentNullException(nameof(coachRepository));
+        private readonly IPasswordHasher<User> _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
 
         public async Task<string> HandleGoogleLoginAsync(GoogleJsonWebSignature.Payload payload, UserTypeEnum userType)
         {
