@@ -9,7 +9,7 @@ public class Lap
     public double Distance { get; set; }
     public double Duration { get; set; }
     public double Speed { get; set; }
-    public int HR { get; set; }
+    public double HR { get; set; }
     public DateTime StartTime { get; set; }
     public string? CoachFeedback { get; set; }
     

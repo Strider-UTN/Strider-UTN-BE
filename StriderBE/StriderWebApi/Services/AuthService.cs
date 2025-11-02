@@ -11,25 +11,17 @@ using System.Text;
 
 namespace StriderWebApi.Services
 {
-    public class AuthService : IAuthService
+    public class AuthService(IConfiguration config, IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IAthleteRepository athleteRepository, ICoachRepository coachRepository) : IAuthService
     {
-        private readonly IConfiguration _config;
-        private readonly IUserRepository _userRepository;
-        private readonly IAthleteRepository _athleteRepository;
-        private readonly ICoachRepository _coachRepository;
-        private readonly IPasswordHasher<User> _passwordHasher;
-        public AuthService(IConfiguration config, IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IAthleteRepository athleteRepository, ICoachRepository coachRepository)
-        {
-            _config = config ?? throw new ArgumentNullException(nameof(config));
-            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-            _athleteRepository = athleteRepository ?? throw new ArgumentNullException(nameof(athleteRepository));
-            _coachRepository = coachRepository ?? throw new ArgumentNullException(nameof(coachRepository));
-            _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
-        }
+        private readonly IConfiguration _config = config ?? throw new ArgumentNullException(nameof(config));
+        private readonly IUserRepository _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        private readonly IAthleteRepository _athleteRepository = athleteRepository ?? throw new ArgumentNullException(nameof(athleteRepository));
+        private readonly ICoachRepository _coachRepository = coachRepository ?? throw new ArgumentNullException(nameof(coachRepository));
+        private readonly IPasswordHasher<User> _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
 
         public async Task<string> HandleGoogleLoginAsync(GoogleJsonWebSignature.Payload payload, UserTypeEnum userType)
         {
-            var dbUser = await _userRepository.GetUserByEmailAsync(payload.Email);
+            var dbUser = await _userRepository.GetUserByEmailAsync(payload.Email, userType);
 
             if (dbUser == null)
                 dbUser = await CreateNewUserFromGooglePayload(payload, userType);
@@ -47,7 +39,7 @@ namespace StriderWebApi.Services
                     Email = payload.Email,
                     FullName = payload.Name,
                     Address = "Not provided", // Default address for Google users
-                    Gender = Domain.Enums.Gender.MALE, // Default gender for Google users
+                    Gender = Gender.MALE, // Default gender for Google users
                     BirthDate = DateTime.UtcNow.AddYears(-18), // Default birth date for Google users
                     UserType = userType,
                     Active = true, // Assuming Google users are automatically active
@@ -66,7 +58,7 @@ namespace StriderWebApi.Services
                     Email = payload.Email,
                     FullName = payload.Name,
                     Address = "Not provided", // Default address for Google users
-                    Gender = Domain.Enums.Gender.MALE, // Default gender for Google users
+                    Gender = Gender.MALE, // Default gender for Google users
                     BirthDate = DateTime.UtcNow.AddYears(-18), // Default birth date for Google users
                     UserType = userType,
                     Active = true, // Assuming Google users are automatically active
@@ -78,16 +70,21 @@ namespace StriderWebApi.Services
             }
         }
 
-        public async Task<string> HandleLoginAsync(string username, string password)
+        public async Task<string> HandleLoginAsync(string email, string password, UserTypeEnum userType)
         {
-            var dbUser = await _userRepository.GetUserByUsernameAsync(username);
+            var dbUser = await _userRepository.GetUserByEmailAsync(email, userType);
 
-            var passwordIsValid = dbUser != null && _passwordHasher.VerifyHashedPassword(dbUser, dbUser.PasswordHash, password) == PasswordVerificationResult.Success;
+            var isGoogleRegistered = dbUser.CreatedBy == "Google SSO";
+
+            if (isGoogleRegistered)
+                throw new UnauthorizedAccessException("Registro con google detectado. Por favor, ingresa seleccionando la opción de 'Iniciar sesión con Google'");
+
+            var passwordIsValid = dbUser != null && !string.IsNullOrEmpty(dbUser.PasswordHash) && _passwordHasher.VerifyHashedPassword(dbUser, dbUser.PasswordHash, password) == PasswordVerificationResult.Success;
 
             if (!passwordIsValid)
-                throw new UnauthorizedAccessException("Invalid username or password.");
+                throw new UnauthorizedAccessException("Email o Contraseña inválidos. Por favor, revisa e intenta de nuevo.");
 
-            return GetToken(dbUser.Id, username, dbUser.UserType);
+            return GetToken(dbUser.Id, dbUser.Username, dbUser.UserType);
         }
 
         private string GetToken(int userId, string username, UserTypeEnum type)

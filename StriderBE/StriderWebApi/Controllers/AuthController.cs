@@ -20,7 +20,7 @@ namespace StriderWebApi.Controllers
         {
             try
             {
-                var token = await _authService.HandleLoginAsync(login.Username, login.Password);
+                var token = await _authService.HandleLoginAsync(login.Email, login.Password, login.UserType);
                 return Ok(new LoginResponseDto { Token = token });
             }
             catch (UnauthorizedAccessException ex)
