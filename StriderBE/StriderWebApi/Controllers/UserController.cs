@@ -1,22 +1,18 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using StriderWebApi.Domain.Enums;
 using StriderWebApi.Dto.UserCreation;
 using StriderWebApi.Exceptions.AccountActivation;
 using StriderWebApi.Exceptions.User;
+using StriderWebApi.Services;
 using StriderWebApi.Services.Interfaces;
 
 namespace StriderWebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class UserController : ControllerBase
+    public class UserController(IUserService userService, IJwtService jwtService) : ControllerBase
     {
-        private readonly IUserService _userService;
-
-        public UserController(IUserService userService)
-        {
-            _userService = userService;
-        }
-
         [HttpPost("Coach")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -25,7 +21,7 @@ namespace StriderWebApi.Controllers
         {
             try
             {
-                await _userService.CreateCoachAsync(dto);
+                await userService.CreateCoachAsync(dto);
                 return CreatedAtAction(nameof(CreateCoach), new { username = dto.Username }, null);
             }
             catch (UserAlreadyExistsException ex)
@@ -46,7 +42,7 @@ namespace StriderWebApi.Controllers
         {
             try
             {
-                await _userService.CreateAthleteAsync(dto);
+                await userService.CreateAthleteAsync(dto);
                 return CreatedAtAction(nameof(CreateAthlete), new { username = dto.Username }, null);
             }
             catch (UserAlreadyExistsException ex)
@@ -64,7 +60,7 @@ namespace StriderWebApi.Controllers
         {
             try
             {
-                await _userService.ActivateAccountAsync(dto);
+                await userService.ActivateAccountAsync(dto);
                 return Ok("Cuenta activada exitosamente.");
             }
             catch (UserNotFoundException ex)
@@ -78,6 +74,53 @@ namespace StriderWebApi.Controllers
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Algo salió mal al activar la cuenta: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Actualiza el tema preferido del usuario actual
+        /// </summary>
+        [HttpPatch("theme")]
+        [Authorize]
+        public async Task<IActionResult> UpdateTheme([FromBody] UpdateThemeDto dto)
+        {
+            try
+            {
+                var userId = jwtService.GetCurrentUserId();
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "Usuario no autenticado" });
+                }
+
+                // Convertir string a enum
+                ThemePreference theme;
+                if (dto.Theme.ToLowerInvariant() == "light")
+                {
+                    theme = ThemePreference.Light;
+                }
+                else if (dto.Theme.ToLowerInvariant() == "dark")
+                {
+                    theme = ThemePreference.Dark;
+                }
+                else
+                {
+                    return BadRequest(new { message = "El tema debe ser 'light' o 'dark'" });
+                }
+
+                var result = await userService.UpdateUserThemeAsync(userId.Value, theme);
+
+                if (result)
+                {
+                    return Ok(new { message = "Tema actualizado exitosamente", theme = dto.Theme });
+                }
+                else
+                {
+                    return NotFound(new { message = "Usuario no encontrado" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al actualizar el tema", error = ex.Message });
             }
         }
     }

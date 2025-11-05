@@ -228,6 +228,128 @@ namespace StriderWebApi.Migrations
                     b.ToTable("Laps");
                 });
 
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Mesocycle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Objective")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("PeriodId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PlanningId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("WeeksCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EndDate");
+
+                    b.HasIndex("PeriodId");
+
+                    b.HasIndex("PlanningId");
+
+                    b.HasIndex("StartDate");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("Mesocycles");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Microcycle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("Focus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Intensity")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("MesocycleId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PeriodId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Sessions")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<decimal>("Volume")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("WeekNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EndDate");
+
+                    b.HasIndex("MesocycleId");
+
+                    b.HasIndex("PeriodId");
+
+                    b.HasIndex("StartDate");
+
+                    b.ToTable("Microcycles");
+                });
+
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Notification", b =>
                 {
                     b.Property<int>("Id")
@@ -271,6 +393,139 @@ namespace StriderWebApi.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Period", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("EndWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Objective")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("PlanningId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StartWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlanningId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("Periods");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Planning", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CoachId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("StartDate");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("Plannings");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.PlanningAthlete", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AthleteId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("PlanningId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AthleteId");
+
+                    b.HasIndex("PlanningId");
+
+                    b.HasIndex("PlanningId", "AthleteId")
+                        .IsUnique();
+
+                    b.ToTable("PlanningAthletes");
                 });
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Session", b =>
@@ -362,6 +617,98 @@ namespace StriderWebApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Teams");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingGroup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AllowSelfJoin")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("IsPublic")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("MaxMembers")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("RequireApproval")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("TrainingGroups");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingGroupMember", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("InvitationMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("JoinedDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("TrainingGroupId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TrainingGroupId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("TrainingGroupId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("TrainingGroupMembers");
                 });
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingInterval", b =>
@@ -521,6 +868,40 @@ namespace StriderWebApi.Migrations
                     b.ToTable("TrainingPlans");
                 });
 
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingPoint", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("TrainingGroupId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TrainingGroupId");
+
+                    b.ToTable("TrainingPoints");
+                });
+
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingSession", b =>
                 {
                     b.Property<int>("Id")
@@ -549,6 +930,9 @@ namespace StriderWebApi.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<int>("MicrocycleId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -557,6 +941,9 @@ namespace StriderWebApi.Migrations
                     b.Property<string>("Notes")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("PlanningId")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("TemplateId")
                         .HasColumnType("integer");
@@ -573,6 +960,10 @@ namespace StriderWebApi.Migrations
                     b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("Date");
+
+                    b.HasIndex("MicrocycleId");
+
+                    b.HasIndex("PlanningId");
 
                     b.HasIndex("TemplateId");
 
@@ -809,6 +1200,9 @@ namespace StriderWebApi.Migrations
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("PreferredTheme")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ProfilePictureUrl")
                         .HasColumnType("text");
@@ -1060,6 +1454,43 @@ namespace StriderWebApi.Migrations
                     b.Navigation("Workout");
                 });
 
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Mesocycle", b =>
+                {
+                    b.HasOne("StriderWebApi.Domain.DomainClasses.Period", "Period")
+                        .WithMany("Mesocycles")
+                        .HasForeignKey("PeriodId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("StriderWebApi.Domain.DomainClasses.Planning", "Planning")
+                        .WithMany("Mesocycles")
+                        .HasForeignKey("PlanningId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Period");
+
+                    b.Navigation("Planning");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Microcycle", b =>
+                {
+                    b.HasOne("StriderWebApi.Domain.DomainClasses.Mesocycle", "Mesocycle")
+                        .WithMany("Microcycles")
+                        .HasForeignKey("MesocycleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StriderWebApi.Domain.DomainClasses.Period", "Period")
+                        .WithMany("Microcycles")
+                        .HasForeignKey("PeriodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Mesocycle");
+
+                    b.Navigation("Period");
+                });
+
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Notification", b =>
                 {
                     b.HasOne("StriderWebApi.Domain.DomainClasses.User", "User")
@@ -1069,6 +1500,46 @@ namespace StriderWebApi.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Period", b =>
+                {
+                    b.HasOne("StriderWebApi.Domain.DomainClasses.Planning", "Planning")
+                        .WithMany("Periods")
+                        .HasForeignKey("PlanningId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Planning");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Planning", b =>
+                {
+                    b.HasOne("StriderWebApi.Domain.DomainClasses.User", "Coach")
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Coach");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.PlanningAthlete", b =>
+                {
+                    b.HasOne("StriderWebApi.Domain.DomainClasses.User", "Athlete")
+                        .WithMany()
+                        .HasForeignKey("AthleteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("StriderWebApi.Domain.DomainClasses.Planning", "Planning")
+                        .WithMany("PlanningAthletes")
+                        .HasForeignKey("PlanningId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Athlete");
+
+                    b.Navigation("Planning");
                 });
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Session", b =>
@@ -1082,6 +1553,63 @@ namespace StriderWebApi.Migrations
                         .HasForeignKey("TrainingPlanId");
 
                     b.Navigation("TrainingPlan");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingGroup", b =>
+                {
+                    b.HasOne("StriderWebApi.Domain.DomainClasses.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsOne("StriderWebApi.Domain.DomainClasses.TrainingGroupNotifications", "Notifications", b1 =>
+                        {
+                            b1.Property<int>("TrainingGroupId")
+                                .HasColumnType("integer");
+
+                            b1.Property<bool>("CompletedWorkouts")
+                                .HasColumnType("boolean");
+
+                            b1.Property<bool>("Injuries")
+                                .HasColumnType("boolean");
+
+                            b1.Property<bool>("MissedSessions")
+                                .HasColumnType("boolean");
+
+                            b1.Property<bool>("NewMembers")
+                                .HasColumnType("boolean");
+
+                            b1.HasKey("TrainingGroupId");
+
+                            b1.ToTable("TrainingGroups");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TrainingGroupId");
+                        });
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Notifications");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingGroupMember", b =>
+                {
+                    b.HasOne("StriderWebApi.Domain.DomainClasses.TrainingGroup", "TrainingGroup")
+                        .WithMany("Members")
+                        .HasForeignKey("TrainingGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StriderWebApi.Domain.DomainClasses.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("TrainingGroup");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingInterval", b =>
@@ -1119,6 +1647,17 @@ namespace StriderWebApi.Migrations
                     b.Navigation("Coach");
                 });
 
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingPoint", b =>
+                {
+                    b.HasOne("StriderWebApi.Domain.DomainClasses.TrainingGroup", "TrainingGroup")
+                        .WithMany("TrainingPoints")
+                        .HasForeignKey("TrainingGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TrainingGroup");
+                });
+
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingSession", b =>
                 {
                     b.HasOne("StriderWebApi.Domain.DomainClasses.User", "CreatedBy")
@@ -1127,12 +1666,28 @@ namespace StriderWebApi.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("StriderWebApi.Domain.DomainClasses.Microcycle", "Microcycle")
+                        .WithMany("TrainingSessions")
+                        .HasForeignKey("MicrocycleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StriderWebApi.Domain.DomainClasses.Planning", "Planning")
+                        .WithMany("TrainingSessions")
+                        .HasForeignKey("PlanningId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("StriderWebApi.Domain.DomainClasses.TrainingTemplate", "Template")
                         .WithMany("Sessions")
                         .HasForeignKey("TemplateId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("CreatedBy");
+
+                    b.Navigation("Microcycle");
+
+                    b.Navigation("Planning");
 
                     b.Navigation("Template");
                 });
@@ -1186,6 +1741,34 @@ namespace StriderWebApi.Migrations
                     b.Navigation("Team");
                 });
 
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Mesocycle", b =>
+                {
+                    b.Navigation("Microcycles");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Microcycle", b =>
+                {
+                    b.Navigation("TrainingSessions");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Period", b =>
+                {
+                    b.Navigation("Mesocycles");
+
+                    b.Navigation("Microcycles");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Planning", b =>
+                {
+                    b.Navigation("Mesocycles");
+
+                    b.Navigation("Periods");
+
+                    b.Navigation("PlanningAthletes");
+
+                    b.Navigation("TrainingSessions");
+                });
+
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Session", b =>
                 {
                     b.Navigation("Intervals");
@@ -1198,6 +1781,13 @@ namespace StriderWebApi.Migrations
                     b.Navigation("Athletes");
 
                     b.Navigation("TrainingLocations");
+                });
+
+            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingGroup", b =>
+                {
+                    b.Navigation("Members");
+
+                    b.Navigation("TrainingPoints");
                 });
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.TrainingPlan", b =>

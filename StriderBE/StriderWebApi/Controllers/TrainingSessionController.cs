@@ -1,140 +1,86 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StriderWebApi.Dto.Trainings;
+using StriderWebApi.Services;
 using StriderWebApi.Services.Interfaces;
 using System.Security.Claims;
 
 namespace StriderWebApi.Controllers
 {
-    // TrainingSessionsController.cs
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class TrainingSessionsController : ControllerBase
+    public class TrainingSessionController(
+        ITrainingSessionService trainingSessionService,
+        IJwtService jwtService) : ControllerBase
     {
-        private readonly ITrainingSessionsService _trainingSessionService;
-        private readonly ILogger<TrainingSessionsController> _logger;
 
-        public TrainingSessionsController(
-            ITrainingSessionsService trainingSessionService,
-            ILogger<TrainingSessionsController> logger)
+        // GET: api/TrainingSession/planning/{planningId}
+        [HttpGet("planning/{planningId}")]
+        public async Task<ActionResult<IEnumerable<TrainingSessionResponseDto>>> GetByPlanningId(int planningId, CancellationToken cancellationToken)
         {
-            _trainingSessionService = trainingSessionService;
-            _logger = logger;
+            var sessions = await trainingSessionService.GetByPlanningIdAsync(planningId, cancellationToken);
+            return Ok(sessions);
         }
 
-        /// <summary>
-        /// Crea una nueva sesión de entrenamiento
-        /// </summary>
-        [HttpPost]
-        [ProducesResponseType(typeof(TrainingSessionResponseDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<TrainingSessionResponseDto>> CreateTrainingSession(
-            [FromBody] CreateTrainingSessionDto dto,
-            CancellationToken cancellationToken)
+        // GET: api/TrainingSession/microcycle/{microcycleId}
+        [HttpGet("microcycle/{microcycleId}")]
+        public async Task<ActionResult<IEnumerable<TrainingSessionResponseDto>>> GetByMicrocycleId(int microcycleId, CancellationToken cancellationToken)
         {
-            try
-            {
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-
-                if (userId == 0)
-                    return Unauthorized(new { message = "Usuario no autenticado" });
-
-                var session = await _trainingSessionService.CreateTrainingSessionAsync(dto, userId, cancellationToken);
-
-                return CreatedAtAction(
-                    nameof(GetTrainingSessionById),
-                    new { id = session.Id },
-                    session
-                );
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al crear sesión de entrenamiento");
-                return StatusCode(500, new { message = "Error al crear la sesión de entrenamiento" });
-            }
+            var sessions = await trainingSessionService.GetByMicrocycleIdAsync(microcycleId, cancellationToken);
+            return Ok(sessions);
         }
 
-        /// <summary>
-        /// Obtiene una sesión por su ID
-        /// </summary>
+        // GET: api/TrainingSession/{id}
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(TrainingSessionResponseDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<TrainingSessionResponseDto>> GetTrainingSessionById(
-            int id,
-            CancellationToken cancellationToken)
+        public async Task<ActionResult<TrainingSessionResponseDto>> GetById(int id, CancellationToken cancellationToken)
         {
-            try
-            {
-                var session = await _trainingSessionService.GetTrainingSessionByIdAsync(id, cancellationToken);
-
-                if (session == null)
-                    return NotFound(new { message = $"Sesión con ID {id} no encontrada" });
-
-                return Ok(session);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener sesión con ID {SessionId}", id);
-                return StatusCode(500, new { message = "Error al obtener la sesión" });
-            }
+            var session = await trainingSessionService.GetByIdAsync(id, cancellationToken);
+            if (session == null) return NotFound();
+            return Ok(session);
         }
 
-        /// <summary>
-        /// Obtiene todas las sesiones del usuario autenticado
-        /// </summary>
-        [HttpGet]
-        [ProducesResponseType(typeof(List<TrainingSessionResponseDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<List<TrainingSessionResponseDto>>> GetAllTrainingSessions(
-            CancellationToken cancellationToken)
+        // POST: api/TrainingSession
+        // IMPORTANTE: Este endpoint identifica automáticamente el microciclo basado en PlanningId + Date
+        [HttpPost]
+        public async Task<ActionResult<TrainingSessionResponseDto>> Create([FromBody] CreateTrainingSessionDto dto, CancellationToken cancellationToken)
         {
-            try
-            {
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-
-                if (userId == 0)
-                    return Unauthorized(new { message = "Usuario no autenticado" });
-
-                var sessions = await _trainingSessionService.GetAllTrainingSessionsAsync(userId, cancellationToken);
-                return Ok(sessions);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener sesiones de entrenamiento");
-                return StatusCode(500, new { message = "Error al obtener las sesiones" });
-            }
+            var coachId = jwtService.GetCurrentUserId();
+            if (!coachId.HasValue) return Unauthorized();
+            var session = await trainingSessionService.CreateWithAutoMicrocycleDetectionAsync(dto, coachId.Value, cancellationToken);
+            return CreatedAtAction(nameof(GetById), new { id = session.Id }, session);
         }
 
-        /// <summary>
-        /// Obtiene todas las sesiones de una fecha específica
-        /// </summary>
-        [HttpGet("date/{date}")]
-        [ProducesResponseType(typeof(List<TrainingSessionResponseDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<List<TrainingSessionResponseDto>>> GetTrainingSessionsByDate(
-            DateTime date,
-            CancellationToken cancellationToken)
+        // PUT: api/TrainingSession/{id}
+        [HttpPut("{id}")]
+        public async Task<ActionResult<TrainingSessionResponseDto>> Update(int id, [FromBody] UpdateTrainingSessionDto dto, CancellationToken cancellationToken)
         {
-            try
-            {
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var coachId = jwtService.GetCurrentUserId();
+            if (!coachId.HasValue) return Unauthorized();
+            var session = await trainingSessionService.UpdateAsync(id, dto, coachId.Value, cancellationToken);
+            return Ok(session);
+        }
 
-                if (userId == 0)
-                    return Unauthorized(new { message = "Usuario no autenticado" });
+        // DELETE: api/TrainingSession/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+        {
+            var coachId = jwtService.GetCurrentUserId();
+            if (!coachId.HasValue) return Unauthorized();
+            var result = await trainingSessionService.DeleteAsync(id, coachId.Value, cancellationToken);
+            if (!result) return NotFound();
+            return NoContent();
+        }
 
-                var sessions = await _trainingSessionService.GetTrainingSessionsByDateAsync(date, userId, cancellationToken);
-                return Ok(sessions);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener sesiones por fecha");
-                return StatusCode(500, new { message = "Error al obtener las sesiones" });
-            }
+        // GET: api/TrainingSession/athlete/{athleteId}
+        [HttpGet("athlete/{athleteId}")]
+        public async Task<ActionResult<IEnumerable<TrainingSessionResponseDto>>> GetByAthleteId(
+            int athleteId,
+            [FromQuery] int? planningId = null,
+            CancellationToken cancellationToken = default)
+        {
+            var sessions = await trainingSessionService.GetByAthleteIdAsync(athleteId, planningId, cancellationToken);
+            return Ok(sessions);
         }
     }
 }

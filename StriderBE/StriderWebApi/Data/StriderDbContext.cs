@@ -25,11 +25,19 @@ namespace StriderWebApi.Data
         public DbSet<TrainingPlan> TrainingPlans => Set<TrainingPlan>();
         public DbSet<Ailment> Ailments => Set<Ailment>();
         public DbSet<Notification> Notifications => Set<Notification>();
-        public DbSet<TrainingTemplate> TrainingTemplates { get; set; }
-        public DbSet<TrainingInterval> TrainingIntervals { get; set; }
-        public DbSet<TrainingSession> TrainingSessions { get; set; }
-        public DbSet<TrainingSessionAthlete> TrainingSessionAthletes { get; set; }
-        public DbSet<CoachAthleteRelationship> CoachAthleteRelationships { get; set; }
+        public DbSet<TrainingTemplate> TrainingTemplates => Set<TrainingTemplate>();
+        public DbSet<TrainingInterval> TrainingIntervals => Set<TrainingInterval>();
+        public DbSet<TrainingSession> TrainingSessions => Set<TrainingSession>();
+        public DbSet<TrainingSessionAthlete> TrainingSessionAthletes => Set<TrainingSessionAthlete>();
+        public DbSet<CoachAthleteRelationship> CoachAthleteRelationships => Set<CoachAthleteRelationship>();
+        public DbSet<TrainingGroup> TrainingGroups => Set<TrainingGroup>();   
+        public DbSet<TrainingPoint> TrainingPoints => Set<TrainingPoint>();
+        public DbSet<TrainingGroupMember> TrainingGroupMembers => Set<TrainingGroupMember>();
+        public DbSet<Planning> Plannings => Set<Planning>();
+        public DbSet<Period> Periods => Set<Period>(); 
+        public DbSet<Mesocycle> Mesocycles => Set<Mesocycle>();
+        public DbSet<Microcycle> Microcycles => Set<Microcycle>();
+        public DbSet<PlanningAthlete> PlanningAthletes => Set<PlanningAthlete>();
         #endregion
 
         #region Overrides
@@ -339,6 +347,18 @@ namespace StriderWebApi.Data
                 entity.Property(e => e.Notes)
                     .HasMaxLength(2000);
 
+                // Relación con Microcycle (REQUERIDA - un entrenamiento pertenece a un solo microciclo)
+                entity.HasOne(e => e.Microcycle)
+                    .WithMany(e => e.TrainingSessions)
+                    .HasForeignKey(e => e.MicrocycleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación con Planning (REQUERIDA - para optimización de consultas y validación de integridad)
+                entity.HasOne(e => e.Planning)
+                    .WithMany(e => e.TrainingSessions)
+                    .HasForeignKey(e => e.PlanningId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
                 // Relación con el usuario que crea
                 entity.HasOne(e => e.CreatedBy)
                     .WithMany()
@@ -359,6 +379,8 @@ namespace StriderWebApi.Data
                 entity.Property(e => e.UpdatedAt);
 
                 // Índices para mejorar búsquedas
+                entity.HasIndex(e => e.PlanningId); // NUEVO
+                entity.HasIndex(e => e.MicrocycleId); // NUEVO
                 entity.HasIndex(e => e.Date);
                 entity.HasIndex(e => e.CreatedByUserId);
                 entity.HasIndex(e => e.TemplateId);
@@ -377,6 +399,12 @@ namespace StriderWebApi.Data
                 // Configurar Id como auto-increment
                 entity.Property(e => e.Id)
                     .ValueGeneratedOnAdd();
+
+                entity.Property(e => e.TrainingSessionId)
+                    .IsRequired();
+
+                entity.Property(e => e.AthleteId)
+                    .IsRequired();
 
                 // Relación con TrainingSession
                 entity.HasOne(e => e.TrainingSession)
@@ -478,6 +506,390 @@ namespace StriderWebApi.Data
                 entity.HasIndex(e => e.Status);
                 entity.HasIndex(e => new { e.AthleteId, e.Status });
                 entity.HasIndex(e => new { e.CoachId, e.Status });
+            });
+
+            modelBuilder.Entity<TrainingGroup>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.Description)
+                    .HasMaxLength(1000);
+
+                entity.Property(e => e.CreatedDate)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                // Relación con User (CreatedBy)
+                entity.HasOne(e => e.CreatedBy)
+                    .WithMany()
+                    .HasForeignKey(e => e.CreatedByUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación con TrainingPoints (uno-a-muchos)
+                entity.HasMany(e => e.TrainingPoints)
+                    .WithOne(e => e.TrainingGroup)
+                    .HasForeignKey(e => e.TrainingGroupId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación con TrainingGroupMembers (uno-a-muchos)
+                entity.HasMany(e => e.Members)
+                    .WithOne(e => e.TrainingGroup)
+                    .HasForeignKey(e => e.TrainingGroupId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Owned Entity para Notifications
+                entity.OwnsOne(e => e.Notifications);
+
+                // Índices
+                entity.HasIndex(e => e.CreatedByUserId);
+                entity.HasIndex(e => e.Name);
+            });
+
+            // TrainingPoint
+            modelBuilder.Entity<TrainingPoint>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                // Relación con TrainingGroup
+                entity.HasOne(e => e.TrainingGroup)
+                    .WithMany(e => e.TrainingPoints)
+                    .HasForeignKey(e => e.TrainingGroupId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Índices
+                entity.HasIndex(e => e.TrainingGroupId);
+            });
+
+            // TrainingGroupMember
+            modelBuilder.Entity<TrainingGroupMember>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                // Status como enum (conversión a int en base de datos)
+                entity.Property(e => e.Status)
+                    .IsRequired()
+                    .HasConversion<int>()
+                    .HasDefaultValue(TrainingGroupMemberStatus.Pending);
+
+                entity.Property(e => e.JoinedDate)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                entity.Property(e => e.InvitationMessage)
+                    .HasMaxLength(500);
+
+                // Relación con TrainingGroup
+                entity.HasOne(e => e.TrainingGroup)
+                    .WithMany(e => e.Members)
+                    .HasForeignKey(e => e.TrainingGroupId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación con User (siempre será un atleta)
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Índice único para evitar miembros duplicados en la misma sede
+                entity.HasIndex(e => new { e.TrainingGroupId, e.UserId })
+                    .IsUnique();
+
+                // Índices adicionales
+                entity.HasIndex(e => e.TrainingGroupId);
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.Status);
+            });
+
+            modelBuilder.Entity<Planning>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.Description)
+                    .HasMaxLength(1000);
+
+                entity.Property(e => e.StartDate)
+                    .IsRequired();
+
+                entity.Property(e => e.EndDate);
+
+                entity.Property(e => e.Status)
+                    .IsRequired()
+                    .HasConversion<int>()
+                    .HasDefaultValue(PlanningStatus.Draft);
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                entity.Property(e => e.UpdatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                // Relación con Coach
+                entity.HasOne(e => e.Coach)
+                    .WithMany()
+                    .HasForeignKey(e => e.CoachId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación con Periods (opcional - para agrupación)
+                entity.HasMany(e => e.Periods)
+                    .WithOne(e => e.Planning)
+                    .HasForeignKey(e => e.PlanningId)
+                    .OnDelete(DeleteBehavior.SetNull); // SetNull porque es opcional
+
+                // Relación con Mesocycles (directa - estructura principal)
+                entity.HasMany(e => e.Mesocycles)
+                    .WithOne(e => e.Planning)
+                    .HasForeignKey(e => e.PlanningId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación con TrainingSessions (para optimización de consultas directas)
+                entity.HasMany(e => e.TrainingSessions)
+                    .WithOne(e => e.Planning)
+                    .HasForeignKey(e => e.PlanningId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Índices
+                entity.HasIndex(e => e.CoachId);
+                entity.HasIndex(e => e.Status);
+                entity.HasIndex(e => e.StartDate);
+            });
+
+            modelBuilder.Entity<Period>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.StartWeek)
+                    .IsRequired();
+
+                entity.Property(e => e.EndWeek)
+                    .IsRequired();
+
+                entity.Property(e => e.Objective)
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.Status)
+                    .IsRequired()
+                    .HasConversion<int>()
+                    .HasDefaultValue(PeriodStatus.Planning);
+
+                entity.Property(e => e.PlanningId);
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                entity.Property(e => e.UpdatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                // Relación opcional con Planning (para contexto)
+                entity.HasOne(e => e.Planning)
+                    .WithMany(e => e.Periods)
+                    .HasForeignKey(e => e.PlanningId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                // Relación con Mesocycles (one-to-many - un mesociclo pertenece a un solo período, opcional)
+                entity.HasMany(e => e.Mesocycles)
+                    .WithOne(e => e.Period)
+                    .HasForeignKey(e => e.PeriodId)
+                    .OnDelete(DeleteBehavior.SetNull); // SetNull porque es opcional
+
+                // Relación con Microcycles (one-to-many - un microciclo debe pertenecer a un período)
+                entity.HasMany(e => e.Microcycles)
+                    .WithOne(e => e.Period)
+                    .HasForeignKey(e => e.PeriodId)
+                    .OnDelete(DeleteBehavior.Restrict); // Restrict porque el período es requerido para microciclos
+
+                // Índices
+                entity.HasIndex(e => e.PlanningId);
+                entity.HasIndex(e => e.Status);
+            });
+
+            modelBuilder.Entity<Mesocycle>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.StartDate)
+                    .IsRequired();
+
+                entity.Property(e => e.EndDate)
+                    .IsRequired();
+
+                entity.Property(e => e.Objective)
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.WeeksCount)
+                    .IsRequired();
+
+                entity.Property(e => e.Status)
+                    .IsRequired()
+                    .HasConversion<int>()
+                    .HasDefaultValue(MesocycleStatus.Planning);
+
+                entity.Property(e => e.PlanningId)
+                    .IsRequired();
+
+                entity.Property(e => e.PeriodId);
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                entity.Property(e => e.UpdatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                // Relación directa con Planning (REQUERIDA - estructura principal)
+                entity.HasOne(e => e.Planning)
+                    .WithMany(e => e.Mesocycles)
+                    .HasForeignKey(e => e.PlanningId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación opcional con Period (para agrupación - un mesociclo pertenece a un solo período)
+                entity.HasOne(e => e.Period)
+                    .WithMany(e => e.Mesocycles)
+                    .HasForeignKey(e => e.PeriodId)
+                    .OnDelete(DeleteBehavior.SetNull); // SetNull porque es opcional
+
+                // Relación con Microcycles (un microciclo pertenece a un solo mesociclo)
+                entity.HasMany(e => e.Microcycles)
+                    .WithOne(e => e.Mesocycle)
+                    .HasForeignKey(e => e.MesocycleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Índices
+                entity.HasIndex(e => e.PlanningId);
+                entity.HasIndex(e => e.PeriodId); // NUEVO
+                entity.HasIndex(e => e.Status);
+                entity.HasIndex(e => e.StartDate);
+                entity.HasIndex(e => e.EndDate);
+            });
+
+            modelBuilder.Entity<Microcycle>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.WeekNumber)
+                    .IsRequired();
+
+                entity.Property(e => e.StartDate)
+                    .IsRequired();
+
+                entity.Property(e => e.EndDate)
+                    .IsRequired();
+
+                entity.Property(e => e.Sessions)
+                    .IsRequired();
+
+                entity.Property(e => e.Volume)
+                    .IsRequired()
+                    .HasColumnType("decimal(10,2)");
+
+                entity.Property(e => e.Intensity)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasConversion<string>();
+
+                entity.Property(e => e.Focus)
+                    .HasConversion<int>();
+
+                entity.Property(e => e.MesocycleId)
+                    .IsRequired();
+
+                entity.Property(e => e.PeriodId)
+                    .IsRequired();
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                entity.Property(e => e.UpdatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                // Relación con Mesocycle (REQUERIDA - un microciclo pertenece a un solo mesociclo)
+                entity.HasOne(e => e.Mesocycle)
+                    .WithMany(e => e.Microcycles)
+                    .HasForeignKey(e => e.MesocycleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación con Period (REQUERIDA - un microciclo debe pertenecer a un período)
+                entity.HasOne(e => e.Period)
+                    .WithMany(e => e.Microcycles)
+                    .HasForeignKey(e => e.PeriodId)
+                    .OnDelete(DeleteBehavior.Restrict); // Restrict porque el período es requerido
+
+                // Relación con TrainingSessions (REQUERIDA - todas las sesiones están dentro de un microciclo)
+                entity.HasMany(e => e.TrainingSessions)
+                    .WithOne(e => e.Microcycle)
+                    .HasForeignKey(e => e.MicrocycleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Índices
+                entity.HasIndex(e => e.MesocycleId);
+                entity.HasIndex(e => e.PeriodId); // NUEVO
+                entity.HasIndex(e => e.StartDate);
+                entity.HasIndex(e => e.EndDate);
+            });
+
+            modelBuilder.Entity<PlanningAthlete>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.PlanningId)
+                    .IsRequired();
+
+                entity.Property(e => e.AthleteId)
+                    .IsRequired();
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                // Relación con Planning
+                entity.HasOne(e => e.Planning)
+                    .WithMany(e => e.PlanningAthletes)
+                    .HasForeignKey(e => e.PlanningId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación con Athlete
+                entity.HasOne(e => e.Athlete)
+                    .WithMany()
+                    .HasForeignKey(e => e.AthleteId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Índice único para evitar duplicados
+                entity.HasIndex(e => new { e.PlanningId, e.AthleteId })
+                    .IsUnique();
+
+                // Índices adicionales
+                entity.HasIndex(e => e.PlanningId);
+                entity.HasIndex(e => e.AthleteId);
             });
         }
         #endregion
