@@ -9,24 +9,23 @@ namespace StriderWebApi.Data.Repositories
         public async Task<Microcycle?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await context.Microcycles
+                .Include(m => m.TrainingSessions)
                 .Include(m => m.Mesocycle)
-                .Include(m => m.Period)
                 .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
         }
 
         public async Task<IEnumerable<Microcycle>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             return await context.Microcycles
+                .Include(m => m.TrainingSessions)
                 .Include(m => m.Mesocycle)
-                .Include(m => m.Period)
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Microcycle>> GetByMesocycleIdAsync(int mesocycleId, CancellationToken cancellationToken = default)
+        public async Task<List<Microcycle>> GetByMesocycleIdAsync(int mesocycleId, CancellationToken cancellationToken = default)
         {
             return await context.Microcycles
                 .Include(m => m.Mesocycle)
-                .Include(m => m.Period)
                 .Where(m => m.MesocycleId == mesocycleId)
                 .OrderBy(m => m.WeekNumber)
                 .ToListAsync(cancellationToken);
@@ -36,8 +35,7 @@ namespace StriderWebApi.Data.Repositories
         {
             return await context.Microcycles
                 .Include(m => m.Mesocycle)
-                .Include(m => m.Period)
-                .Where(m => m.PeriodId == periodId)
+                .Where(m => m.Mesocycle.PeriodId == periodId)
                 .OrderBy(m => m.StartDate)
                 .ToListAsync(cancellationToken);
         }
@@ -88,7 +86,7 @@ namespace StriderWebApi.Data.Repositories
         {
             return await context.Microcycles
                 .Include(m => m.TrainingSessions)
-                .Where(m => m.PeriodId == periodId)
+                .Where(m => m.Mesocycle.PeriodId == periodId)
                 .ToListAsync(cancellationToken);
         }
 

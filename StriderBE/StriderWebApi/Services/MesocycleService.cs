@@ -1,4 +1,5 @@
-﻿using StriderWebApi.Data.Repositories.Interfaces;
+﻿using StriderWebApi.Data.Repositories;
+using StriderWebApi.Data.Repositories.Interfaces;
 using StriderWebApi.Domain.DomainClasses;
 using StriderWebApi.Domain.Enums;
 using StriderWebApi.Dto.Mesocycle;
@@ -12,7 +13,7 @@ namespace StriderWebApi.Services
         IMesocycleRepository mesocycleRepository,
         IMicrocycleRepository microcycleRepository,
         IPlanningRepository planningRepository,
-        IPeriodRepository periodRepository) : IMesocycleService
+        ITrainingSessionsRepository trainingSessionsRepository) : IMesocycleService
     {
         public async Task<MesocycleResponseDto> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
@@ -56,17 +57,12 @@ namespace StriderWebApi.Services
         public async Task<MesocycleResponseDto> CreateWithAutoMicrocyclesAsync(
             CreateMesocycleDto dto,
             int planningId,
-            int periodId,
             int coachId,
             CancellationToken cancellationToken = default)
         {
             var planning = await planningRepository.GetByIdAsync(planningId, cancellationToken);
             if (planning == null || planning.CoachId != coachId)
                 throw new UnauthorizedException("No tienes permisos para crear mesociclos en esta planificación");
-
-            var period = await periodRepository.GetByIdAsync(periodId, cancellationToken);
-            if (period == null || period.PlanningId != planningId)
-                throw new NotFoundException("Período no encontrado o no pertenece a esta planificación");
 
             var endDate = dto.StartDate.AddDays((dto.WeeksCount * 7) - 1);
             var hasOverlap = await mesocycleRepository.HasOverlappingDatesAsync(
@@ -102,15 +98,16 @@ namespace StriderWebApi.Services
 
                 var microcycle = new Microcycle
                 {
+                    Name = $"Semana {week}",
+                    Description = null,
                     WeekNumber = week,
                     StartDate = weekStartDate,
                     EndDate = weekEndDate,
-                    Sessions = 0,
-                    Volume = 0,
+                    Sessions = 0, // Se calculará automáticamente
+                    Volume = 0, // Se calculará automáticamente
                     Intensity = MicrocycleIntensity.Medium,
                     Focus = null,
                     MesocycleId = createdMesocycle.Id,
-                    PeriodId = periodId
                 };
 
                 var createdMicrocycle = await microcycleRepository.CreateAsync(microcycle, cancellationToken);
@@ -122,15 +119,52 @@ namespace StriderWebApi.Services
             return MapToMesocycleResponseDto(createdMesocycle, microcycles.Count);
         }
 
-        public async Task<MesocycleResponseDto> UpdateAsync(int id, UpdateMesocycleDto dto, int coachId, CancellationToken cancellationToken = default)
+        public async Task<MesocycleResponseDto> UpdateAsync(
+             int id,
+             UpdateMesocycleDto dto,
+             int coachId,
+             CancellationToken cancellationToken = default)
         {
-            var mesocycle = await mesocycleRepository.GetByIdAsync(id, cancellationToken);
-            if (mesocycle == null)
-                throw new NotFoundException("Mesociclo no encontrado");
-
+            var mesocycle = await mesocycleRepository.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("Mesociclo no encontrado");
             if (!await ValidateMesocycleAccessAsync(id, coachId, cancellationToken))
                 throw new UnauthorizedException("No tienes permisos para actualizar este mesociclo");
 
+            // Obtener microciclos actuales del mesociclo
+            var existingMicrocycles = await microcycleRepository.GetByMesocycleIdAsync(id, cancellationToken);
+
+            // Validar que no se puedan eliminar microciclos con sesiones
+            if (dto.WeeksCount < mesocycle.WeeksCount)
+            {
+                var weeksToRemove = mesocycle.WeeksCount - dto.WeeksCount;
+                // Obtener los microciclos que se eliminarían (los últimos)
+                var microcyclesToRemove = existingMicrocycles
+                    .OrderByDescending(m => m.WeekNumber)
+                    .Take(weeksToRemove)
+                    .ToList();
+
+                // Verificar si alguno de estos microciclos tiene sesiones
+                var microcyclesWithSessions = new List<int>();
+                foreach (var microcycle in microcyclesToRemove)
+                {
+                    var sessions = await trainingSessionsRepository.GetByMicrocycleIdAsync(microcycle.Id, cancellationToken);
+                    if (sessions.Any())
+                    {
+                        microcyclesWithSessions.Add(microcycle.WeekNumber);
+                    }
+                }
+
+                if (microcyclesWithSessions.Any())
+                {
+                    var minWeeksRequired = mesocycle.WeeksCount - microcyclesWithSessions.Count;
+                    throw new ValidationException(
+                        $"No se pueden eliminar las semanas {string.Join(", ", microcyclesWithSessions)} " +
+                        $"porque contienen sesiones de entrenamiento. " +
+                        $"Debe mantener al menos {minWeeksRequired} semanas."
+                    );
+                }
+            }
+
+            // Actualizar propiedades del mesociclo
             mesocycle.Name = dto.Name;
             mesocycle.StartDate = dto.StartDate;
             mesocycle.EndDate = dto.EndDate;
@@ -140,7 +174,19 @@ namespace StriderWebApi.Services
             mesocycle.PeriodId = dto.PeriodId;
 
             var updatedMesocycle = await mesocycleRepository.UpdateAsync(mesocycle, cancellationToken);
-            return MapToMesocycleResponseDto(updatedMesocycle);
+
+            // Gestionar microciclos según el cambio en WeeksCount
+            if (dto.WeeksCount != existingMicrocycles.Count)
+            {
+                await SyncMicrocyclesForMesocycleAsync(
+                    updatedMesocycle,
+                    existingMicrocycles.ToList(),
+                    cancellationToken);
+            }
+
+            // Contar microciclos actualizados
+            var currentMicrocycles = await microcycleRepository.GetByMesocycleIdAsync(id, cancellationToken);
+            return MapToMesocycleResponseDto(updatedMesocycle, currentMicrocycles.Count());
         }
 
         public async Task<bool> DeleteAsync(int id, int coachId, CancellationToken cancellationToken = default)
@@ -182,6 +228,72 @@ namespace StriderWebApi.Services
                 CreatedAt = mesocycle.CreatedAt,
                 UpdatedAt = mesocycle.UpdatedAt
             };
+        }
+
+        private async Task SyncMicrocyclesForMesocycleAsync(
+                Mesocycle mesocycle,
+                List<Microcycle> existingMicrocycles,
+                CancellationToken cancellationToken)
+        {
+            var currentCount = existingMicrocycles.Count;
+            var targetCount = mesocycle.WeeksCount;
+
+            if (targetCount > currentCount)
+            {
+                // Agregar microciclos faltantes
+                var weeksToAdd = targetCount - currentCount;
+                var lastWeekNumber = existingMicrocycles.Any()
+                    ? existingMicrocycles.Max(m => m.WeekNumber)
+                    : 0;
+
+                // Calcular la fecha de inicio del próximo microciclo
+                var lastMicrocycle = existingMicrocycles
+                    .OrderByDescending(m => m.WeekNumber)
+                    .FirstOrDefault();
+
+                var currentDate = lastMicrocycle != null
+                    ? lastMicrocycle.EndDate.AddDays(1)
+                    : mesocycle.StartDate;
+
+                for (int week = 1; week <= weeksToAdd; week++)
+                {
+                    var weekNumber = lastWeekNumber + week;
+                    var weekStartDate = currentDate;
+                    var weekEndDate = currentDate.AddDays(6);
+
+                    var newMicrocycle = new Microcycle
+                    {
+                        Name = $"Semana {weekNumber}",
+                        Description = null,
+                        WeekNumber = weekNumber,
+                        StartDate = weekStartDate,
+                        EndDate = weekEndDate,
+                        Sessions = 0, // Se calculará automáticamente
+                        Volume = 0, // Se calculará automáticamente
+                        Intensity = MicrocycleIntensity.Medium,
+                        Focus = null,
+                        MesocycleId = mesocycle.Id
+                    };
+
+                    await microcycleRepository.CreateAsync(newMicrocycle, cancellationToken);
+                    currentDate = currentDate.AddDays(7);
+                }
+            }
+            else if (targetCount < currentCount)
+            {
+                // Eliminar microciclos sobrantes (los últimos)
+                // NOTA: Ya validamos que no tengan sesiones en UpdateAsync
+                var weeksToRemove = currentCount - targetCount;
+                var microcyclesToRemove = existingMicrocycles
+                    .OrderByDescending(m => m.WeekNumber)
+                    .Take(weeksToRemove)
+                    .ToList();
+
+                foreach (var microcycle in microcyclesToRemove)
+                {
+                    await microcycleRepository.DeleteAsync(microcycle.Id, cancellationToken);
+                }
+            }
         }
     }
 }

@@ -6,7 +6,7 @@ namespace StriderWebApi.Dto.Trainings
     public class CreateTrainingSessionDto
     {
         public int PlanningId { get; set; }
-        public string Date { get; set; } = string.Empty; // ISO string
+        public DateTime Date { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public TrainingCategory Category { get; set; } = TrainingCategory.Training;

@@ -26,6 +26,9 @@ namespace StriderWebApi.Data.Repositories
         {
             return await context.TrainingSessions
                 .Include(s => s.Microcycle)
+                .Include(s => s.Intervals)
+                .Include(s => s.Athletes)
+                    .ThenInclude(a => a.Athlete)
                 .Where(s => s.PlanningId == planningId)
                 .OrderBy(s => s.Date)
                 .ToListAsync(cancellationToken);
@@ -124,6 +127,14 @@ namespace StriderWebApi.Data.Repositories
             return await query
                 .OrderBy(s => s.Date)
                 .ToListAsync(cancellationToken);
+        }
+
+        public async Task<bool> HasSessionsByMicrocycleIdAsync(
+            int microcycleId,
+            CancellationToken cancellationToken)
+        {
+            return await context.TrainingSessions
+                .AnyAsync(ts => ts.MicrocycleId == microcycleId, cancellationToken);
         }
     }
 }

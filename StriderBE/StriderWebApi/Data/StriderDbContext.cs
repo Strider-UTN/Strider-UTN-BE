@@ -353,12 +353,6 @@ namespace StriderWebApi.Data
                     .HasForeignKey(e => e.MicrocycleId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                // Relación con Planning (REQUERIDA - para optimización de consultas y validación de integridad)
-                entity.HasOne(e => e.Planning)
-                    .WithMany(e => e.TrainingSessions)
-                    .HasForeignKey(e => e.PlanningId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
                 // Relación con el usuario que crea
                 entity.HasOne(e => e.CreatedBy)
                     .WithMany()
@@ -715,12 +709,6 @@ namespace StriderWebApi.Data
                     .HasForeignKey(e => e.PeriodId)
                     .OnDelete(DeleteBehavior.SetNull); // SetNull porque es opcional
 
-                // Relación con Microcycles (one-to-many - un microciclo debe pertenecer a un período)
-                entity.HasMany(e => e.Microcycles)
-                    .WithOne(e => e.Period)
-                    .HasForeignKey(e => e.PeriodId)
-                    .OnDelete(DeleteBehavior.Restrict); // Restrict porque el período es requerido para microciclos
-
                 // Índices
                 entity.HasIndex(e => e.PlanningId);
                 entity.HasIndex(e => e.Status);
@@ -794,6 +782,13 @@ namespace StriderWebApi.Data
             {
                 entity.HasKey(e => e.Id);
 
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.Description)
+                    .HasMaxLength(1000); // Opcional, sin IsRequired()
+
                 entity.Property(e => e.WeekNumber)
                     .IsRequired();
 
@@ -821,9 +816,6 @@ namespace StriderWebApi.Data
                 entity.Property(e => e.MesocycleId)
                     .IsRequired();
 
-                entity.Property(e => e.PeriodId)
-                    .IsRequired();
-
                 entity.Property(e => e.CreatedAt)
                     .IsRequired()
                     .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -838,12 +830,6 @@ namespace StriderWebApi.Data
                     .HasForeignKey(e => e.MesocycleId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                // Relación con Period (REQUERIDA - un microciclo debe pertenecer a un período)
-                entity.HasOne(e => e.Period)
-                    .WithMany(e => e.Microcycles)
-                    .HasForeignKey(e => e.PeriodId)
-                    .OnDelete(DeleteBehavior.Restrict); // Restrict porque el período es requerido
-
                 // Relación con TrainingSessions (REQUERIDA - todas las sesiones están dentro de un microciclo)
                 entity.HasMany(e => e.TrainingSessions)
                     .WithOne(e => e.Microcycle)
@@ -852,7 +838,6 @@ namespace StriderWebApi.Data
 
                 // Índices
                 entity.HasIndex(e => e.MesocycleId);
-                entity.HasIndex(e => e.PeriodId); // NUEVO
                 entity.HasIndex(e => e.StartDate);
                 entity.HasIndex(e => e.EndDate);
             });

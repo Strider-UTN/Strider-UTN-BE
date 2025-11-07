@@ -11,7 +11,7 @@ namespace StriderWebApi.Services.Interfaces
         Task<bool> DeleteAsync(int id, int coachId, CancellationToken cancellationToken = default);
 
         // Funcionalidad especial: Crear mesociclo con microciclos automáticos
-        Task<MesocycleResponseDto> CreateWithAutoMicrocyclesAsync(CreateMesocycleDto dto, int planningId, int periodId, int coachId, CancellationToken cancellationToken = default);
+        Task<MesocycleResponseDto> CreateWithAutoMicrocyclesAsync(CreateMesocycleDto dto, int planningId, int coachId, CancellationToken cancellationToken = default);
 
         // Validaciones
         Task<bool> ValidateMesocycleAccessAsync(int mesocycleId, int coachId, CancellationToken cancellationToken = default);

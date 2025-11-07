@@ -93,7 +93,7 @@ namespace StriderWebApi.Services
                 Status = period.Status,
                 PlanningId = period.PlanningId,
                 MesocyclesCount = period.Mesocycles?.Count ?? 0,
-                MicrocyclesCount = period.Microcycles?.Count ?? 0,
+                MicrocyclesCount = period.Mesocycles?.SelectMany(m => m.Microcycles)?.ToList().Count ?? 0,
                 CreatedAt = period.CreatedAt,
                 UpdatedAt = period.UpdatedAt
             };

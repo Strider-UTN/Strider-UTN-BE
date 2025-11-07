@@ -71,7 +71,8 @@ namespace StriderWebApi.Data.Repositories
         public async Task<IEnumerable<Period>> GetPeriodsWithMicrocyclesAsync(int planningId, CancellationToken cancellationToken = default)
         {
             return await context.Periods
-                .Include(p => p.Microcycles)
+                .Include(p => p.Mesocycles)
+                    .ThenInclude(m => m.Microcycles)
                 .Where(p => p.PlanningId == planningId)
                 .ToListAsync(cancellationToken);
         }

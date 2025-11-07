@@ -1,5 +1,6 @@
 using Microsoft.OpenApi.Models;
 using StriderWebApi.Extensions;
+using StriderWebApi.Helpers;
 using StriderWebApi.Hubs;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -18,6 +19,7 @@ builder.Services.AddControllers()
             allowIntegerValues: true
         ));
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
     });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

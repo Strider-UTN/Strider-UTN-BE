@@ -12,6 +12,7 @@ namespace StriderWebApi.Data.Repositories.Interfaces
         Task<TrainingSession> UpdateAsync(TrainingSession trainingSession, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
         Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default);
+        Task<bool> HasSessionsByMicrocycleIdAsync(int microcycleId, CancellationToken cancellationToken);
 
         // Búsquedas específicas
         Task<IEnumerable<TrainingSession>> GetByDateRangeAsync(int planningId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);

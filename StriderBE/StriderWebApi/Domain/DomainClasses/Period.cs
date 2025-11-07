@@ -20,9 +20,6 @@ namespace StriderWebApi.Domain.DomainClasses
         // Relaciones one-to-many con mesociclos (opcional - un mesociclo puede pertenecer a un período)
         public ICollection<Mesocycle> Mesocycles { get; set; } = new List<Mesocycle>();
 
-        // Relaciones one-to-many con microciclos (requerida - un microciclo debe pertenecer a un período)
-        public ICollection<Microcycle> Microcycles { get; set; } = new List<Microcycle>();
-
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }

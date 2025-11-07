@@ -57,7 +57,10 @@ namespace StriderWebApi.Services
             if (planning.CoachId != coachId)
                 throw new UnauthorizedException("No tienes permisos para crear sesiones en esta planificación");
 
-            var sessionDate = DateTime.Parse(dto.Date);
+            var sessionDate = dto.Date.Kind == DateTimeKind.Utc
+                ? dto.Date
+                : DateTime.SpecifyKind(dto.Date, DateTimeKind.Utc);
+
             var microcycle = await microcycleRepository.GetByPlanningIdAndDateAsync(
                 dto.PlanningId, sessionDate, cancellationToken);
 
