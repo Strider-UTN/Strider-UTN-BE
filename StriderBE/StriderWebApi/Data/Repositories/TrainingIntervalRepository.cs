@@ -10,15 +10,26 @@ namespace StriderWebApi.Data.Repositories
         public async Task<TrainingInterval?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await context.TrainingIntervals
-                .Include(i => i.TrainingSession)
-                .Include(i => i.TrainingTemplate)
+                .Include(i => i.TrainingSeries)
+                    .ThenInclude(series => series.TrainingSession)
+                .Include(i => i.TrainingSeries)
+                    .ThenInclude(series => series.TrainingTemplate)
                 .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
         }
 
         public async Task<IEnumerable<TrainingInterval>> GetByTrainingSessionIdAsync(int trainingSessionId, CancellationToken cancellationToken = default)
         {
             return await context.TrainingIntervals
-                .Where(i => i.TrainingSessionId == trainingSessionId)
+                .Include(i => i.TrainingSeries)
+                .Where(i => i.TrainingSeries != null && i.TrainingSeries.TrainingSessionId == trainingSessionId)
+                .OrderBy(i => i.OrderIndex)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<TrainingInterval>> GetByTrainingSeriesIdAsync(int trainingSeriesId, CancellationToken cancellationToken = default)
+        {
+            return await context.TrainingIntervals
+                .Where(i => i.TrainingSeriesId == trainingSeriesId)
                 .OrderBy(i => i.OrderIndex)
                 .ToListAsync(cancellationToken);
         }
@@ -26,7 +37,8 @@ namespace StriderWebApi.Data.Repositories
         public async Task<IEnumerable<TrainingInterval>> GetByTrainingTemplateIdAsync(int templateId, CancellationToken cancellationToken = default)
         {
             return await context.TrainingIntervals
-                .Where(i => i.TrainingTemplateId == templateId)
+                .Include(i => i.TrainingSeries)
+                .Where(i => i.TrainingSeries != null && i.TrainingSeries.TrainingTemplateId == templateId)
                 .OrderBy(i => i.OrderIndex)
                 .ToListAsync(cancellationToken);
         }

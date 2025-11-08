@@ -92,9 +92,10 @@ namespace StriderWebApi.Data.Repositories
 
         public async Task<decimal> CalculateTotalVolumeAsync(int microcycleId, CancellationToken cancellationToken = default)
         {
-            // Obtener todas las sesiones del microciclo con sus intervalos
+            // Obtener todas las sesiones del microciclo con sus series e intervalos
             var sessions = await context.TrainingSessions
-                .Include(s => s.Intervals)
+                .Include(s => s.Series)
+                    .ThenInclude(series => series.Intervals)
                 .Where(s => s.MicrocycleId == microcycleId)
                 .ToListAsync(cancellationToken);
 
@@ -102,15 +103,21 @@ namespace StriderWebApi.Data.Repositories
 
             foreach (var session in sessions)
             {
-                // Calcular volumen de la sesión sumando las distancias de los intervalos
                 decimal sessionVolumeMeters = 0;
-                foreach (var interval in session.Intervals)
+
+                if (session.Series != null)
                 {
-                    // Distancia total = distancia del intervalo * repeticiones
-                    sessionVolumeMeters += interval.Distance * interval.Repetitions;
+                    foreach (var series in session.Series)
+                    {
+                        if (series.Intervals == null) continue;
+
+                        foreach (var interval in series.Intervals)
+                        {
+                            sessionVolumeMeters += interval.Distance * interval.Repetitions;
+                        }
+                    }
                 }
 
-                // Convertir de metros a kilómetros y sumar
                 totalVolumeKm += sessionVolumeMeters / 1000m;
             }
 

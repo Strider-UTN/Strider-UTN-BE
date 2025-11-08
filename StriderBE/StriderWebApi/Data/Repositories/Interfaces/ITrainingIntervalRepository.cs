@@ -6,6 +6,7 @@ namespace StriderWebApi.Data.Repositories.Interfaces
     {
         Task<TrainingInterval?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<IEnumerable<TrainingInterval>> GetByTrainingSessionIdAsync(int trainingSessionId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<TrainingInterval>> GetByTrainingSeriesIdAsync(int trainingSeriesId, CancellationToken cancellationToken = default);
         Task<IEnumerable<TrainingInterval>> GetByTrainingTemplateIdAsync(int templateId, CancellationToken cancellationToken = default);
         Task<TrainingInterval> CreateAsync(TrainingInterval interval, CancellationToken cancellationToken = default);
         Task<int> CreateMultipleAsync(IEnumerable<TrainingInterval> intervals, CancellationToken cancellationToken = default);

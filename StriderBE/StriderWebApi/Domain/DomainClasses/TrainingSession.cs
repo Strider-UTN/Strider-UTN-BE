@@ -17,29 +17,29 @@ namespace StriderWebApi.Domain.DomainClasses
         public TrainingCategory Category { get; set; }
         public string? Notes { get; set; }
 
-        //Relación con Microcycle (REQUERIDA - porque todas las sesiones están dentro de un microciclo)
+        // Relación obligatoria con Microcycle
         public int MicrocycleId { get; set; }
         public Microcycle Microcycle { get; set; } = null!;
 
-        // NUEVO: Relación con Planning (REQUERIDA - para optimización de consultas y validación de integridad)
+        // Relación obligatoria con Planning
         public int PlanningId { get; set; }
         public Planning Planning { get; set; } = null!;
 
-        // Relación con usuario/coach que crea la sesión
+        // Coach que creó la sesión
         public int CreatedByUserId { get; set; }
         public User CreatedBy { get; set; } = null!;
 
-        // Relación opcional con plantilla (si fue creada desde una plantilla)
+        // Plantilla origen (opcional)
         public int? TemplateId { get; set; }
         public TrainingTemplate? Template { get; set; }
 
-        // Relaciones muchos a muchos con atletas
+        // Atletas asignados
         public ICollection<TrainingSessionAthlete> Athletes { get; set; } = new List<TrainingSessionAthlete>();
 
-        // Intervalos de la sesión (usando la misma entidad TrainingInterval)
-        public ICollection<TrainingInterval> Intervals { get; set; } = new List<TrainingInterval>();
+        // Series de la sesión
+        public ICollection<TrainingSeries> Series { get; set; } = new List<TrainingSeries>();
 
-        // Metadata
+        // Metadatos
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
     }

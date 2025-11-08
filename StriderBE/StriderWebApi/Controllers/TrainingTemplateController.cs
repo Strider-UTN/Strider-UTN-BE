@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Asn1.Ocsp;
 using StriderWebApi.Dto;
+using StriderWebApi.Dto.Trainings;
 using StriderWebApi.Services.Interfaces;
-using static StriderWebApi.Dto.Trainings.TrainingTemplateDto;
 
 namespace StriderWebApi.Controllers
 {
@@ -18,33 +17,25 @@ namespace StriderWebApi.Controllers
         ITrainingTemplateService trainingTemplateService,
         ILogger<TrainingTemplatesController> logger) : ControllerBase
     {
-
         /// <summary>
         /// Crea una nueva plantilla de entrenamiento
         /// </summary>
-        /// <param name="dto">Datos de la plantilla a crear</param>
-        /// <returns>La plantilla creada con su ID asignado</returns>
-        /// <response code="201">Plantilla creada exitosamente</response>
-        /// <response code="400">Datos inválidos</response>
-        /// <response code="401">No Autorizado</response>
-        /// <response code="500">Error interno del servidor</response>
-        [HttpPost("")]
+        [HttpPost]
         [Authorize]
         [ProducesResponseType(typeof(TrainingTemplateResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<TrainingTemplateResponseDto>> CreateTrainingTemplate(
-            [FromBody] CreateTrainingTemplateDto dto, CancellationToken cancellationToken)
+            [FromBody] CreateTrainingTemplateDto dto,
+            CancellationToken cancellationToken)
         {
             try
             {
-                // Validar modelo
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
                 }
 
-                // Validaciones adicionales
                 var validationResult = ValidateCreateTrainingTemplate(dto);
                 if (!validationResult.IsValid)
                 {
@@ -52,18 +43,13 @@ namespace StriderWebApi.Controllers
                 }
 
                 var responseDto = await trainingTemplateService.CreateTrainingTemplateAsync(dto, cancellationToken);
-
                 if (responseDto == null)
                 {
                     logger.LogError("Error al recuperar la plantilla creada.");
                     return StatusCode(500, new { message = "Error al crear la plantilla" });
                 }
 
-                return CreatedAtAction(
-                    nameof(GetTrainingTemplate),
-                    new { id = responseDto.Id },
-                    responseDto
-                );
+                return CreatedAtAction(nameof(GetTrainingTemplate), new { id = responseDto.Id }, responseDto);
             }
             catch (DbUpdateException ex)
             {
@@ -80,19 +66,15 @@ namespace StriderWebApi.Controllers
         /// <summary>
         /// Obtiene una plantilla por su ID
         /// </summary>
-        /// <param name="id">ID de la plantilla</param>
-        /// <returns>La plantilla solicitada</returns>
-        /// <response code="200">Plantilla encontrada</response>
-        /// <response code="401">No Autorizado</response>
-        /// <response code="404">Plantilla no encontrada</response>
         [HttpGet("{id}")]
         [Authorize]
         [ProducesResponseType(typeof(TrainingTemplateResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<TrainingTemplateResponseDto>> GetTrainingTemplate(int id, CancellationToken cancellationToken)
+        public async Task<ActionResult<TrainingTemplateResponseDto>> GetTrainingTemplate(
+            int id,
+            CancellationToken cancellationToken)
         {
             var template = await trainingTemplateService.GetTrainingTemplateByIdAsync(id, cancellationToken);
-
             if (template == null)
             {
                 return NotFound(new { message = $"No se encontró la plantilla con ID {id}" });
@@ -102,21 +84,18 @@ namespace StriderWebApi.Controllers
         }
 
         /// <summary>
-        /// Obtiene todas las plantillas del usuario
+        /// Obtiene todas las plantillas del usuario autenticado
         /// </summary>
-        /// <returns>Las plantillas creadas por el usuario</returns>
-        /// <response code="200">Plantillas encontradas</response>
-        /// <response code="401">No Autorizado</response>
-        [HttpGet("")]
+        [HttpGet]
         [Authorize]
         [ProducesResponseType(typeof(List<TrainingTemplateResponseDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<List<TrainingTemplateResponseDto>>> GetTrainingTemplate(CancellationToken cancellationToken)
+        public async Task<ActionResult<List<TrainingTemplateResponseDto>>> GetTrainingTemplate(
+            CancellationToken cancellationToken)
         {
             try
             {
-                var template = await trainingTemplateService.GetAllTrainingTemplatesAsync(cancellationToken);
-                return Ok(template);
+                var templates = await trainingTemplateService.GetAllTrainingTemplatesAsync(cancellationToken);
+                return Ok(templates);
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -131,25 +110,22 @@ namespace StriderWebApi.Controllers
         }
 
         /// <summary>
-        /// Elmina la plantilla de entrenamiento por su ID
+        /// Elimina una plantilla de entrenamiento
         /// </summary>
-        /// <response code="204">Plantilla eliminada</response>
-        /// <response code="401">No Autorizado</response>
-        /// <response code="404">Plantilla no encontrada</response>
-        /// <response code="500">Error del servidor</response>
         [HttpDelete("{id}")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult> DeleteTrainingTemplate(int id, CancellationToken cancellationToken)
         {
             try
             {
-                if( await trainingTemplateService.DeleteTrainingTemplateAsync(id, cancellationToken))
+                if (await trainingTemplateService.DeleteTrainingTemplateAsync(id, cancellationToken))
+                {
                     return NoContent();
+                }
 
-                return NotFound( new { message = $"No se encontró la plantilla con ID {id}" });
+                return NotFound(new { message = $"No se encontró la plantilla con ID {id}" });
             }
             catch (Exception ex)
             {
@@ -159,24 +135,26 @@ namespace StriderWebApi.Controllers
         }
 
         /// <summary>
-        /// Actualiza una plantilla de entrenamiento por su ID
+        /// Actualiza una plantilla de entrenamiento
         /// </summary>
-        /// <returns>La plantilla Actualizada</returns>
-        /// <response code="200">Plantilla Actualizada</response>
-        /// <response code="401">No Autorizado</response>
-        /// <response code="404">Plantilla no encontrada</response>
-        /// <response code="500">Error del servidor</response>
         [HttpPut("{id}")]
         [Authorize]
         [ProducesResponseType(typeof(TrainingTemplateResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<TrainingTemplateResponseDto>> UpdateTrainingTemplate(int id, [FromBody] CreateTrainingTemplateDto dto, CancellationToken cancellationToken)
+        public async Task<ActionResult<TrainingTemplateResponseDto>> UpdateTrainingTemplate(
+            int id,
+            [FromBody] CreateTrainingTemplateDto dto,
+            CancellationToken cancellationToken)
         {
             try
             {
-                var responseDto = await trainingTemplateService.UpdateTrainingTemplateAsync(id, dto, cancellationToken);
+                var validationResult = ValidateCreateTrainingTemplate(dto);
+                if (!validationResult.IsValid)
+                {
+                    return BadRequest(new { errors = validationResult.Errors });
+                }
 
+                var responseDto = await trainingTemplateService.UpdateTrainingTemplateAsync(id, dto, cancellationToken);
                 if (responseDto == null)
                 {
                     logger.LogError("Error al recuperar la plantilla actualizada.");
@@ -201,13 +179,13 @@ namespace StriderWebApi.Controllers
         [Authorize]
         [ProducesResponseType(typeof(TrainingTemplateResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<TrainingTemplateResponseDto>> ToggleFavoriteTemplate(int id, CancellationToken cancellationToken)
+        public async Task<ActionResult<TrainingTemplateResponseDto>> ToggleFavoriteTemplate(
+            int id,
+            CancellationToken cancellationToken)
         {
             try
             {
                 var response = await trainingTemplateService.ToggleFavoriteTemplateAsync(id, cancellationToken);
-
                 if (response == null)
                 {
                     logger.LogError("Error al recuperar la plantilla actualizada.");
@@ -228,7 +206,6 @@ namespace StriderWebApi.Controllers
             }
         }
 
-
         /// <summary>
         /// Valida los datos de creación de plantilla
         /// </summary>
@@ -236,7 +213,6 @@ namespace StriderWebApi.Controllers
         {
             var errors = new List<string>();
 
-            // Validar nombre
             if (string.IsNullOrWhiteSpace(dto.Name))
             {
                 errors.Add("El nombre de la plantilla es requerido");
@@ -246,32 +222,44 @@ namespace StriderWebApi.Controllers
                 errors.Add("El nombre de la plantilla no puede exceder 200 caracteres");
             }
 
-            // Validar duración
             if (dto.Duration <= 0)
             {
                 errors.Add("La duración debe ser mayor a 0");
             }
 
-            // Validar intervalos
-            if (dto.Intervals != null && dto.Intervals.Any())
+            if (dto.Series == null || !dto.Series.Any())
             {
-                for (int i = 0; i < dto.Intervals.Count; i++)
+                errors.Add("La plantilla debe incluir al menos una serie con intervalos");
+            }
+            else
+            {
+                for (int seriesIndex = 0; seriesIndex < dto.Series.Count; seriesIndex++)
                 {
-                    var interval = dto.Intervals[i];
-
-                    if (interval.Repetitions <= 0)
+                    var series = dto.Series[seriesIndex];
+                    if (series.Intervals == null || !series.Intervals.Any())
                     {
-                        errors.Add($"El intervalo {i + 1} debe tener al menos 1 repetición");
+                        errors.Add($"La serie {seriesIndex + 1} debe contener al menos un intervalo");
+                        continue;
                     }
 
-                    if (interval.Distance < 0)
+                    for (int intervalIndex = 0; intervalIndex < series.Intervals.Count; intervalIndex++)
                     {
-                        errors.Add($"El intervalo {i + 1} tiene una distancia inválida");
-                    }
+                        var interval = series.Intervals[intervalIndex];
 
-                    if (string.IsNullOrWhiteSpace(interval.RecoveryTime))
-                    {
-                        errors.Add($"El intervalo {i + 1} debe tener un tiempo de recuperación");
+                        if (interval.Repetitions <= 0)
+                        {
+                            errors.Add($"La serie {seriesIndex + 1}, intervalo {intervalIndex + 1} debe tener al menos 1 repetición");
+                        }
+
+                        if (interval.Distance < 0)
+                        {
+                            errors.Add($"La serie {seriesIndex + 1}, intervalo {intervalIndex + 1} tiene una distancia inválida");
+                        }
+
+                        if (string.IsNullOrWhiteSpace(interval.RecoveryTime))
+                        {
+                            errors.Add($"La serie {seriesIndex + 1}, intervalo {intervalIndex + 1} debe tener un tiempo de recuperación");
+                        }
                     }
                 }
             }

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using StriderWebApi.Domain;
 using StriderWebApi.Domain.DomainClasses;
 using StriderWebApi.Domain.Enums;
+using System.Text.Json;
 
 namespace StriderWebApi.Data
 {
@@ -26,6 +27,7 @@ namespace StriderWebApi.Data
         public DbSet<Ailment> Ailments => Set<Ailment>();
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<TrainingTemplate> TrainingTemplates => Set<TrainingTemplate>();
+        public DbSet<TrainingSeries> TrainingSeries => Set<TrainingSeries>();
         public DbSet<TrainingInterval> TrainingIntervals => Set<TrainingInterval>();
         public DbSet<TrainingSession> TrainingSessions => Set<TrainingSession>();
         public DbSet<TrainingSessionAthlete> TrainingSessionAthletes => Set<TrainingSessionAthlete>();
@@ -129,258 +131,122 @@ namespace StriderWebApi.Data
             modelBuilder.Entity<TrainingTemplate>(entity =>
             {
                 entity.ToTable("TrainingTemplates");
-
                 entity.HasKey(e => e.Id);
-
-                // Configurar Id como auto-increment
-                entity.Property(e => e.Id)
-                    .ValueGeneratedOnAdd();
-
-                // Configuración de columnas con nombres PascalCase
-                entity.Property(e => e.Name)
-                    .IsRequired()
-                    .HasMaxLength(200);
-
-                entity.Property(e => e.Description)
-                    .HasMaxLength(1000);
-
-                entity.Property(e => e.Type)
-                    .IsRequired()
-                    .HasConversion<string>()
-                    .HasMaxLength(20);
-
-                entity.Property(e => e.Category)
-                    .IsRequired()
-                    .HasConversion<string>()
-                    .HasMaxLength(30);
-
-                entity.Property(e => e.Duration)
-                    .IsRequired();
-
-                entity.Property(e => e.TargetPace)
-                    .HasMaxLength(10);
-
-                entity.Property(e => e.TargetHR)
-                    .HasMaxLength(50);
-
-                entity.Property(e => e.Notes)
-                    .HasMaxLength(2000);
-
-                entity.Property(e => e.Difficulty)
-                    .IsRequired()
-                    .HasConversion<int>();
-
-                entity.Property(e => e.IsFavorite)
-                    .IsRequired()
-                    .HasDefaultValue(false);
-
-                entity.Property(e => e.UseCount)
-                    .IsRequired()
-                    .HasDefaultValue(0);
-
-                entity.Property(e => e.CreatedAt)
-                    .IsRequired()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                // Configurar tags como JSONB (PostgreSQL)
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Description).HasMaxLength(1000);
+                entity.Property(e => e.Type).IsRequired().HasConversion<string>().HasMaxLength(20);
+                entity.Property(e => e.Category).IsRequired().HasConversion<string>().HasMaxLength(30);
+                entity.Property(e => e.Duration).IsRequired();
+                entity.Property(e => e.TargetPace).HasMaxLength(10);
+                entity.Property(e => e.TargetHR).HasMaxLength(50);
+                entity.Property(e => e.Notes).HasMaxLength(2000);
+                entity.Property(e => e.Difficulty).IsRequired().HasConversion<int>();
+                entity.Property(e => e.IsFavorite).IsRequired().HasDefaultValue(false);
+                entity.Property(e => e.UseCount).IsRequired().HasDefaultValue(0);
+                entity.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
                 entity.Property(e => e.Tags)
-                    .HasColumnType("jsonb")
-                    .HasConversion(
-                        v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
-                        v => System.Text.Json.JsonSerializer.Deserialize<string[]>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? Array.Empty<string>()
-                    )
-                    .Metadata.SetValueComparer(
-                        new ValueComparer<string[]>(
-                            (c1, c2) => c1!.SequenceEqual(c2!),
-                            c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-                            c => c.ToArray()
-                        )
-                    );
+                      .HasColumnType("jsonb")
+                      .HasConversion(
+                          v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                          v => JsonSerializer.Deserialize<string[]>(v, (JsonSerializerOptions?)null) ?? Array.Empty<string>())
+                      .Metadata.SetValueComparer(
+                          new ValueComparer<string[]>(
+                              (a, b) => a!.SequenceEqual(b!),
+                              a => a.Aggregate(0, (hash, v) => HashCode.Combine(hash, v.GetHashCode())),
+                              a => a.ToArray()));
 
-                // Warm-up y Cool-down
-                entity.Property(e => e.WarmUpPace)
-                    .HasMaxLength(10);
+                entity.Property(e => e.WarmUpPace).HasMaxLength(10);
+                entity.Property(e => e.WarmUpDescription).HasMaxLength(500);
+                entity.Property(e => e.CoolDownPace).HasMaxLength(10);
+                entity.Property(e => e.CoolDownDescription).HasMaxLength(500);
 
-                entity.Property(e => e.WarmUpDescription)
-                    .HasMaxLength(500);
+                entity.HasMany(e => e.Series)
+                      .WithOne(s => s.TrainingTemplate)
+                      .HasForeignKey(s => s.TrainingTemplateId)
+                      .OnDelete(DeleteBehavior.Cascade);
 
-                entity.Property(e => e.CoolDownPace)
-                    .HasMaxLength(10);
-
-                entity.Property(e => e.CoolDownDescription)
-                    .HasMaxLength(500);
-
-                // Índices para mejorar búsquedas
                 entity.HasIndex(e => e.Name);
                 entity.HasIndex(e => e.CreatedAt);
                 entity.HasIndex(e => e.IsFavorite);
                 entity.HasIndex(e => e.CreatedByUserId);
                 entity.HasIndex(e => new { e.Type, e.Category });
-
-                // Índice GIN para búsqueda eficiente en tags (JSONB)
-                entity.HasIndex(e => e.Tags)
-                      .HasMethod("gin");
-
-                // Relación uno a muchos con intervalos (eliminación en cascada)
-                entity.HasMany(e => e.Intervals)
-                    .WithOne(e => e.TrainingTemplate)
-                    .HasForeignKey(e => e.TrainingTemplateId)
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .IsRequired(false); // Opcional porque ahora puede pertenecer a Session
-
-                // Relación uno a muchos con sesiones (opcional, solo si agregaste la relación inversa)
-                entity.HasMany(e => e.Sessions)
-                    .WithOne(s => s.Template)
-                    .HasForeignKey(s => s.TemplateId)
-                    .OnDelete(DeleteBehavior.SetNull);
+                entity.HasIndex(e => e.Tags).HasMethod("gin");
             });
 
             // Configuración de TrainingInterval
             modelBuilder.Entity<TrainingInterval>(entity =>
             {
                 entity.ToTable("TrainingIntervals");
-
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.Type).IsRequired().HasConversion<string>().HasMaxLength(20);
+                entity.Property(e => e.Repetitions).IsRequired();
+                entity.Property(e => e.Distance).IsRequired();
+                entity.Property(e => e.TargetTime).HasMaxLength(10);
+                entity.Property(e => e.RecoveryTime).IsRequired().HasMaxLength(10).HasDefaultValue("00:00");
+                entity.Property(e => e.PaceType).IsRequired().HasConversion<string>();
+                entity.Property(e => e.Description).HasMaxLength(500);
+                entity.Property(e => e.Intensity).HasConversion<string>();
+                entity.Property(e => e.TrainingMode).HasConversion<string>();
+                entity.Property(e => e.Duration).HasMaxLength(10);
+                entity.Property(e => e.TargetSpeed).HasMaxLength(10);
+                entity.Property(e => e.OrderIndex).IsRequired();
+                entity.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                // Configurar Id como auto-increment
-                entity.Property(e => e.Id)
-                    .ValueGeneratedOnAdd();
+                entity.HasOne(e => e.TrainingSeries)
+                      .WithMany(s => s.Intervals)
+                      .HasForeignKey(e => e.TrainingSeriesId)
+                      .OnDelete(DeleteBehavior.Cascade);
 
-                // Relación opcional con Template
-                entity.HasOne(e => e.TrainingTemplate)
-                    .WithMany(t => t.Intervals)
-                    .HasForeignKey(e => e.TrainingTemplateId)
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .IsRequired(false);
-
-                // Relación opcional con Session
-                entity.HasOne(e => e.TrainingSession)
-                    .WithMany(s => s.Intervals)
-                    .HasForeignKey(e => e.TrainingSessionId)
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .IsRequired(false);
-
-                // Check constraint (usando ToTable con HasCheckConstraint)
-                entity.ToTable(tb => tb.HasCheckConstraint(
-                    "CK_TrainingInterval_SingleParent",
-                    "((\"TrainingTemplateId\" IS NULL AND \"TrainingSessionId\" IS NOT NULL) OR " +
-                    "(\"TrainingTemplateId\" IS NOT NULL AND \"TrainingSessionId\" IS NULL))"
-                ));
-
-                entity.Property(e => e.Type)
-                    .IsRequired()
-                    .HasConversion<string>()
-                    .HasMaxLength(20);
-
-                entity.Property(e => e.Repetitions)
-                    .IsRequired();
-
-                entity.Property(e => e.Distance)
-                    .IsRequired();
-
-                entity.Property(e => e.TargetTime)
-                    .HasMaxLength(10);
-
-                entity.Property(e => e.RecoveryTime)
-                    .IsRequired()
-                    .HasMaxLength(10)
-                    .HasDefaultValue("00:00");
-
-                entity.Property(e => e.PaceType)
-                    .IsRequired()
-                    .HasConversion<string>();
-
-                entity.Property(e => e.Description)
-                    .HasMaxLength(500);
-
-                entity.Property(e => e.Intensity)
-                    .HasConversion<string>();
-
-                entity.Property(e => e.TrainingMode)
-                    .HasConversion<string>();
-
-                entity.Property(e => e.Duration)
-                    .HasMaxLength(10);
-
-                entity.Property(e => e.TargetSpeed)
-                    .HasMaxLength(10);
-
-                entity.Property(e => e.OrderIndex)
-                    .IsRequired();
-
-                entity.Property(e => e.CreatedAt)
-                    .IsRequired()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                entity.HasIndex(e => e.TrainingTemplateId);
-                entity.HasIndex(e => e.TrainingSessionId);
-                entity.HasIndex(e => new { e.TrainingTemplateId, e.OrderIndex });
-                entity.HasIndex(e => new { e.TrainingSessionId, e.OrderIndex });
+                entity.HasIndex(e => e.TrainingSeriesId);
+                entity.HasIndex(e => new { e.TrainingSeriesId, e.OrderIndex });
             });
 
             // Configuración de TrainingSession
             modelBuilder.Entity<TrainingSession>(entity =>
             {
                 entity.ToTable("TrainingSessions");
-
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Description).HasMaxLength(1000);
+                entity.Property(e => e.Date).IsRequired();
+                entity.Property(e => e.Category).IsRequired().HasConversion<string>().HasMaxLength(30);
+                entity.Property(e => e.Notes).HasMaxLength(2000);
+                entity.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                // Configurar Id como auto-increment
-                entity.Property(e => e.Id)
-                    .ValueGeneratedOnAdd();
-
-                entity.Property(e => e.Name)
-                    .IsRequired()
-                    .HasMaxLength(200);
-
-                entity.Property(e => e.Description)
-                    .HasMaxLength(1000);
-
-                entity.Property(e => e.Date)
-                    .IsRequired();
-
-                entity.Property(e => e.Category)
-                    .IsRequired()
-                    .HasConversion<string>()
-                    .HasMaxLength(30);
-
-                entity.Property(e => e.Notes)
-                    .HasMaxLength(2000);
-
-                // Relación con Microcycle (REQUERIDA - un entrenamiento pertenece a un solo microciclo)
                 entity.HasOne(e => e.Microcycle)
-                    .WithMany(e => e.TrainingSessions)
-                    .HasForeignKey(e => e.MicrocycleId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                      .WithMany(e => e.TrainingSessions)
+                      .HasForeignKey(e => e.MicrocycleId)
+                      .OnDelete(DeleteBehavior.Cascade);
 
-                // Relación con el usuario que crea
+                entity.HasOne(e => e.Planning)
+                      .WithMany(e => e.TrainingSessions)
+                      .HasForeignKey(e => e.PlanningId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
                 entity.HasOne(e => e.CreatedBy)
-                    .WithMany()
-                    .HasForeignKey(e => e.CreatedByUserId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                      .WithMany()
+                      .HasForeignKey(e => e.CreatedByUserId)
+                      .OnDelete(DeleteBehavior.Restrict);
 
-                // Relación opcional con Template
                 entity.HasOne(e => e.Template)
-                    .WithMany(t => t.Sessions)
-                    .HasForeignKey(e => e.TemplateId)
-                    .OnDelete(DeleteBehavior.SetNull);
+                      .WithMany(t => t.Sessions)
+                      .HasForeignKey(e => e.TemplateId)
+                      .OnDelete(DeleteBehavior.SetNull);
 
-                // Metadata
-                entity.Property(e => e.CreatedAt)
-                    .IsRequired()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                entity.HasMany(e => e.Series)
+                      .WithOne(s => s.TrainingSession)
+                      .HasForeignKey(s => s.TrainingSessionId)
+                      .OnDelete(DeleteBehavior.Cascade);
 
-                entity.Property(e => e.UpdatedAt);
-
-                // Índices para mejorar búsquedas
-                entity.HasIndex(e => e.PlanningId); // NUEVO
-                entity.HasIndex(e => e.MicrocycleId); // NUEVO
+                entity.HasIndex(e => e.PlanningId);
+                entity.HasIndex(e => e.MicrocycleId);
                 entity.HasIndex(e => e.Date);
                 entity.HasIndex(e => e.CreatedByUserId);
-                entity.HasIndex(e => e.TemplateId);
                 entity.HasIndex(e => e.Category);
-                entity.HasIndex(e => e.CreatedAt);
-                entity.HasIndex(e => new { e.CreatedByUserId, e.Date });
+                entity.HasIndex(e => e.TemplateId);
             });
 
             // Configuración de TrainingSessionAthlete
@@ -875,6 +741,47 @@ namespace StriderWebApi.Data
                 // Índices adicionales
                 entity.HasIndex(e => e.PlanningId);
                 entity.HasIndex(e => e.AthleteId);
+            });
+
+            modelBuilder.Entity<TrainingSeries>(entity =>
+            {
+                entity.ToTable("TrainingSeries");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Repetitions).IsRequired().HasDefaultValue(1);
+                entity.Property(e => e.RecoveryBetweenSets).IsRequired().HasMaxLength(10).HasDefaultValue("00:00");
+                entity.Property(e => e.OrderIndex).IsRequired();
+                entity.Property(e => e.Notes).HasMaxLength(1000);
+                entity.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                entity.HasOne(e => e.TrainingSession)
+                      .WithMany(s => s.Series)
+                      .HasForeignKey(e => e.TrainingSessionId)
+                      .OnDelete(DeleteBehavior.Cascade)
+                      .IsRequired(false);
+
+                entity.HasOne(e => e.TrainingTemplate)
+                      .WithMany(t => t.Series)
+                      .HasForeignKey(e => e.TrainingTemplateId)
+                      .OnDelete(DeleteBehavior.Cascade)
+                      .IsRequired(false);
+
+                entity.HasMany(e => e.Intervals)
+                      .WithOne(i => i.TrainingSeries)
+                      .HasForeignKey(i => i.TrainingSeriesId)
+                      .OnDelete(DeleteBehavior.Cascade)
+                      .IsRequired();
+
+                entity.HasIndex(e => e.TrainingSessionId);
+                entity.HasIndex(e => e.TrainingTemplateId);
+                entity.HasIndex(e => new { e.TrainingSessionId, e.OrderIndex });
+                entity.HasIndex(e => new { e.TrainingTemplateId, e.OrderIndex });
+
+                entity.ToTable(tb => tb.HasCheckConstraint(
+                    "CK_TrainingSeries_SingleParent",
+                    "((\"TrainingSessionId\" IS NULL AND \"TrainingTemplateId\" IS NOT NULL) OR " +
+                    "(\"TrainingSessionId\" IS NOT NULL AND \"TrainingTemplateId\" IS NULL))"));
             });
         }
         #endregion

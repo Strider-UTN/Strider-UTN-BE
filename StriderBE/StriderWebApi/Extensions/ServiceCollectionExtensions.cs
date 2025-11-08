@@ -108,6 +108,7 @@ namespace StriderWebApi.Extensions
             services.AddScoped<IMicrocycleRepository, MicrocycleRepository>();
             services.AddScoped<ITrainingIntervalRepository, TrainingIntervalRepository>();
             services.AddScoped<ITrainingSessionAthleteRepository, TrainingSessionAthleteRepository>();
+            services.AddScoped<ITrainingSeriesRepository, TrainingSeriesRepository>();
 
             return services;
         }

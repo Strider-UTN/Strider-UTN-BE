@@ -11,6 +11,8 @@ namespace StriderWebApi.Data.Repositories
             return await context.TrainingSessions
                 .Include(s => s.Planning)
                 .Include(s => s.Microcycle)
+                .Include(s => s.Series)
+                    .ThenInclude(series => series.Intervals)
                 .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
         }
 
@@ -19,6 +21,8 @@ namespace StriderWebApi.Data.Repositories
             return await context.TrainingSessions
                 .Include(s => s.Planning)
                 .Include(s => s.Microcycle)
+                .Include(s => s.Series)
+                    .ThenInclude(series => series.Intervals)
                 .ToListAsync(cancellationToken);
         }
 
@@ -26,7 +30,8 @@ namespace StriderWebApi.Data.Repositories
         {
             return await context.TrainingSessions
                 .Include(s => s.Microcycle)
-                .Include(s => s.Intervals)
+                .Include(s => s.Series)
+                    .ThenInclude(series => series.Intervals)
                 .Include(s => s.Athletes)
                     .ThenInclude(a => a.Athlete)
                 .Where(s => s.PlanningId == planningId)
@@ -37,7 +42,8 @@ namespace StriderWebApi.Data.Repositories
         public async Task<IEnumerable<TrainingSession>> GetByMicrocycleIdAsync(int microcycleId, CancellationToken cancellationToken = default)
         {
             return await context.TrainingSessions
-                .Include(s => s.Intervals)
+                .Include(s => s.Series)
+                    .ThenInclude(series => series.Intervals)
                 .Where(s => s.MicrocycleId == microcycleId)
                 .OrderBy(s => s.Date)
                 .ToListAsync(cancellationToken);
@@ -98,13 +104,25 @@ namespace StriderWebApi.Data.Repositories
             var session = await context.TrainingSessions
                 .Include(s => s.Athletes)
                     .ThenInclude(a => a.Athlete)
-                .Include(s => s.Intervals)
+                .Include(s => s.Series)
+                    .ThenInclude(series => series.Intervals)
                 .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 
-            // Ordenar intervalos por OrderIndex después de cargarlos
-            if (session?.Intervals != null)
+            if (session?.Series != null)
             {
-                session.Intervals = session.Intervals.OrderBy(i => i.OrderIndex).ToList();
+                foreach (var series in session.Series)
+                {
+                    if (series.Intervals != null)
+                    {
+                        series.Intervals = series.Intervals
+                            .OrderBy(i => i.OrderIndex)
+                            .ToList();
+                    }
+                }
+
+                session.Series = session.Series
+                    .OrderBy(s => s.OrderIndex)
+                    .ToList();
             }
 
             return session;
@@ -116,7 +134,8 @@ namespace StriderWebApi.Data.Repositories
                 .Include(s => s.Planning)
                 .Include(s => s.Microcycle)
                 .Include(s => s.Athletes)
-                .Include(s => s.Intervals)
+                .Include(s => s.Series)
+                    .ThenInclude(series => series.Intervals)
                 .Where(s => s.Athletes.Any(a => a.AthleteId == athleteId));
 
             if (planningId.HasValue)

@@ -4,69 +4,127 @@ using StriderWebApi.Domain.DomainClasses;
 
 namespace StriderWebApi.Data.Repositories
 {
-    public class TrainingTemplateRepository : ITrainingTemplateRepository
+    public class TrainingTemplateRepository(StriderDbContext context) : ITrainingTemplateRepository
     {
-        private readonly StriderDbContext _context;
-
-        public TrainingTemplateRepository(StriderDbContext context)
-        {
-            _context = context;
-        }
         public async Task AddTrainingTemplateAsync(TrainingTemplate trainingTemplate, CancellationToken cancellationToken)
         {
-            // Guardar en la base de datos
-            await _context.TrainingTemplates.AddAsync(trainingTemplate, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            await context.TrainingTemplates.AddAsync(trainingTemplate, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<TrainingTemplate?> GetTrainingTemplateByIdAsync(int id, CancellationToken cancellationToken)
         {
-            // Cargar la plantilla con sus intervalos para retornar
-            return await _context.TrainingTemplates
-                .Include(t => t.Intervals.OrderBy(i => i.OrderIndex))
+            return await context.TrainingTemplates
+                .Include(t => t.Series)
+                    .ThenInclude(series => series.Intervals)
                 .AsTracking()
                 .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
         }
+
         public async Task<List<TrainingTemplate>> GetAllTrainingTemplatesAsync(int userId, CancellationToken cancellationToken)
         {
-            // Cargar las plantillas del usuario con sus intervalos para retornar
-            return await _context.TrainingTemplates
-                .Include(t => t.Intervals.OrderBy(i => i.OrderIndex))
+            return await context.TrainingTemplates
+                .Include(t => t.Series)
+                    .ThenInclude(series => series.Intervals)
                 .Where(t => t.CreatedByUserId == userId)
                 .ToListAsync(cancellationToken);
         }
 
         public async Task<bool> DeleteTrainingTemplateAsync(int id, CancellationToken cancellationToken)
         {
-            var deletedTemplates = await _context.TrainingTemplates
+            var deletedTemplates = await context.TrainingTemplates
                 .Where(t => t.Id == id)
                 .ExecuteDeleteAsync(cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
-            return deletedTemplates > 0;
+
+            if (deletedTemplates > 0)
+            {
+                await context.SaveChangesAsync(cancellationToken);
+                return true;
+            }
+
+            return false;
         }
 
         public async Task UpdateTrainingTemplateAsync(TrainingTemplate trainingTemplate, CancellationToken cancellationToken)
         {
-            // Si la entidad no está trackeada, marcarla como modificada
-            if (_context.Entry(trainingTemplate).State == EntityState.Detached)
+            if (context.Entry(trainingTemplate).State == EntityState.Detached)
             {
-                _context.TrainingTemplates.Update(trainingTemplate);
+                context.TrainingTemplates.Update(trainingTemplate);
             }
 
-            await _context.SaveChangesAsync(cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task DeleteAllAsociatedIntervalsAsync(int id, CancellationToken cancellationToken)
+        public async Task DeleteSeriesByTemplateIdAsync(int templateId, CancellationToken cancellationToken)
         {
-            await _context.TrainingIntervals
-                    .Where(i => i.TrainingTemplateId == id)
-                    .ExecuteDeleteAsync(cancellationToken);
+            await context.TrainingSeries
+                .Where(s => s.TrainingTemplateId == templateId)
+                .ExecuteDeleteAsync(cancellationToken);
         }
 
-        public async Task AddTrainingIntervalsToTemplateAsync(List<TrainingInterval> trainingIntervals, CancellationToken cancellationToken)
+        public async Task DeleteSeriesBySessionIdAsync(int sessionId, CancellationToken cancellationToken)
         {
-            await _context.TrainingIntervals.AddRangeAsync(trainingIntervals, cancellationToken);
-            await _context.SaveChangesAsync();
+            await context.TrainingSeries
+                .Where(s => s.TrainingSessionId == sessionId)
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+
+        public async Task AddSeriesAsync(IEnumerable<TrainingSeries> series, CancellationToken cancellationToken)
+        {
+            var seriesList = series.ToList();
+            if (!seriesList.Any())
+            {
+                return;
+            }
+
+            var now = DateTime.UtcNow;
+            foreach (var trainingSeries in seriesList)
+            {
+                trainingSeries.CreatedAt = now;
+                trainingSeries.UpdatedAt = now;
+
+                if (trainingSeries.Intervals != null)
+                {
+                    foreach (var interval in trainingSeries.Intervals)
+                    {
+                        interval.CreatedAt = now;
+                        interval.UpdatedAt = now;
+                    }
+                }
+            }
+
+            await context.TrainingSeries.AddRangeAsync(seriesList, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        public async Task ReplaceSeriesForTemplateAsync(int templateId, IEnumerable<TrainingSeries> series, CancellationToken cancellationToken)
+        {
+            await DeleteSeriesByTemplateIdAsync(templateId, cancellationToken);
+            await AddSeriesAsync(series, cancellationToken);
+        }
+
+        public async Task ReplaceSeriesForSessionAsync(int sessionId, IEnumerable<TrainingSeries> series, CancellationToken cancellationToken)
+        {
+            await DeleteSeriesBySessionIdAsync(sessionId, cancellationToken);
+            await AddSeriesAsync(series, cancellationToken);
+        }
+
+        public async Task<List<TrainingSeries>> GetSeriesByTemplateIdAsync(int templateId, CancellationToken cancellationToken)
+        {
+            return await context.TrainingSeries
+                .Include(s => s.Intervals)
+                .Where(s => s.TrainingTemplateId == templateId)
+                .OrderBy(s => s.OrderIndex)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<TrainingSeries>> GetSeriesBySessionIdAsync(int sessionId, CancellationToken cancellationToken)
+        {
+            return await context.TrainingSeries
+                .Include(s => s.Intervals)
+                .Where(s => s.TrainingSessionId == sessionId)
+                .OrderBy(s => s.OrderIndex)
+                .ToListAsync(cancellationToken);
         }
     }
 }
