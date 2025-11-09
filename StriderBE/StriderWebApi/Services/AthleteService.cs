@@ -88,5 +88,25 @@ namespace StriderWebApi.Services
             
             await _athleteRepository.UpdateAthleteAsync(domainAthlete);
         }
+
+        public async Task<bool> GetActiveStatusAsync(int athleteId, CancellationToken cancellationToken = default)
+        {
+            var status = await _athleteRepository.GetActiveStatusAsync(athleteId, cancellationToken);
+            if (!status.HasValue)
+            {
+                throw new AthleteNotFoundException();
+            }
+
+            return status.Value;
+        }
+
+        public async Task UpdateActiveStatusAsync(int athleteId, bool isActive, CancellationToken cancellationToken = default)
+        {
+            var updated = await _athleteRepository.UpdateActiveStatusAsync(athleteId, isActive, cancellationToken);
+            if (!updated)
+            {
+                throw new AthleteNotFoundException();
+            }
+        }
     }
 }

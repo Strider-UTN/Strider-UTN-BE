@@ -11,6 +11,7 @@ namespace StriderWebApi.Data.Repositories
             return await context.PlanningAthletes
                 .Include(pa => pa.Planning)
                 .Include(pa => pa.Athlete)
+                    .ThenInclude(a => a.Injuries)
                 .FirstOrDefaultAsync(pa => pa.Id == id, cancellationToken);
         }
 
@@ -18,6 +19,7 @@ namespace StriderWebApi.Data.Repositories
         {
             return await context.PlanningAthletes
                 .Include(pa => pa.Athlete)
+                    .ThenInclude(a => a.Injuries)
                 .Where(pa => pa.PlanningId == planningId)
                 .ToListAsync(cancellationToken);
         }

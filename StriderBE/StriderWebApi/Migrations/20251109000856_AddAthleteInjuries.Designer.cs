@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StriderWebApi.Data;
@@ -12,9 +13,11 @@ using StriderWebApi.Data;
 namespace StriderWebApi.Migrations
 {
     [DbContext(typeof(StriderDbContext))]
-    partial class StriderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251109000856_AddAthleteInjuries")]
+    partial class AddAthleteInjuries
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -125,10 +128,6 @@ namespace StriderWebApi.Migrations
                     b.Property<DateTime>("DiagnosisDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ImpactOnTraining")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.Property<string>("Notes")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
@@ -153,10 +152,6 @@ namespace StriderWebApi.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Treatment")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

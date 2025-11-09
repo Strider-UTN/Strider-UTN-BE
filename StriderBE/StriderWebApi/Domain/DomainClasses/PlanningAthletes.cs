@@ -9,7 +9,7 @@ namespace StriderWebApi.Domain.DomainClasses
         public int PlanningId { get; set; }
         public Planning Planning { get; set; } = null!;
         public int AthleteId { get; set; }
-        public User Athlete { get; set; } = null!;
+        public Athlete Athlete { get; set; } = null!;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     }

@@ -1,16 +1,23 @@
 using StriderWebApi.Data.Repositories.Interfaces;
+using StriderWebApi.Domain.Enums;
 using StriderWebApi.Dto.Coach;
+using StriderWebApi.Dto.Injuries;
 using StriderWebApi.Exceptions.Coach;
 using StriderWebApi.Model;
 using StriderWebApi.Services.Interfaces;
+using System.Linq;
 
 namespace StriderWebApi.Services;
 
-public class CoachService(ICoachRepository coachRepository, IAthleteService athleteService) : ICoachService
+public class CoachService(
+    ICoachRepository coachRepository,
+    IAthleteService athleteService,
+    IAthleteInjuryRepository athleteInjuryRepository) : ICoachService
 {
 
     private readonly ICoachRepository _coachRepository = coachRepository;
     private readonly IAthleteService _athleteService = athleteService;
+    private readonly IAthleteInjuryRepository _athleteInjuryRepository = athleteInjuryRepository;
 
     public async Task<Coach> GetCoachById(int id)
     {
@@ -32,12 +39,9 @@ public class CoachService(ICoachRepository coachRepository, IAthleteService athl
     public async Task<CoachResponseDTO> GetCoachIndividualAthletes(int coachId)
     {
         Coach coach = await GetCoachById(coachId);
-        return new CoachResponseDTO
+        var response = new CoachResponseDTO
         {
             Name = coach.Name,
-            TotalAthletes = coach.TotalIndividualAthletes(),
-            ActiveAthletes = coach.ActiveIndividualAthletes(),
-            InactiveAthletes = coach.InactiveIndividualAthletes(),
             WorkoutsCompleted = coach.TotalWorkoutsCompletedByIndividualAthletes(),
             Athletes = coach.Athletes.Select(a => new CoachResponseDTO.Athlete
             {
@@ -60,6 +64,20 @@ public class CoachService(ICoachRepository coachRepository, IAthleteService athl
 
             }).ToList()
         };
+
+        foreach (var athlete in response.Athletes)
+        {
+            var activeInjuries = await _athleteInjuryRepository.GetByAthleteIdAndStatusAsync(athlete.Id, InjuryStatus.Active);
+            var summaries = activeInjuries.Select(MapToInjurySummary).ToList();
+            athlete.HasActiveInjury = summaries.Count > 0;
+            athlete.ActiveInjuries = summaries;
+        }
+
+        response.TotalAthletes = response.Athletes.Count;
+        response.ActiveAthletes = response.Athletes.Count(a => !a.HasActiveInjury);
+        response.InactiveAthletes = response.TotalAthletes - response.ActiveAthletes;
+
+        return response;
     }
 
     public async Task PostWorkoutFeedbackAsync(int athleteId, int workoutId, CoachFeedbackDTO feedback)
@@ -72,5 +90,21 @@ public class CoachService(ICoachRepository coachRepository, IAthleteService athl
             lap.CoachFeedback = feedback.LapFeedbacks[index];
         }
         await _athleteService.UpdateAthlete(athlete);
+    }
+
+    private static AthleteInjurySummaryDto MapToInjurySummary(Domain.DomainClasses.AthleteInjury injury)
+    {
+        return new AthleteInjurySummaryDto
+        {
+            Id = injury.Id,
+            Title = injury.Title,
+            Severity = injury.Severity,
+            Status = injury.Status,
+            AffectedArea = injury.AffectedArea,
+            DiagnosisDate = injury.DiagnosisDate,
+            RecoveryEstimateDate = injury.RecoveryEstimateDate,
+            RecoveryDate = injury.RecoveryDate,
+            Notes = injury.Notes
+        };
     }
 }

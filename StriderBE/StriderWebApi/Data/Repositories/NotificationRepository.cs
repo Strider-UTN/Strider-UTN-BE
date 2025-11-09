@@ -34,16 +34,16 @@ namespace StriderWebApi.Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task AddAsync(Notification notification)
+        public async Task AddAsync(Notification notification, CancellationToken cancellationToken = default)
         {
-            await _context.Notifications.AddAsync(notification);
-            await _context.SaveChangesAsync();
+            await _context.Notifications.AddAsync(notification, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task AddRangeAsync(IEnumerable<Notification> notifications)
+        public async Task AddRangeAsync(IEnumerable<Notification> notifications, CancellationToken cancellationToken = default)
         {
-            await _context.Notifications.AddRangeAsync(notifications);
-            await _context.SaveChangesAsync();
+            await _context.Notifications.AddRangeAsync(notifications, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task MarkAsReadAsync(Notification notification)

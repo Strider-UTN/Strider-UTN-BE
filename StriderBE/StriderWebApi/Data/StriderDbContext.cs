@@ -24,7 +24,7 @@ namespace StriderWebApi.Data
         public DbSet<Team> Teams => Set<Team>();
         public DbSet<TrainingLocation> TrainingLocations => Set<TrainingLocation>();
         public DbSet<TrainingPlan> TrainingPlans => Set<TrainingPlan>();
-        public DbSet<Ailment> Ailments => Set<Ailment>();
+        public DbSet<AthleteInjury> AthleteInjuries => Set<AthleteInjury>();
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<TrainingTemplate> TrainingTemplates => Set<TrainingTemplate>();
         public DbSet<TrainingSeries> TrainingSeries => Set<TrainingSeries>();
@@ -92,32 +92,63 @@ namespace StriderWebApi.Data
                 .Property(tp => tp.Id)
                 .ValueGeneratedOnAdd();
 
-            modelBuilder.Entity<Ailment>()
-                .HasDiscriminator<string>("AilmentType")
-                .HasValue<Injury>(nameof(Injury))
-                .HasValue<Illness>(nameof(Illness));
+            modelBuilder.Entity<AthleteInjury>(entity =>
+            {
+                entity.ToTable("AthleteInjuries");
+                entity.HasKey(i => i.Id);
+                entity.Property(i => i.Id).ValueGeneratedOnAdd();
 
-            modelBuilder.Entity<Ailment>()
-                .HasOne(a => a.Athlete)
-                .WithMany(a => a.Ailments)
-                .HasForeignKey(a => a.AthleteId)
-                .OnDelete(DeleteBehavior.Cascade);
+                entity.Property(i => i.Title)
+                    .IsRequired()
+                    .HasMaxLength(200);
 
-            modelBuilder.Entity<Ailment>()
-                .Property(a => a.Severity)
-                .HasConversion<string>();
+                entity.Property(i => i.Description)
+                    .HasMaxLength(2000);
 
-            modelBuilder.Entity<Injury>()
-                .Property(i => i.Type)
-                .HasConversion<string>();
+                entity.Property(i => i.Notes)
+                    .HasMaxLength(2000);
 
-            modelBuilder.Entity<Injury>()
-                .Property(i => i.Location)
-                .HasConversion<string>();
+                entity.Property(i => i.Severity)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
 
-            modelBuilder.Entity<Illness>()
-                .Property(i => i.Type)
-                .HasConversion<string>();
+                entity.Property(i => i.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(i => i.AffectedArea)
+                    .HasConversion<string>()
+                    .HasMaxLength(30);
+
+                entity.Property(i => i.DiagnosisDate)
+                    .IsRequired();
+
+                entity.Property(i => i.RecoveryEstimateDate);
+                entity.Property(i => i.RecoveryDate);
+
+                entity.Property(i => i.Treatment)
+                    .HasConversion<string>()
+                    .HasMaxLength(50);
+
+                entity.Property(i => i.ImpactOnTraining)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(i => i.CreatedAt)
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                    .ValueGeneratedOnAdd();
+
+                entity.Property(i => i.UpdatedAt);
+
+                entity.HasOne(i => i.Athlete)
+                    .WithMany(a => a.Injuries)
+                    .HasForeignKey(i => i.AthleteId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(i => i.AthleteId);
+                entity.HasIndex(i => new { i.AthleteId, i.Status });
+                entity.HasIndex(i => i.DiagnosisDate);
+            });
 
             modelBuilder.Entity<Notification>()
                 .Property(n => n.Id)

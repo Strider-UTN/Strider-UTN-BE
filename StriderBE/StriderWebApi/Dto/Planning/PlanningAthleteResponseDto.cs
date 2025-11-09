@@ -1,4 +1,6 @@
-﻿namespace StriderWebApi.Dto.Planning
+﻿using StriderWebApi.Dto.Injuries;
+
+namespace StriderWebApi.Dto.Planning
 {
     /// <summary>
     /// DTO de respuesta para un atleta asignado a una planificación
@@ -11,5 +13,7 @@
         public string AthleteEmail { get; set; } = string.Empty;
         public int PlanningId { get; set; }
         public DateTime AssignedAt { get; set; }
+        public bool HasActiveInjury { get; set; }
+        public List<AthleteInjurySummaryDto> ActiveInjuries { get; set; } = [];
     }
 }

@@ -1,10 +1,13 @@
 ﻿using StriderWebApi.Data.Repositories;
 using StriderWebApi.Data.Repositories.Interfaces;
 using StriderWebApi.Domain.DomainClasses;
+using StriderWebApi.Domain.Enums;
+using StriderWebApi.Dto.Injuries;
 using StriderWebApi.Dto.Planning;
 using StriderWebApi.Exceptions;
 using StriderWebApi.Services.Interfaces;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace StriderWebApi.Services
 {
@@ -199,14 +202,25 @@ namespace StriderWebApi.Services
             var planningAthletes = await planningAthleteRepository.GetByPlanningIdAsync(planningId, cancellationToken);
 
             // Mapear a DTOs
-            return planningAthletes.Select(pa => new PlanningAthleteResponseDto
+            return planningAthletes.Select(pa =>
             {
-                Id = pa.Id,
-                AthleteId = pa.AthleteId,
-                AthleteName = pa.Athlete?.FullName ?? string.Empty,
-                AthleteEmail = pa.Athlete?.Email ?? string.Empty,
-                PlanningId = pa.PlanningId,
-                AssignedAt = pa.CreatedAt
+                var activeInjuries = pa.Athlete?.Injuries?
+                    .Where(injury => injury.Status == InjuryStatus.Active)
+                    .OrderByDescending(injury => injury.DiagnosisDate)
+                    .ThenByDescending(injury => injury.Id)
+                    .ToList() ?? new List<AthleteInjury>();
+
+                return new PlanningAthleteResponseDto
+                {
+                    Id = pa.Id,
+                    AthleteId = pa.AthleteId,
+                    AthleteName = pa.Athlete?.FullName ?? string.Empty,
+                    AthleteEmail = pa.Athlete?.Email ?? string.Empty,
+                    PlanningId = pa.PlanningId,
+                    AssignedAt = pa.CreatedAt,
+                    HasActiveInjury = activeInjuries.Count > 0,
+                    ActiveInjuries = activeInjuries.Select(MapToInjurySummary).ToList()
+                };
             });
         }
 
@@ -227,6 +241,22 @@ namespace StriderWebApi.Services
                 PeriodsCount = planning.Periods?.Count ?? 0,
                 CreatedAt = planning.CreatedAt,
                 UpdatedAt = planning.UpdatedAt
+            };
+        }
+
+        private static AthleteInjurySummaryDto MapToInjurySummary(AthleteInjury injury)
+        {
+            return new AthleteInjurySummaryDto
+            {
+                Id = injury.Id,
+                Title = injury.Title,
+                Severity = injury.Severity,
+                Status = injury.Status,
+                AffectedArea = injury.AffectedArea,
+                DiagnosisDate = injury.DiagnosisDate,
+                RecoveryEstimateDate = injury.RecoveryEstimateDate,
+                RecoveryDate = injury.RecoveryDate,
+                Notes = injury.Notes
             };
         }
     }

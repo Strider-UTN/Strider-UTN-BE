@@ -54,12 +54,19 @@ namespace StriderWebApi.Dto.Trainings
         public List<TrainingSeriesResponseDto> Series { get; set; } = new();
 
         /// <summary>
+        /// Intervalos planos (útil para estructuras simples).
+        /// </summary>
+        public List<TrainingIntervalResponseDto> Intervals { get; set; } = new();
+
+        /// <summary>
         /// Indica si la sesión se construyó con intervalos simples o series avanzadas.
         /// </summary>
         public string StructureType { get; set; } = "simple";
 
         public string? Notes { get; set; }
         public decimal Volume { get; set; } // Volumen calculado desde intervalos (en km)
+        public int EstimatedWorkSeconds { get; set; }
+        public int EstimatedRecoverySeconds { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }

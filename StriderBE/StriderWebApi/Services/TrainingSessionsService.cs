@@ -5,6 +5,8 @@ using StriderWebApi.Dto.Trainings;
 using StriderWebApi.Exceptions;
 using StriderWebApi.Services.Interfaces;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
+using System.Xml;
 
 namespace StriderWebApi.Services
 {
@@ -312,6 +314,8 @@ namespace StriderWebApi.Services
             var orderedIntervals = orderedSeries
                 .SelectMany(s => (s.Intervals ?? new List<TrainingInterval>()).OrderBy(i => i.OrderIndex))
                 .ToList();
+            var (estimatedWorkSeconds, estimatedRecoverySeconds) = CalculateEstimatedTimes(orderedSeries);
+            var structureType = DetermineStructureType(session);
 
             return new TrainingSessionResponseDto
             {
@@ -338,9 +342,14 @@ namespace StriderWebApi.Services
                             .ToList()
                     })
                     .ToList(),
-                StructureType = DetermineStructureType(session),
+                Intervals = orderedIntervals
+                    .Select(MapToTrainingIntervalResponseDto)
+                    .ToList(),
+                StructureType = structureType,
                 Notes = session.Notes,
                 Volume = sessionVolume,
+                EstimatedWorkSeconds = estimatedWorkSeconds,
+                EstimatedRecoverySeconds = estimatedRecoverySeconds,
                 CreatedAt = session.CreatedAt,
                 UpdatedAt = session.UpdatedAt
             };
@@ -366,6 +375,150 @@ namespace StriderWebApi.Services
                 TargetSpeed = interval.TargetSpeed,
                 OrderIndex = interval.OrderIndex
             };
+        }
+
+        private static (int WorkSeconds, int RecoverySeconds) CalculateEstimatedTimes(IEnumerable<TrainingSeries> seriesCollection)
+        {
+            var totalWorkSeconds = 0;
+            var totalRecoverySeconds = 0;
+
+            foreach (var series in seriesCollection)
+            {
+                if (series == null)
+                {
+                    continue;
+                }
+
+                var seriesRepetitions = Math.Max(series.Repetitions, 1);
+                var betweenSetsRecoverySeconds = ParseTimeStringToSeconds(series.RecoveryBetweenSets) ?? 0;
+
+                if (betweenSetsRecoverySeconds > 0 && seriesRepetitions > 1)
+                {
+                    totalRecoverySeconds += betweenSetsRecoverySeconds * (seriesRepetitions - 1);
+                }
+
+                if (series.Intervals == null)
+                {
+                    continue;
+                }
+
+                foreach (var interval in series.Intervals)
+                {
+                    if (interval == null)
+                    {
+                        continue;
+                    }
+
+                    var intervalRepetitions = Math.Max(interval.Repetitions, 1);
+                    var paceSeconds = ParsePaceSeconds(interval);
+                    var distanceKm = interval.Distance > 0 ? (double)interval.Distance / 1000d : 0d;
+
+                    if (paceSeconds > 0 && distanceKm > 0)
+                    {
+                        var perRepetitionSeconds = (int)Math.Round(paceSeconds * distanceKm);
+                        totalWorkSeconds += perRepetitionSeconds * intervalRepetitions * seriesRepetitions;
+                    }
+                    else
+                    {
+                        var durationSeconds = ParseTimeStringToSeconds(interval.Duration)
+                            ?? ParseTimeStringToSeconds(interval.TargetTime);
+
+                        if (durationSeconds.HasValue && durationSeconds.Value > 0)
+                        {
+                            totalWorkSeconds += durationSeconds.Value * intervalRepetitions * seriesRepetitions;
+                        }
+                    }
+
+                    var intervalRecoverySeconds = ParseTimeStringToSeconds(interval.RecoveryTime) ?? 0;
+                    if (intervalRecoverySeconds > 0 && intervalRepetitions > 1)
+                    {
+                        totalRecoverySeconds += intervalRecoverySeconds * (intervalRepetitions - 1) * seriesRepetitions;
+                    }
+                }
+            }
+
+            return (totalWorkSeconds, totalRecoverySeconds);
+        }
+
+        private static int ParsePaceSeconds(TrainingInterval interval)
+        {
+            if (!string.IsNullOrWhiteSpace(interval.TargetSpeed))
+            {
+                var sanitized = interval.TargetSpeed
+                    .Replace("min/km", string.Empty, StringComparison.OrdinalIgnoreCase)
+                    .Trim();
+
+                var candidate = sanitized.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .FirstOrDefault();
+
+                var seconds = ParseTimeStringToSeconds(candidate);
+                if (seconds.HasValue && seconds.Value > 0)
+                {
+                    return seconds.Value;
+                }
+            }
+
+            var fallbackTargetTime = ParseTimeStringToSeconds(interval.TargetTime);
+            if (fallbackTargetTime.HasValue && fallbackTargetTime.Value > 0)
+            {
+                return fallbackTargetTime.Value;
+            }
+
+            var fallbackDuration = ParseTimeStringToSeconds(interval.Duration);
+            if (fallbackDuration.HasValue && fallbackDuration.Value > 0)
+            {
+                return fallbackDuration.Value;
+            }
+
+            return 0;
+        }
+
+        private static int? ParseTimeStringToSeconds(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            var trimmed = value.Trim();
+
+            if (trimmed.StartsWith("PT", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    var timeSpan = XmlConvert.ToTimeSpan(trimmed);
+                    return (int)Math.Round(timeSpan.TotalSeconds);
+                }
+                catch
+                {
+                    // Ignorar errores de formato ISO y continuar con otras estrategias de parseo
+                }
+            }
+
+            if (trimmed.Contains(':'))
+            {
+                var parts = trimmed.Split(':');
+
+                if (parts.Length == 2 && int.TryParse(parts[0], out var minutes) && int.TryParse(parts[1], out var seconds))
+                {
+                    return minutes * 60 + seconds;
+                }
+
+                if (parts.Length == 3
+                    && int.TryParse(parts[0], out var hours)
+                    && int.TryParse(parts[1], out var partMinutes)
+                    && int.TryParse(parts[2], out var partSeconds))
+                {
+                    return hours * 3600 + partMinutes * 60 + partSeconds;
+                }
+            }
+
+            if (double.TryParse(trimmed, NumberStyles.Float, CultureInfo.InvariantCulture, out var numericMinutes))
+            {
+                return (int)Math.Round(numericMinutes * 60);
+            }
+
+            return null;
         }
 
         private static string DetermineStructureType(TrainingSession session)

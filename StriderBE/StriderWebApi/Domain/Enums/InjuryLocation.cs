@@ -1,13 +1,35 @@
 namespace StriderWebApi.Domain.Enums
 {
-    // TODO :: This name sucks please change :)
-    public enum BodyPart
+    public enum InjuryLocation
     {
-        HIP,
-        THIGH,
-        KNEE,
-        CALF,
-        ANKLE,
-        FOOT
+        Head,
+        Neck,
+        RightShoulder,
+        LeftShoulder,
+        RightArm,
+        LeftArm,
+        RightElbow,
+        LeftElbow,
+        RightWrist,
+        LeftWrist,
+        RightHand,
+        LeftHand,
+        Chest,
+        UpperBack,
+        LowerBack,
+        Abdomen,
+        Hip,
+        RightThigh,
+        LeftThigh,
+        RightKnee,
+        LeftKnee,
+        RightCalf,
+        LeftCalf,
+        RightAnkle,
+        LeftAnkle,
+        RightFoot,
+        LeftFoot,
+        RightAchilles,
+        LeftAchilles
     }
 } 

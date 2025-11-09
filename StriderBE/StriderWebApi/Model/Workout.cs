@@ -28,7 +28,6 @@ public class Workout
     public string? Comments { get; set; }
     public string? CoachFeedback { get; set; }
     public bool IsReviewed { get; set; }
-    public List<Discomfort> Discomforts { get; set; } = [];
     public Athlete Athlete { get; set; } = null!;
     public Session? Session { get; set; }
     public List<Lap> Laps { get; set; } = [];
@@ -37,5 +36,4 @@ public class Workout
     public double AverageSpeed() => Laps.Average(l => l.Speed);
     public Lap GetLap(int index) => Laps[index];
     public bool HasFeedback() => !string.IsNullOrEmpty(CoachFeedback);
-    public bool HasDiscomfort() => Discomforts.Count != 0;
 }
