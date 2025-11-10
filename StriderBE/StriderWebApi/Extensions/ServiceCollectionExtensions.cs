@@ -84,8 +84,13 @@ namespace StriderWebApi.Extensions
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<ITrainingTemplateService, TrainingTemplateService>();
             services.AddScoped<IJwtService, JwtService>();
-            services.AddScoped<ITrainingSessionsService, TrainingSessionsService>();
+            services.AddScoped<ITrainingSessionService, TrainingSessionService>();
             services.AddScoped<ICoachAthleteRelationshipService, CoachAthleteRelationshipService>();
+            services.AddScoped<ITrainingGroupService, TrainingGroupService>();
+            services.AddScoped<IPlanningService, PlanningService>();
+            services.AddScoped<IMesocycleService, MesocycleService>();
+            services.AddScoped<IMicrocycleService, MicrocycleService>();
+            services.AddScoped<IPeriodService, PeriodService>();
 
             // Repositories Registrations
             services.AddScoped<IUserRepository, UserRepository>();
@@ -93,8 +98,19 @@ namespace StriderWebApi.Extensions
             services.AddScoped<ICoachRepository, CoachRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<ITrainingTemplateRepository, TrainingTemplateRepository>();
-            services.AddScoped<ITrainingSessionsRepository, TrainingSessionsRepository>();
+            services.AddScoped<ITrainingSessionsRepository, TrainingSessionRepository>();
             services.AddScoped<ICoachAthleteRelationshipRepository, CoachAthleteRelationshipRepository>();
+            services.AddScoped<ITrainingGroupRepository, TrainingGroupRepository>();
+            services.AddScoped<IPlanningRepository, PlanningRepository>();
+            services.AddScoped<IPlanningAthleteRepository, PlanningAthleteRepository>();
+            services.AddScoped<IMesocycleRepository, MesocycleRepository>();
+            services.AddScoped<IPeriodRepository, PeriodRepository>();
+            services.AddScoped<IMicrocycleRepository, MicrocycleRepository>();
+            services.AddScoped<ITrainingIntervalRepository, TrainingIntervalRepository>();
+            services.AddScoped<ITrainingSessionAthleteRepository, TrainingSessionAthleteRepository>();
+            services.AddScoped<ITrainingSeriesRepository, TrainingSeriesRepository>();
+            services.AddScoped<IAthleteInjuryRepository, AthleteInjuryRepository>();
+            services.AddScoped<IAthleteInjuryService, AthleteInjuryService>();
 
             return services;
         }

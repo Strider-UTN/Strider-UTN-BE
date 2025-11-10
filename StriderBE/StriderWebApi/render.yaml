@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: strider-backend
+    env: dotnet
+    region: oregon
+    plan: starter
+    buildCommand: dotnet publish -c Release -o ./publish
+    startCommand: dotnet ./publish/StriderWebApi.dll
+    healthCheckPath: /swagger
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:${PORT}
+      # IMPORTANTE: Configura estas variables manualmente en Render Dashboard
+      # Ve a tu servicio → Environment → Add Environment Variable
+      # ConnectionStrings__StriderConnectionString=postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
+      # Jwt__Key=tu-jwt-key-secreto
+      # Jwt__Issuer=StriderWebApi
+      # Jwt__Audience=StriderWebClient
+      # Jwt__ExpireMinutes=600
+      # AppSettings__FrontendBaseUrl=https://tu-frontend.vercel.app
+

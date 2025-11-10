@@ -19,6 +19,8 @@ namespace StriderWebApi.Services
         private readonly ICoachRepository _coachRepository = coachRepository ?? throw new ArgumentNullException(nameof(coachRepository));
         private readonly IPasswordHasher<User> _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
 
+        public IPasswordHasher<User> PasswordHasher => _passwordHasher;
+
         public async Task<string> HandleGoogleLoginAsync(GoogleJsonWebSignature.Payload payload, UserTypeEnum userType)
         {
             var dbUser = await _userRepository.GetUserByEmailAsync(payload.Email, userType);
@@ -26,7 +28,7 @@ namespace StriderWebApi.Services
             if (dbUser == null)
                 dbUser = await CreateNewUserFromGooglePayload(payload, userType);
 
-            return GetToken(dbUser.Id, payload.Name, dbUser.UserType);
+            return GetToken(dbUser, payload.Name);
         }
 
         private async Task<User?> CreateNewUserFromGooglePayload(GoogleJsonWebSignature.Payload payload, UserTypeEnum userType)
@@ -79,21 +81,23 @@ namespace StriderWebApi.Services
             if (isGoogleRegistered)
                 throw new UnauthorizedAccessException("Registro con google detectado. Por favor, ingresa seleccionando la opción de 'Iniciar sesión con Google'");
 
-            var passwordIsValid = dbUser != null && !string.IsNullOrEmpty(dbUser.PasswordHash) && _passwordHasher.VerifyHashedPassword(dbUser, dbUser.PasswordHash, password) == PasswordVerificationResult.Success;
+            var passwordIsValid = dbUser != null && !string.IsNullOrEmpty(dbUser.PasswordHash) && PasswordHasher.VerifyHashedPassword(dbUser, dbUser.PasswordHash, password) == PasswordVerificationResult.Success;
 
             if (!passwordIsValid)
                 throw new UnauthorizedAccessException("Email o Contraseña inválidos. Por favor, revisa e intenta de nuevo.");
 
-            return GetToken(dbUser.Id, dbUser.Username, dbUser.UserType);
+            return GetToken(dbUser, dbUser.Username);
         }
 
-        private string GetToken(int userId, string username, UserTypeEnum type)
+        private string GetToken(User user, string username)
         {
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim("Name", username),
-                new Claim("Role", type.ToString())
+                new Claim("Role", user.UserType.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("theme", user.PreferredTheme.ToString().ToLowerInvariant())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));

@@ -1,4 +1,4 @@
-﻿using static StriderWebApi.Dto.Trainings.TrainingTemplateDto;
+﻿using StriderWebApi.Dto.Trainings;
 
 namespace StriderWebApi.Services.Interfaces
 {

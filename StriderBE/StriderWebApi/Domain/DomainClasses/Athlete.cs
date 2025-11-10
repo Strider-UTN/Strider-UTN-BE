@@ -19,7 +19,7 @@ namespace StriderWebApi.Domain.DomainClasses
         public List<string> Objectives { get; set; } = [];
         public int? TeamId { get; set; }
         public Team? Team { get; set; }
-        public virtual List<Ailment> Ailments { get; set; } = [];
+        public virtual List<AthleteInjury> Injuries { get; set; } = [];
         public virtual List<Workout> Workouts { get; set; } = [];
     }
 }

@@ -16,7 +16,7 @@ namespace StriderWebApi.Domain.DomainClasses
         public TrainingSession TrainingSession { get; set; } = null!;
 
         public int AthleteId { get; set; }
-        public User Athlete { get; set; } = null!; // O tu entidad Athlete si la tienes separada
+        public User Athlete { get; set; } = null!;
 
         // Estado de la sesión para este atleta específico
         public SessionStatus Status { get; set; } = SessionStatus.Pending;

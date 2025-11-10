@@ -10,6 +10,7 @@
         System,
         Message,
         Warning,
-        Achievement
+        Achievement,
+        Injury
     }
 }

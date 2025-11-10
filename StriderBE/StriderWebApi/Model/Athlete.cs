@@ -1,4 +1,5 @@
 using StriderWebApi.Domain.Enums;
+using StriderWebApi.Domain.DomainClasses;
 
 namespace StriderWebApi.Model;
 
@@ -17,7 +18,7 @@ public class Athlete : User
     public int ThresholdHeartRate { get; set; }
     public List<string> MedicalConditions { get; set; } = [];
     public List<string> Objectives { get; set; } = [];
-    public List<Ailment> Ailments { get; set; } = [];
+    public List<AthleteInjury> Injuries { get; set; } = [];
     public List<Workout> Workouts { get; set; } = [];
     public void AddWorkouts(List<Workout> workouts) => Workouts.AddRange(workouts);
     public void UpdateVO2Max(double vO2Max) => VO2Max = vO2Max;
@@ -25,11 +26,11 @@ public class Athlete : User
     public void AddMedicalCondition(string medicalCondition) => MedicalConditions.Add(medicalCondition);
     public double WeeklyDistance() => Workouts.Where(w => w.Date > DateTime.Now.AddDays(-7)).Sum(w => w.TotalDistance());
     public double MonthlyDistance() => Workouts.Where(w => w.Date > DateTime.Now.AddDays(-30)).Sum(w => w.TotalDistance());
-    public bool IsActive() => Ailments.Any(a => !a.IsRecovered);
+    public bool IsActive() => Injuries.Any(i => i.Status != InjuryStatus.Recovered);
     public bool IsInactive() => !IsActive();
     public DateTime GetLastWorkoutDate() => Workouts.OrderBy(w => w.Date).Last().Date;
     public int TotalWorkoutsCompleted() => Workouts.Count;
-    public List<Ailment> GetActiveAilments() => [.. Ailments.Where(a => !a.IsRecovered)];
+    public List<AthleteInjury> GetActiveInjuries() => [.. Injuries.Where(i => i.Status != InjuryStatus.Recovered)];
     public List<Workout> WorkoutsPendingFeedback() => [.. Workouts.Where(w => w.HasLinkedSession() && !w.HasFeedback())];
     public List<Workout> WorkoutsWithFeedback() => [.. Workouts.Where(w => w.HasLinkedSession() && w.HasFeedback())];
     public List<Workout> WorkoutsThisWeek() => [.. Workouts.Where(w => w.Date > DateTime.Now.AddDays(-7))];

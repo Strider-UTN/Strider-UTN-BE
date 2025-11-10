@@ -1,4 +1,5 @@
-﻿using StriderWebApi.Dto.UserCreation;
+﻿using StriderWebApi.Domain.Enums;
+using StriderWebApi.Dto.UserCreation;
 
 namespace StriderWebApi.Services.Interfaces
 {
@@ -7,5 +8,6 @@ namespace StriderWebApi.Services.Interfaces
         Task CreateCoachAsync(CreateCoachDto dto);
         Task CreateAthleteAsync(CreateAthleteDto dto);
         Task ActivateAccountAsync(ActivateAccountDto dto);
+        Task<bool> UpdateUserThemeAsync(int userId, ThemePreference theme);
     }
 }

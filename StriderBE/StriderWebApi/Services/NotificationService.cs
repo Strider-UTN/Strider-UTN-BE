@@ -34,5 +34,16 @@ namespace StriderWebApi.Services
 
             await _repository.RemoveAsync(notification);
         }
+
+        public async Task<Notification> CreateAsync(Notification notification, CancellationToken cancellationToken = default)
+        {
+            await _repository.AddAsync(notification, cancellationToken);
+            return notification;
+        }
+
+        public async Task CreateRangeAsync(IEnumerable<Notification> notifications, CancellationToken cancellationToken = default)
+        {
+            await _repository.AddRangeAsync(notifications, cancellationToken);
+        }
     }
 }

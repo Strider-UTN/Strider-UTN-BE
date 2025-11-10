@@ -1,3 +1,5 @@
+using StriderWebApi.Dto.Injuries;
+
 namespace StriderWebApi.Dto.Coach
 {
     public class CoachResponseDTO
@@ -27,6 +29,8 @@ namespace StriderWebApi.Dto.Coach
             public string EmergencyContactRelationship { get; set; } = string.Empty;
             public DateTime RegistrationDate { get; set; }
             public DateTime LastActivityDate { get; set; }
+            public bool HasActiveInjury { get; set; }
+            public List<AthleteInjurySummaryDto> ActiveInjuries { get; set; } = [];
 
         }
     }

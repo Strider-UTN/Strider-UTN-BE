@@ -1,8 +1,8 @@
 ﻿using StriderWebApi.Data.Repositories.Interfaces;
 using StriderWebApi.Domain.DomainClasses;
-using StriderWebApi.Domain.Enums;
+using StriderWebApi.Dto.Trainings;
 using StriderWebApi.Services.Interfaces;
-using static StriderWebApi.Dto.Trainings.TrainingTemplateDto;
+using System.ComponentModel.DataAnnotations;
 
 namespace StriderWebApi.Services
 {
@@ -10,9 +10,10 @@ namespace StriderWebApi.Services
     {
         public async Task<TrainingTemplateResponseDto?> CreateTrainingTemplateAsync(CreateTrainingTemplateDto dto, CancellationToken cancellationToken)
         {
+            ValidateSeriesOrThrow(dto.Series);
+
             var userId = jwtService.GetCurrentUserId();
 
-            // Crear la entidad de plantilla
             var template = new TrainingTemplate
             {
                 Name = dto.Name.Trim(),
@@ -35,111 +36,45 @@ namespace StriderWebApi.Services
                 CoolDownPace = dto.CoolDownPace?.Trim(),
                 CoolDownDescription = dto.CoolDownDescription?.Trim(),
                 CreatedAt = DateTime.UtcNow,
-                CreatedByUserId = userId
+                CreatedByUserId = userId,
+                Series = MapSeriesFromDtos(dto.Series!, templateId: null)
             };
 
-            // Agregar intervalos si existen
-            if (dto.Intervals != null && dto.Intervals.Any())
-            {
-                template.Intervals = dto.Intervals
-                    .Select((intervalDto, index) => new TrainingInterval
-                    {
-                        Type = intervalDto.Type,
-                        Repetitions = intervalDto.Repetitions,
-                        Distance = intervalDto.Distance,
-                        TargetTime = intervalDto.TargetTime?.Trim(),
-                        RecoveryTime = intervalDto.RecoveryTime?.Trim() ?? "00:00",
-                        PaceType = intervalDto.PaceType,
-                        Pace = intervalDto.Pace,
-                        Vo2MaxPercentage = intervalDto.Vo2MaxPercentage,
-                        Description = intervalDto.Description?.Trim(),
-                        Intensity = intervalDto.Intensity,
-                        TrainingMode = intervalDto.TrainingMode,
-                        Duration = intervalDto.Duration?.Trim(),
-                        TargetSpeed = intervalDto.TargetSpeed?.Trim(),
-                        OrderIndex = intervalDto.OrderIndex >= 0
-                            ? intervalDto.OrderIndex
-                            : index, // Usar índice si no se proporciona OrderIndex
-                        CreatedAt = DateTime.UtcNow
-                    })
-                    .ToList();
-            }
-
-            // Guardar la plantilla en el repositorio
             await trainingTemplateRepository.AddTrainingTemplateAsync(template, cancellationToken);
 
-
-            // Recuperar la plantilla creada con sus intervalos
             var createdTemplate = await trainingTemplateRepository.GetTrainingTemplateByIdAsync(template.Id, cancellationToken);
-
-            if (createdTemplate == null)
-                return null;
-
-            // Mapear a DTO de respuesta
-            var responseDto = MapToResponseDto(createdTemplate);
-
-            return responseDto;
+            return createdTemplate == null ? null : MapToResponseDto(createdTemplate);
         }
 
         public async Task<TrainingTemplateResponseDto?> GetTrainingTemplateByIdAsync(int templateId, CancellationToken cancellationToken)
         {
             var dbTemplate = await trainingTemplateRepository.GetTrainingTemplateByIdAsync(templateId, cancellationToken);
-            if (dbTemplate == null)
-                return null;
-            return MapToResponseDto(dbTemplate);
+            return dbTemplate == null ? null : MapToResponseDto(dbTemplate);
         }
 
         public async Task<List<TrainingTemplateResponseDto>> GetAllTrainingTemplatesAsync(CancellationToken cancellationToken)
         {
-            var userId = jwtService.GetCurrentUserId();
-
-            if (userId == null) 
-                throw new UnauthorizedAccessException("User ID not found in token.");
-
-            var dbTemplates = await trainingTemplateRepository.GetAllTrainingTemplatesAsync(userId.Value, cancellationToken);
-
+            var userId = jwtService.GetCurrentUserId() ?? throw new UnauthorizedAccessException("User ID not found in token.");
+            var dbTemplates = await trainingTemplateRepository.GetAllTrainingTemplatesAsync(userId, cancellationToken);
             return dbTemplates.Select(MapToResponseDto).ToList();
         }
 
-        public async Task<bool> DeleteTrainingTemplateAsync(int templateId, CancellationToken cancellationToken)
+        public Task<bool> DeleteTrainingTemplateAsync(int templateId, CancellationToken cancellationToken)
         {
-            return await trainingTemplateRepository.DeleteTrainingTemplateAsync(templateId, cancellationToken);
+            return trainingTemplateRepository.DeleteTrainingTemplateAsync(templateId, cancellationToken);
         }
 
         public async Task<TrainingTemplateResponseDto?> UpdateTrainingTemplateAsync(int id, CreateTrainingTemplateDto dto, CancellationToken cancellationToken)
         {
-            // buscar la plantilla existente
+            ValidateSeriesOrThrow(dto.Series);
+
             var dbTemplate = await trainingTemplateRepository.GetTrainingTemplateByIdAsync(id, cancellationToken) ?? throw new KeyNotFoundException($"Training template with ID {id} not found.");
 
-            // Borrar los intervalos existentes (Es más sencillo para el update)
-            await trainingTemplateRepository.DeleteAllAsociatedIntervalsAsync(id, cancellationToken);
+            var newSeries = MapSeriesFromDtos(dto.Series!, templateId: id);
+            await trainingTemplateRepository.ReplaceSeriesForTemplateAsync(id, newSeries, cancellationToken);
 
-            var newIntervals = dto.Intervals.Select((intervalDto, index) => new TrainingInterval
-            {
-                Type = intervalDto.Type,
-                Repetitions = intervalDto.Repetitions,
-                Distance = intervalDto.Distance,
-                TargetTime = intervalDto.TargetTime,
-                RecoveryTime = intervalDto.RecoveryTime,
-                PaceType = intervalDto.PaceType,
-                Pace = intervalDto.Pace,
-                Vo2MaxPercentage = intervalDto.Vo2MaxPercentage,
-                Description = intervalDto.Description,
-                Intensity = intervalDto.Intensity,
-                TrainingMode = intervalDto.TrainingMode,
-                Duration = intervalDto.Duration,
-                TargetSpeed = intervalDto.TargetSpeed,
-                OrderIndex = intervalDto.OrderIndex,
-                TrainingTemplateId = dbTemplate.Id  // Asignar FK
-            }).ToList();
+            dbTemplate = await trainingTemplateRepository.GetTrainingTemplateByIdAsync(id, cancellationToken) ?? throw new KeyNotFoundException($"Training template with ID {id} not found after updating series.");
 
-            // Agregar intervalos nuevos
-            await trainingTemplateRepository.AddTrainingIntervalsToTemplateAsync(newIntervals, cancellationToken);
-
-            // recargar la plantilla desde la base de datos para reflejar los cambios
-            dbTemplate = await trainingTemplateRepository.GetTrainingTemplateByIdAsync(id, cancellationToken) ?? throw new KeyNotFoundException($"Training template with ID {id} not found after adding intervals.");
-
-            // Actualizar los campos
             dbTemplate.Name = dto.Name;
             dbTemplate.Description = dto.Description;
             dbTemplate.Type = dto.Type;
@@ -150,43 +85,100 @@ namespace StriderWebApi.Services
             dbTemplate.TargetPace = dto.TargetPace;
             dbTemplate.TargetHR = dto.TargetHR;
             dbTemplate.Notes = dto.Notes;
-            dbTemplate.Difficulty = dto.Difficulty;
             dbTemplate.Tags = dto.Tags.ToArray() ?? [];
             dbTemplate.UpdatedAt = DateTime.UtcNow;
 
-            // Actualizar la plantilla en el repositorio
             await trainingTemplateRepository.UpdateTrainingTemplateAsync(dbTemplate, cancellationToken);
-            
-            // Recuperar la plantilla actualizada con sus intervalos
+
             var updatedTemplate = await trainingTemplateRepository.GetTrainingTemplateByIdAsync(dbTemplate.Id, cancellationToken);
-
-            if (updatedTemplate == null)
-                return null;
-
-            // Mapear a DTO de respuesta
-            var responseDto = MapToResponseDto(updatedTemplate);
-            return responseDto;
+            return updatedTemplate == null ? null : MapToResponseDto(updatedTemplate);
         }
+
         public async Task<TrainingTemplateResponseDto?> ToggleFavoriteTemplateAsync(int id, CancellationToken cancellationToken)
         {
-            // buscar la plantilla existente
             var dbTemplate = await trainingTemplateRepository.GetTrainingTemplateByIdAsync(id, cancellationToken) ?? throw new KeyNotFoundException($"Training template with ID {id} not found.");
 
-            // Invertir el valor de favorite
             dbTemplate.IsFavorite = !dbTemplate.IsFavorite;
             dbTemplate.UpdatedAt = DateTime.UtcNow;
 
             await trainingTemplateRepository.UpdateTrainingTemplateAsync(dbTemplate, cancellationToken);
 
-            var responseDto = MapToResponseDto(dbTemplate);
-            return responseDto;
+            return MapToResponseDto(dbTemplate);
         }
 
-        // <summary>
-        /// Mapea una entidad TrainingTemplate a su DTO de respuesta
-        /// </summary>
+        private static void ValidateSeriesOrThrow(List<CreateTrainingSeriesDto>? series)
+        {
+            if (series == null || series.Count == 0)
+            {
+                throw new ValidationException("La plantilla debe incluir al menos una serie con intervalos.");
+            }
+
+            for (int i = 0; i < series.Count; i++)
+            {
+                if (series[i].Intervals == null || series[i].Intervals.Count == 0)
+                {
+                    throw new ValidationException($"La serie {i + 1} debe contener al menos un intervalo.");
+                }
+            }
+        }
+
+        private static List<TrainingSeries> MapSeriesFromDtos(List<CreateTrainingSeriesDto> seriesDtos, int? templateId)
+        {
+            var list = new List<TrainingSeries>();
+            var now = DateTime.UtcNow;
+
+            foreach (var seriesDto in seriesDtos.OrderBy(s => s.OrderIndex))
+            {
+                var series = new TrainingSeries
+                {
+                    TrainingTemplateId = templateId,
+                    Name = seriesDto.Name.Trim(),
+                    Repetitions = seriesDto.Repetitions,
+                    RecoveryBetweenSets = seriesDto.RecoveryBetweenSets?.Trim() ?? "00:00",
+                    OrderIndex = seriesDto.OrderIndex,
+                    Notes = seriesDto.Notes?.Trim(),
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                    Intervals = seriesDto.Intervals
+                        .OrderBy(i => i.OrderIndex)
+                        .Select(intervalDto => new TrainingInterval
+                        {
+                            Type = intervalDto.Type,
+                            Repetitions = intervalDto.Repetitions,
+                            Distance = intervalDto.Distance,
+                            TargetTime = intervalDto.TargetTime?.Trim(),
+                            RecoveryTime = intervalDto.RecoveryTime?.Trim() ?? "00:00",
+                            PaceType = intervalDto.PaceType,
+                            Pace = intervalDto.Pace,
+                            Vo2MaxPercentage = intervalDto.Vo2MaxPercentage,
+                            Description = intervalDto.Description?.Trim(),
+                            Intensity = intervalDto.Intensity,
+                            TrainingMode = intervalDto.TrainingMode,
+                            Duration = intervalDto.Duration?.Trim(),
+                            TargetSpeed = intervalDto.TargetSpeed?.Trim(),
+                            OrderIndex = intervalDto.OrderIndex,
+                            CreatedAt = now,
+                            UpdatedAt = now
+                        })
+                        .ToList()
+                };
+
+                list.Add(series);
+            }
+
+            return list;
+        }
+
         private TrainingTemplateResponseDto MapToResponseDto(TrainingTemplate template)
         {
+            var orderedSeries = template.Series
+                .OrderBy(s => s.OrderIndex)
+                .ToList();
+
+            var orderedIntervals = orderedSeries
+                .SelectMany(s => (s.Intervals ?? new List<TrainingInterval>()).OrderBy(i => i.OrderIndex))
+                .ToList();
+
             return new TrainingTemplateResponseDto
             {
                 Id = template.Id,
@@ -204,30 +196,75 @@ namespace StriderWebApi.Services
                 UseCount = template.UseCount,
                 CreatedAt = template.CreatedAt,
                 LastUsed = template.LastUsed,
+                StructureType = DetermineStructureType(template),
                 Tags = template.Tags ?? Array.Empty<string>(),
-                Intervals = template.Intervals
-                    .OrderBy(i => i.OrderIndex)
-                    .Select(i => new TrainingIntervalResponseDto
+                Series = orderedSeries
+                    .Select(series => new TrainingSeriesResponseDto
                     {
-                        Id = i.Id,
-                        Type = i.Type,
-                        Repetitions = i.Repetitions,
-                        Distance = i.Distance,
-                        TargetTime = i.TargetTime,
-                        RecoveryTime = i.RecoveryTime,
-                        PaceType = i.PaceType,
-                        Pace = i.Pace,
-                        Vo2MaxPercentage = i.Vo2MaxPercentage,
-                        Description = i.Description,
-                        Intensity = i.Intensity,
-                        TrainingMode = i.TrainingMode,
-                        Duration = i.Duration,
-                        TargetSpeed = i.TargetSpeed,
-                        OrderIndex = i.OrderIndex
+                        Id = series.Id,
+                        Name = series.Name,
+                        Repetitions = series.Repetitions,
+                        RecoveryBetweenSets = series.RecoveryBetweenSets,
+                        OrderIndex = series.OrderIndex,
+                        Notes = series.Notes,
+                        Intervals = (series.Intervals ?? new List<TrainingInterval>())
+                            .OrderBy(interval => interval.OrderIndex)
+                            .Select(MapToTrainingIntervalResponseDto)
+                            .ToList()
                     })
-                    .ToList()
+                    .ToList(),
             };
         }
 
+        private static TrainingIntervalResponseDto MapToTrainingIntervalResponseDto(TrainingInterval interval)
+        {
+            return new TrainingIntervalResponseDto
+            {
+                Id = interval.Id,
+                Type = interval.Type,
+                Repetitions = interval.Repetitions,
+                Distance = interval.Distance,
+                TargetTime = interval.TargetTime,
+                RecoveryTime = interval.RecoveryTime,
+                PaceType = interval.PaceType,
+                Pace = interval.Pace,
+                Vo2MaxPercentage = interval.Vo2MaxPercentage,
+                Description = interval.Description,
+                Intensity = interval.Intensity,
+                TrainingMode = interval.TrainingMode,
+                Duration = interval.Duration,
+                TargetSpeed = interval.TargetSpeed,
+                OrderIndex = interval.OrderIndex
+            };
+        }
+
+        private static string DetermineStructureType(TrainingTemplate template)
+        {
+            if (template.Series == null || template.Series.Count == 0)
+            {
+                return "simple";
+            }
+
+            if (template.Series.Count > 1)
+            {
+                return "advanced";
+            }
+
+            var singleSeries = template.Series.First();
+
+            var isDefaultName = string.Equals(singleSeries.Name, "Intervalos Simples", StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(singleSeries.Name, "Serie Principal", StringComparison.OrdinalIgnoreCase);
+
+            var isDefaultRepetitions = singleSeries.Repetitions <= 1;
+            var isDefaultRecovery = string.Equals(singleSeries.RecoveryBetweenSets, "00:00", StringComparison.OrdinalIgnoreCase);
+            var hasNotes = !string.IsNullOrWhiteSpace(singleSeries.Notes);
+
+            if (!isDefaultName || !isDefaultRepetitions || !isDefaultRecovery || hasNotes)
+            {
+                return "advanced";
+            }
+
+            return "simple";
+        }
     }
 }
