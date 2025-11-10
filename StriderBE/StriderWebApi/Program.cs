@@ -82,6 +82,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Configurar el puerto desde la variable de entorno PORT (para Render, Railway, etc.)
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    app.Urls.Add($"http://0.0.0.0:{port}");
+}
+
 // Configure the HTTP request pipeline.
 // Swagger disponible en desarrollo y producción (útil para testing)
 app.UseSwagger();
@@ -96,7 +103,11 @@ else
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Solo redirigir HTTPS si no estamos en un entorno que maneja HTTPS externamente (como Render)
+if (!app.Environment.IsProduction() || string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PORT")))
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors(MyAllowSpecificOrigins);
 
