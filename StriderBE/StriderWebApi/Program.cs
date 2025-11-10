@@ -63,19 +63,36 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins(frontendBaseUrl)
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
+            if (!string.IsNullOrEmpty(frontendBaseUrl))
+            {
+                policy.WithOrigins(frontendBaseUrl)
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            }
+            else
+            {
+                // Fallback para desarrollo local
+                policy.AllowAnyOrigin()
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
+            }
         });
 });
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+// Swagger disponible en desarrollo y producción (útil para testing)
+app.UseSwagger();
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+else
+{
+    // En producción, Swagger UI solo con autenticación o deshabilitado
+    // Por ahora lo dejamos habilitado para testing, puedes comentarlo después
     app.UseSwaggerUI();
 }
 

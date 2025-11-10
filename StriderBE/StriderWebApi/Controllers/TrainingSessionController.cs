@@ -82,5 +82,38 @@ namespace StriderWebApi.Controllers
             var sessions = await trainingSessionService.GetByAthleteIdAsync(athleteId, planningId, cancellationToken);
             return Ok(sessions);
         }
+
+        // GET: api/TrainingSession/athlete/mine
+        [HttpGet("athlete/mine")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<TrainingSessionResponseDto>>> GetMyTrainingSessions(
+            [FromQuery] string? date = null,
+            CancellationToken cancellationToken = default)
+        {
+            var userId = jwtService.GetCurrentUserId();
+            if (!userId.HasValue)
+            {
+                return Unauthorized("No se pudo determinar el usuario actual");
+            }
+
+            // En este sistema, el userId del JWT es el mismo que el athleteId porque Athlete hereda de User
+            var athleteId = userId.Value;
+
+            DateTime? dateFilter = null;
+            if (!string.IsNullOrEmpty(date))
+            {
+                if (DateTime.TryParse(date, out var parsedDate))
+                {
+                    dateFilter = parsedDate;
+                }
+                else
+                {
+                    return BadRequest("Formato de fecha inválido. Use YYYY-MM-DD");
+                }
+            }
+
+            var sessions = await trainingSessionService.GetMyTrainingSessionsAsync(athleteId, dateFilter, cancellationToken);
+            return Ok(sessions);
+        }
     }
 }

@@ -211,6 +211,27 @@ namespace StriderWebApi.Services
             return sessions.Select(MapToTrainingSessionResponseDto);
         }
 
+        public async Task<IEnumerable<TrainingSessionResponseDto>> GetMyTrainingSessionsAsync(int athleteId, DateTime? date = null, CancellationToken cancellationToken = default)
+        {
+            IEnumerable<TrainingSession> sessions;
+
+            if (date.HasValue)
+            {
+                // Filtrar por fecha si se proporciona
+                var dateUtc = date.Value.Kind == DateTimeKind.Utc
+                    ? date.Value
+                    : DateTime.SpecifyKind(date.Value, DateTimeKind.Utc);
+                sessions = await trainingSessionRepository.GetByAthleteIdAndDateAsync(athleteId, dateUtc, cancellationToken);
+            }
+            else
+            {
+                // Obtener todas las sesiones del atleta
+                sessions = await trainingSessionRepository.GetByAthleteIdAsync(athleteId, null, cancellationToken);
+            }
+
+            return sessions.Select(MapToTrainingSessionResponseDto);
+        }
+
         public async Task<decimal> RecalculateSessionVolumeAsync(int sessionId, CancellationToken cancellationToken = default)
         {
             var series = await trainingTemplateRepository.GetSeriesBySessionIdAsync(sessionId, cancellationToken);

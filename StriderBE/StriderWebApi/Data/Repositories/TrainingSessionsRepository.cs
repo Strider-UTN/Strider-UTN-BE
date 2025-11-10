@@ -148,6 +148,21 @@ namespace StriderWebApi.Data.Repositories
                 .ToListAsync(cancellationToken);
         }
 
+        public async Task<IEnumerable<TrainingSession>> GetByAthleteIdAndDateAsync(int athleteId, DateTime date, CancellationToken cancellationToken = default)
+        {
+            return await context.TrainingSessions
+                .Include(s => s.Planning)
+                .Include(s => s.Microcycle)
+                .Include(s => s.Athletes)
+                .Include(s => s.Series)
+                    .ThenInclude(series => series.Intervals)
+                .Where(s => s.Athletes.Any(a => a.AthleteId == athleteId) 
+                    && s.Date.Date == date.Date)
+                .OrderBy(s => s.Date)
+                .ThenBy(s => s.CreatedAt)
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task<bool> HasSessionsByMicrocycleIdAsync(
             int microcycleId,
             CancellationToken cancellationToken)
