@@ -31,5 +31,8 @@ namespace StriderWebApi.Domain.DomainClasses
 
         // Metadata
         public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
+
+        // Navegación a entrenamientos completados
+        public ICollection<CompletedWorkout> CompletedWorkouts { get; set; } = new List<CompletedWorkout>();
     }
 }

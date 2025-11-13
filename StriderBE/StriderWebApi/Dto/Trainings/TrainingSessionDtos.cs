@@ -49,6 +49,11 @@ namespace StriderWebApi.Dto.Trainings
         public IEnumerable<int> AthleteIds { get; set; } = new List<int>();
 
         /// <summary>
+        /// ID de la relación TrainingSessionAthlete para el atleta actual (solo cuando se consulta por atleta específico).
+        /// </summary>
+        public int? TrainingSessionAthleteId { get; set; }
+
+        /// <summary>
         /// Series completas de la sesión.
         /// </summary>
         public List<TrainingSeriesResponseDto> Series { get; set; } = new();
@@ -69,6 +74,12 @@ namespace StriderWebApi.Dto.Trainings
         public int EstimatedRecoverySeconds { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        
+        /// <summary>
+        /// Indica si el atleta actual tiene un entrenamiento completado para esta sesión.
+        /// Solo se establece cuando se consulta por un atleta específico.
+        /// </summary>
+        public bool HasCompletedWorkout { get; set; }
     }
 
     // DTO auxiliar

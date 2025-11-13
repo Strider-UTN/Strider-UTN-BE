@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StriderWebApi.Data;
@@ -12,9 +13,11 @@ using StriderWebApi.Data;
 namespace StriderWebApi.Migrations
 {
     [DbContext(typeof(StriderDbContext))]
-    partial class StriderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251112024745_AddCompletedWorkoutEntities")]
+    partial class AddCompletedWorkoutEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -206,10 +209,6 @@ namespace StriderWebApi.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<string>("Rating")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -308,43 +307,6 @@ namespace StriderWebApi.Migrations
                     b.HasIndex("WorkoutId");
 
                     b.ToTable("Laps");
-                });
-
-            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.LapFeedback", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("Feedback")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("WorkoutFeedbackId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("WorkoutLapId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WorkoutFeedbackId");
-
-                    b.HasIndex("WorkoutLapId")
-                        .IsUnique();
-
-                    b.ToTable("LapFeedbacks", (string)null);
                 });
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Mesocycle", b =>
@@ -1460,49 +1422,6 @@ namespace StriderWebApi.Migrations
                     b.ToTable("Workouts");
                 });
 
-            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.WorkoutFeedback", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CoachId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CompletedWorkoutId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("Feedback")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<string>("Recommendations")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CoachId");
-
-                    b.HasIndex("CompletedWorkoutId")
-                        .IsUnique();
-
-                    b.HasIndex("CreatedAt");
-
-                    b.ToTable("WorkoutFeedbacks", (string)null);
-                });
-
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.WorkoutInjury", b =>
                 {
                     b.Property<int>("Id")
@@ -1518,8 +1437,8 @@ namespace StriderWebApi.Migrations
 
                     b.Property<string>("BodyPart")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("CompletedWorkoutId")
                         .HasColumnType("integer");
@@ -1772,25 +1691,6 @@ namespace StriderWebApi.Migrations
                         .IsRequired();
 
                     b.Navigation("Workout");
-                });
-
-            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.LapFeedback", b =>
-                {
-                    b.HasOne("StriderWebApi.Domain.DomainClasses.WorkoutFeedback", "WorkoutFeedback")
-                        .WithMany("LapFeedbacks")
-                        .HasForeignKey("WorkoutFeedbackId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StriderWebApi.Domain.DomainClasses.WorkoutLap", "WorkoutLap")
-                        .WithOne("LapFeedback")
-                        .HasForeignKey("StriderWebApi.Domain.DomainClasses.LapFeedback", "WorkoutLapId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("WorkoutFeedback");
-
-                    b.Navigation("WorkoutLap");
                 });
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Mesocycle", b =>
@@ -2070,25 +1970,6 @@ namespace StriderWebApi.Migrations
                     b.Navigation("Session");
                 });
 
-            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.WorkoutFeedback", b =>
-                {
-                    b.HasOne("StriderWebApi.Domain.DomainClasses.Coach", "Coach")
-                        .WithMany()
-                        .HasForeignKey("CoachId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("StriderWebApi.Domain.DomainClasses.CompletedWorkout", "CompletedWorkout")
-                        .WithOne("Feedback")
-                        .HasForeignKey("StriderWebApi.Domain.DomainClasses.WorkoutFeedback", "CompletedWorkoutId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Coach");
-
-                    b.Navigation("CompletedWorkout");
-                });
-
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.WorkoutInjury", b =>
                 {
                     b.HasOne("StriderWebApi.Domain.DomainClasses.CompletedWorkout", "CompletedWorkout")
@@ -2137,8 +2018,6 @@ namespace StriderWebApi.Migrations
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.CompletedWorkout", b =>
                 {
-                    b.Navigation("Feedback");
-
                     b.Navigation("Injuries");
 
                     b.Navigation("Laps");
@@ -2225,16 +2104,6 @@ namespace StriderWebApi.Migrations
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Workout", b =>
                 {
                     b.Navigation("Laps");
-                });
-
-            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.WorkoutFeedback", b =>
-                {
-                    b.Navigation("LapFeedbacks");
-                });
-
-            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.WorkoutLap", b =>
-                {
-                    b.Navigation("LapFeedback");
                 });
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Athlete", b =>
