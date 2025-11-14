@@ -145,6 +145,14 @@ namespace StriderWebApi.Data.Repositories
 
         public async Task<IEnumerable<CompletedWorkout>> GetByAthleteIdAndDateRangeAsync(int athleteId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
         {
+            // Asegurar que las fechas estén en UTC
+            var startUtc = startDate.Kind == DateTimeKind.Utc 
+                ? startDate.Date 
+                : DateTime.SpecifyKind(startDate.Date, DateTimeKind.Utc);
+            var endUtc = endDate.Kind == DateTimeKind.Utc 
+                ? endDate.Date 
+                : DateTime.SpecifyKind(endDate.Date, DateTimeKind.Utc);
+            
             return await context.CompletedWorkouts
                 .Include(w => w.TrainingSessionAthlete)
                     .ThenInclude(tsa => tsa.TrainingSession)
@@ -159,8 +167,8 @@ namespace StriderWebApi.Data.Repositories
                 .Include(w => w.Feedback)
                     .ThenInclude(f => f!.LapFeedbacks)
                 .Where(w => w.TrainingSessionAthlete.AthleteId == athleteId 
-                    && w.Date.Date >= startDate.Date 
-                    && w.Date.Date <= endDate.Date)
+                    && w.Date.Date >= startUtc 
+                    && w.Date.Date <= endUtc)
                 .OrderByDescending(w => w.Date)
                 .ThenByDescending(w => w.CreatedAt)
                 .ToListAsync(cancellationToken);

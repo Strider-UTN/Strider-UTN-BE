@@ -154,7 +154,15 @@ namespace StriderWebApi.Controllers
                 return BadRequest("Las fechas deben estar en formato válido");
             }
 
-            var workouts = await completedWorkoutService.GetMyCompletedWorkoutsByDateRangeAsync(athleteId.Value, start, end, cancellationToken);
+            // Asegurar que las fechas estén en UTC para PostgreSQL
+            var startUtc = start.Kind == DateTimeKind.Utc 
+                ? start 
+                : DateTime.SpecifyKind(start, DateTimeKind.Utc);
+            var endUtc = end.Kind == DateTimeKind.Utc 
+                ? end 
+                : DateTime.SpecifyKind(end, DateTimeKind.Utc);
+
+            var workouts = await completedWorkoutService.GetMyCompletedWorkoutsByDateRangeAsync(athleteId.Value, startUtc, endUtc, cancellationToken);
             return Ok(workouts);
         }
 
