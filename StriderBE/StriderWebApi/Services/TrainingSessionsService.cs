@@ -148,6 +148,41 @@ namespace StriderWebApi.Services
 
             session = await trainingSessionRepository.UpdateAsync(session, cancellationToken);
 
+            // Actualizar asignaciones de atletas
+            if (dto.AthleteIds != null)
+            {
+                // Obtener atletas actualmente asignados
+                var currentAthletes = await trainingSessionAthleteRepository.GetByTrainingSessionIdAsync(session.Id, cancellationToken);
+                var currentAthleteIds = currentAthletes.Select(a => a.AthleteId).ToHashSet();
+                var newAthleteIds = dto.AthleteIds.ToHashSet();
+
+                // Identificar atletas a agregar (están en nuevo pero no en actual)
+                var athletesToAdd = newAthleteIds.Except(currentAthleteIds).ToList();
+
+                // Identificar atletas a eliminar (están en actual pero no en nuevo)
+                var athletesToRemove = currentAthletes
+                    .Where(a => !newAthleteIds.Contains(a.AthleteId))
+                    .ToList();
+
+                // Eliminar asignaciones que ya no están en la lista
+                foreach (var athleteToRemove in athletesToRemove)
+                {
+                    await trainingSessionAthleteRepository.DeleteAsync(athleteToRemove.Id, cancellationToken);
+                }
+
+                // Agregar nuevas asignaciones
+                foreach (var athleteId in athletesToAdd)
+                {
+                    var sessionAthlete = new TrainingSessionAthlete
+                    {
+                        TrainingSessionId = session.Id,
+                        AthleteId = athleteId,
+                        Status = SessionStatus.Pending
+                    };
+                    await trainingSessionAthleteRepository.CreateAsync(sessionAthlete, cancellationToken);
+                }
+            }
+
             var series = MapSeriesFromDtos(dto.Series!, sessionId: session.Id, templateId: null);
             await trainingTemplateRepository.ReplaceSeriesForSessionAsync(session.Id, series, cancellationToken);
 
