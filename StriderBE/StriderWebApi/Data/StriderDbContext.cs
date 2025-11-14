@@ -40,6 +40,12 @@ namespace StriderWebApi.Data
         public DbSet<Mesocycle> Mesocycles => Set<Mesocycle>();
         public DbSet<Microcycle> Microcycles => Set<Microcycle>();
         public DbSet<PlanningAthlete> PlanningAthletes => Set<PlanningAthlete>();
+        public DbSet<CompletedWorkout> CompletedWorkouts => Set<CompletedWorkout>();
+        public DbSet<WorkoutSensations> WorkoutSensations => Set<WorkoutSensations>();
+        public DbSet<WorkoutLap> WorkoutLaps => Set<WorkoutLap>();
+        public DbSet<WorkoutInjury> WorkoutInjuries => Set<WorkoutInjury>();
+        public DbSet<WorkoutFeedback> WorkoutFeedbacks => Set<WorkoutFeedback>();
+        public DbSet<LapFeedback> LapFeedbacks => Set<LapFeedback>();
         #endregion
 
         #region Overrides
@@ -339,6 +345,268 @@ namespace StriderWebApi.Data
                 entity.HasIndex(e => e.CompletedAt); // ✅ Sin filtro
                 entity.HasIndex(e => new { e.AthleteId, e.Status });
                 entity.HasIndex(e => new { e.TrainingSessionId, e.Status });
+            });
+
+            // Configuración de CompletedWorkout
+            modelBuilder.Entity<CompletedWorkout>(entity =>
+            {
+                entity.ToTable("CompletedWorkouts");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.Distance)
+                    .IsRequired();
+
+                entity.Property(e => e.Date)
+                    .IsRequired();
+
+                entity.Property(e => e.Duration)
+                    .IsRequired(); // segundos
+
+                entity.Property(e => e.AverageHR)
+                    .IsRequired();
+
+                entity.Property(e => e.Comments)
+                    .HasMaxLength(2000);
+
+                entity.Property(e => e.Source)
+                    .IsRequired()
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.Rating)
+                    .HasConversion<string>()
+                    .HasMaxLength(30);
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                // Relación obligatoria con TrainingSessionAthlete
+                entity.HasOne(e => e.TrainingSessionAthlete)
+                    .WithMany(tsa => tsa.CompletedWorkouts)
+                    .HasForeignKey(e => e.TrainingSessionAthleteId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación uno-a-uno con WorkoutSensations
+                entity.HasOne(e => e.Sensations)
+                    .WithOne(s => s.CompletedWorkout)
+                    .HasForeignKey<WorkoutSensations>(s => s.CompletedWorkoutId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación uno-a-muchos con WorkoutLaps
+                entity.HasMany(e => e.Laps)
+                    .WithOne(l => l.CompletedWorkout)
+                    .HasForeignKey(l => l.CompletedWorkoutId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación uno-a-muchos con WorkoutInjuries
+                entity.HasMany(e => e.Injuries)
+                    .WithOne(i => i.CompletedWorkout)
+                    .HasForeignKey(i => i.CompletedWorkoutId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Índices
+                entity.HasIndex(e => e.TrainingSessionAthleteId);
+                entity.HasIndex(e => e.Date);
+                entity.HasIndex(e => new { e.TrainingSessionAthleteId, e.Date });
+            });
+
+            // Configuración de WorkoutSensations
+            modelBuilder.Entity<WorkoutSensations>(entity =>
+            {
+                entity.ToTable("WorkoutSensations");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+
+                entity.Property(e => e.Effort)
+                    .IsRequired();
+
+                entity.Property(e => e.Fatigue)
+                    .IsRequired();
+
+                entity.Property(e => e.Motivation)
+                    .IsRequired();
+
+                entity.Property(e => e.MuscularLoad)
+                    .IsRequired();
+
+                entity.Property(e => e.OverallFeeling)
+                    .IsRequired();
+
+                // Check constraints a nivel de entidad
+                entity.HasCheckConstraint("CK_WorkoutSensations_Effort", "\"Effort\" >= 1 AND \"Effort\" <= 10");
+                entity.HasCheckConstraint("CK_WorkoutSensations_Fatigue", "\"Fatigue\" >= 1 AND \"Fatigue\" <= 10");
+                entity.HasCheckConstraint("CK_WorkoutSensations_Motivation", "\"Motivation\" >= 1 AND \"Motivation\" <= 10");
+                entity.HasCheckConstraint("CK_WorkoutSensations_MuscularLoad", "\"MuscularLoad\" >= 1 AND \"MuscularLoad\" <= 10");
+                entity.HasCheckConstraint("CK_WorkoutSensations_OverallFeeling", "\"OverallFeeling\" >= 1 AND \"OverallFeeling\" <= 10");
+
+                // Relación con CompletedWorkout (uno-a-uno)
+                entity.HasOne(e => e.CompletedWorkout)
+                    .WithOne(w => w.Sensations)
+                    .HasForeignKey<WorkoutSensations>(e => e.CompletedWorkoutId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Índice único para asegurar uno-a-uno
+                entity.HasIndex(e => e.CompletedWorkoutId)
+                    .IsUnique();
+            });
+
+            // Configuración de WorkoutLap
+            modelBuilder.Entity<WorkoutLap>(entity =>
+            {
+                entity.ToTable("WorkoutLaps");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+
+                entity.Property(e => e.Index)
+                    .IsRequired();
+
+                entity.Property(e => e.Distance)
+                    .IsRequired();
+
+                entity.Property(e => e.Duration)
+                    .IsRequired(); // segundos
+
+                entity.Property(e => e.AverageHR)
+                    .IsRequired();
+
+                entity.Property(e => e.Speed)
+                    .IsRequired();
+
+                entity.Property(e => e.StartTime)
+                    .IsRequired();
+
+                // Relación con CompletedWorkout
+                entity.HasOne(e => e.CompletedWorkout)
+                    .WithMany(w => w.Laps)
+                    .HasForeignKey(e => e.CompletedWorkoutId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Índices
+                entity.HasIndex(e => e.CompletedWorkoutId);
+                entity.HasIndex(e => new { e.CompletedWorkoutId, e.Index });
+            });
+
+            // Configuración de WorkoutInjury
+            modelBuilder.Entity<WorkoutInjury>(entity =>
+            {
+                entity.ToTable("WorkoutInjuries");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+
+                entity.Property(e => e.BodyPart)
+                    .IsRequired()
+                    .HasConversion<string>()
+                    .HasMaxLength(30);
+
+                entity.Property(e => e.Severity)
+                    .IsRequired();
+
+                // Check constraint a nivel de entidad
+                entity.HasCheckConstraint("CK_WorkoutInjury_Severity", "\"Severity\" >= 1 AND \"Severity\" <= 10");
+
+                entity.Property(e => e.Description)
+                    .IsRequired()
+                    .HasMaxLength(1000);
+
+                entity.Property(e => e.AffectedPerformance)
+                    .IsRequired()
+                    .HasDefaultValue(false);
+
+                entity.Property(e => e.Type)
+                    .IsRequired()
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                // Relación con CompletedWorkout
+                entity.HasOne(e => e.CompletedWorkout)
+                    .WithMany(w => w.Injuries)
+                    .HasForeignKey(e => e.CompletedWorkoutId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Índices
+                entity.HasIndex(e => e.CompletedWorkoutId);
+            });
+
+            // Configuración de WorkoutFeedback
+            modelBuilder.Entity<WorkoutFeedback>(entity =>
+            {
+                entity.ToTable("WorkoutFeedbacks");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+
+                entity.Property(e => e.Feedback)
+                    .IsRequired()
+                    .HasMaxLength(2000);
+
+                entity.Property(e => e.Recommendations)
+                    .HasMaxLength(2000);
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                // Relación uno-a-uno con CompletedWorkout
+                entity.HasOne(e => e.CompletedWorkout)
+                    .WithOne(w => w.Feedback)
+                    .HasForeignKey<WorkoutFeedback>(f => f.CompletedWorkoutId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación con Coach
+                entity.HasOne(e => e.Coach)
+                    .WithMany()
+                    .HasForeignKey(e => e.CoachId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación uno-a-muchos con LapFeedbacks
+                entity.HasMany(e => e.LapFeedbacks)
+                    .WithOne(lf => lf.WorkoutFeedback)
+                    .HasForeignKey(lf => lf.WorkoutFeedbackId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Índices
+                entity.HasIndex(e => e.CompletedWorkoutId)
+                    .IsUnique(); // Uno-a-uno con CompletedWorkout
+                entity.HasIndex(e => e.CoachId);
+                entity.HasIndex(e => e.CreatedAt);
+            });
+
+            // Configuración de LapFeedback
+            modelBuilder.Entity<LapFeedback>(entity =>
+            {
+                entity.ToTable("LapFeedbacks");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+
+                entity.Property(e => e.Feedback)
+                    .IsRequired()
+                    .HasMaxLength(2000);
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                // Relación con WorkoutFeedback
+                entity.HasOne(e => e.WorkoutFeedback)
+                    .WithMany(wf => wf.LapFeedbacks)
+                    .HasForeignKey(e => e.WorkoutFeedbackId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relación uno-a-uno con WorkoutLap
+                entity.HasOne(e => e.WorkoutLap)
+                    .WithOne(wl => wl.LapFeedback)
+                    .HasForeignKey<LapFeedback>(lf => lf.WorkoutLapId)
+                    .OnDelete(DeleteBehavior.Restrict); // No eliminar el lap si se elimina el feedback
+
+                // Índices
+                entity.HasIndex(e => e.WorkoutFeedbackId);
+                entity.HasIndex(e => e.WorkoutLapId)
+                    .IsUnique(); // Un lap solo puede tener un feedback
             });
 
             // Configuración de CoachAthleteRelationship

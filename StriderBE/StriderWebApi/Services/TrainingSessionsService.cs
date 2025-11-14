@@ -26,19 +26,19 @@ namespace StriderWebApi.Services
                 throw new NotFoundException("Sesión de entrenamiento no encontrada");
             }
 
-            return MapToTrainingSessionResponseDto(session);
+            return MapToTrainingSessionResponseDto(session, null);
         }
 
         public async Task<IEnumerable<TrainingSessionResponseDto>> GetByPlanningIdAsync(int planningId, CancellationToken cancellationToken = default)
         {
             var sessions = await trainingSessionRepository.GetByPlanningIdAsync(planningId, cancellationToken);
-            return sessions.Select(MapToTrainingSessionResponseDto);
+            return sessions.Select(session => MapToTrainingSessionResponseDto(session, null));
         }
 
         public async Task<IEnumerable<TrainingSessionResponseDto>> GetByMicrocycleIdAsync(int microcycleId, CancellationToken cancellationToken = default)
         {
             var sessions = await trainingSessionRepository.GetByMicrocycleIdAsync(microcycleId, cancellationToken);
-            return sessions.Select(MapToTrainingSessionResponseDto);
+            return sessions.Select(session => MapToTrainingSessionResponseDto(session, null));
         }
 
         public Task<TrainingSessionResponseDto> CreateAsync(CreateTrainingSessionDto dto, int coachId, CancellationToken cancellationToken = default)
@@ -122,7 +122,7 @@ namespace StriderWebApi.Services
             await microcycleRepository.UpdateAsync(microcycle, cancellationToken);
 
             var sessionWithSeries = await trainingSessionRepository.GetByIdWithAthletesAsync(createdSession.Id, cancellationToken);
-            return MapToTrainingSessionResponseDto(sessionWithSeries ?? createdSession);
+            return MapToTrainingSessionResponseDto(sessionWithSeries ?? createdSession, null);
         }
 
         public async Task<TrainingSessionResponseDto> UpdateAsync(int id, UpdateTrainingSessionDto dto, int coachId, CancellationToken cancellationToken = default)
@@ -155,7 +155,7 @@ namespace StriderWebApi.Services
             await microcycleService.UpdateVolumeAutomaticallyAsync(session.MicrocycleId, cancellationToken);
 
             var sessionWithSeries = await trainingSessionRepository.GetByIdWithAthletesAsync(session.Id, cancellationToken);
-            return MapToTrainingSessionResponseDto(sessionWithSeries ?? session);
+            return MapToTrainingSessionResponseDto(sessionWithSeries ?? session, null);
         }
 
         public async Task<bool> DeleteAsync(int id, int coachId, CancellationToken cancellationToken = default)
@@ -208,7 +208,12 @@ namespace StriderWebApi.Services
         public async Task<IEnumerable<TrainingSessionResponseDto>> GetByAthleteIdAsync(int athleteId, int? planningId = null, CancellationToken cancellationToken = default)
         {
             var sessions = await trainingSessionRepository.GetByAthleteIdAsync(athleteId, planningId, cancellationToken);
-            return sessions.Select(MapToTrainingSessionResponseDto);
+            var result = new List<TrainingSessionResponseDto>();
+            foreach (var session in sessions)
+            {
+                result.Add(MapToTrainingSessionResponseDto(session, athleteId));
+            }
+            return result;
         }
 
         public async Task<IEnumerable<TrainingSessionResponseDto>> GetMyTrainingSessionsAsync(int athleteId, DateTime? date = null, CancellationToken cancellationToken = default)
@@ -229,7 +234,12 @@ namespace StriderWebApi.Services
                 sessions = await trainingSessionRepository.GetByAthleteIdAsync(athleteId, null, cancellationToken);
             }
 
-            return sessions.Select(MapToTrainingSessionResponseDto);
+            var result = new List<TrainingSessionResponseDto>();
+            foreach (var session in sessions)
+            {
+                result.Add(MapToTrainingSessionResponseDto(session, athleteId));
+            }
+            return result;
         }
 
         public async Task<decimal> RecalculateSessionVolumeAsync(int sessionId, CancellationToken cancellationToken = default)
@@ -314,7 +324,7 @@ namespace StriderWebApi.Services
             return list;
         }
 
-        private TrainingSessionResponseDto MapToTrainingSessionResponseDto(TrainingSession session)
+        private TrainingSessionResponseDto MapToTrainingSessionResponseDto(TrainingSession session, int? athleteId = null)
         {
             decimal sessionVolume = 0;
 
@@ -338,6 +348,23 @@ namespace StriderWebApi.Services
             var (estimatedWorkSeconds, estimatedRecoverySeconds) = CalculateEstimatedTimes(orderedSeries);
             var structureType = DetermineStructureType(session);
 
+            // Obtener el TrainingSessionAthleteId si se proporciona un athleteId específico
+            int? trainingSessionAthleteId = null;
+            bool hasCompletedWorkout = false;
+            if (athleteId.HasValue && session.Athletes != null)
+            {
+                var trainingSessionAthlete = session.Athletes.FirstOrDefault(a => a.AthleteId == athleteId.Value);
+                trainingSessionAthleteId = trainingSessionAthlete?.Id;
+                
+                // Verificar si hay un completedWorkout para esta sesión y fecha (ya está incluido en el query)
+                if (trainingSessionAthlete != null && trainingSessionAthlete.CompletedWorkouts != null)
+                {
+                    var sessionDate = session.Date.Date;
+                    hasCompletedWorkout = trainingSessionAthlete.CompletedWorkouts
+                        .Any(cw => cw.Date.Date == sessionDate);
+                }
+            }
+
             return new TrainingSessionResponseDto
             {
                 Id = session.Id,
@@ -348,6 +375,7 @@ namespace StriderWebApi.Services
                 PlanningId = session.PlanningId,
                 MicrocycleId = session.MicrocycleId,
                 AthleteIds = session.Athletes?.Select(a => a.AthleteId).ToList() ?? new List<int>(),
+                TrainingSessionAthleteId = trainingSessionAthleteId,
                 Series = orderedSeries
                     .Select(series => new TrainingSeriesResponseDto
                     {
@@ -372,7 +400,8 @@ namespace StriderWebApi.Services
                 EstimatedWorkSeconds = estimatedWorkSeconds,
                 EstimatedRecoverySeconds = estimatedRecoverySeconds,
                 CreatedAt = session.CreatedAt,
-                UpdatedAt = session.UpdatedAt
+                UpdatedAt = session.UpdatedAt,
+                HasCompletedWorkout = hasCompletedWorkout
             };
         }
 
