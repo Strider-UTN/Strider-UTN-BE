@@ -1,6 +1,6 @@
 using System.Threading;
 using StriderWebApi.Dto.Athlete;
-using StriderWebApi.Model;
+using StriderWebApi.Domain.DomainClasses;
 
 namespace StriderWebApi.Services.Interfaces;
 

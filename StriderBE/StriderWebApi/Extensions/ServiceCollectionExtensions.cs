@@ -91,6 +91,57 @@ namespace StriderWebApi.Extensions
             services.AddScoped<IMesocycleService, MesocycleService>();
             services.AddScoped<IMicrocycleService, MicrocycleService>();
             services.AddScoped<IPeriodService, PeriodService>();
+            services.AddScoped<ITrainingLoadCalculatorService, TrainingLoadCalculatorService>();
+
+            services.AddScoped<IAthleteAnalysisService>(provider =>
+            {
+                var calculator = provider.GetRequiredService<ITrainingLoadCalculatorService>();
+                var config = provider.GetRequiredService<IConfiguration>();
+
+                var acuteLookBackInDays = config.GetValue<int>("TrainingLoad:AcuteLookBackInDays");
+                var chronicLookBackInDays = config.GetValue<int>("TrainingLoad:ChronicLookBackInDays");
+                var weightFactor = config.GetValue<double>("TrainingLoad:WeightFactor");
+                var undertrainmentThreshold = config.GetValue<double>("TrainingLoad:UndertrainmentThreshold");
+                var overreachThreshold = config.GetValue<double>("TrainingLoad:OverreachThreshold");
+                var overTrainingThreshold = config.GetValue<double>("TrainingLoad:OverTrainingThreshold");
+
+                return new LoadBalanceAnalyzerService(
+                    calculator,
+                    acuteLookBackInDays,
+                    chronicLookBackInDays,
+                    weightFactor,
+                    undertrainmentThreshold,
+                    overreachThreshold,
+                    overTrainingThreshold);
+            });
+
+            services.AddScoped<IAthleteAnalysisService>(provider =>
+            {
+                var config = provider.GetRequiredService<IConfiguration>();
+                var incompletedWorkoutsThreshold = config.GetValue<int>("IncompletedWorkouts:Threshold", defaultValue: 3);
+                
+                return new IncompletedWorkoutsAnalyzerService(incompletedWorkoutsThreshold);
+            });
+
+            services.AddScoped<IAthleteAnalysisService>(provider =>
+            {
+                var calculator = provider.GetRequiredService<ITrainingLoadCalculatorService>();
+                var config = provider.GetRequiredService<IConfiguration>();
+
+                var acuteLookBackInDays = config.GetValue<int>("StressBalance:AcuteLookBackInDays");
+                var chronicLookBackInDays = config.GetValue<int>("StressBalance:ChronicLookBackInDays");
+                var stressBalanceThreshold = config.GetValue<double>("StressBalance:StressBalanceThreshold");
+                var competitionLookForwardInDays = config.GetValue<int>("StressBalance:CompetitionLookForwardInDays");
+                var weightFactor = config.GetValue<double>("StressBalance:WeightFactor");
+
+                return new StressBalanceAnalyzerService(
+                    calculator,
+                    acuteLookBackInDays,
+                    chronicLookBackInDays,
+                    stressBalanceThreshold,
+                    competitionLookForwardInDays,
+                    weightFactor);
+            });
 
             // Repositories Registrations
             services.AddScoped<IUserRepository, UserRepository>();

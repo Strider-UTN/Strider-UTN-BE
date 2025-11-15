@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StriderWebApi.Data.Repositories;
+using StriderWebApi.Data.Repositories.Interfaces;
+using StriderWebApi.Domain.DomainClasses;
 using StriderWebApi.Dto.Athlete;
 using StriderWebApi.Services.Interfaces;
 
@@ -8,11 +11,16 @@ namespace StriderWebApi.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
-    public class AthleteController(IAthleteService athleteService, IJwtService jwtService) : ControllerBase
+    public class AthleteController(IAthleteService athleteService, IJwtService jwtService, List<IAthleteAnalysisService> athleteAnalysisServices, ITrainingSessionsRepository trainingSessionAthleteRepository) : ControllerBase
     {
 
         private readonly IAthleteService _athleteService = athleteService;
         private readonly IJwtService _jwtService = jwtService;
+
+        private readonly List<IAthleteAnalysisService> _athleteAnalysisServices = athleteAnalysisServices;
+
+        private readonly ITrainingSessionsRepository _trainingSessionAthleteRepository = trainingSessionAthleteRepository;
+
 
         [Authorize]
         [HttpGet("athletes/{athleteId}/feedback")]
@@ -88,9 +96,19 @@ namespace StriderWebApi.Controllers
                 return NotFound();
             }
         }
+
+
+        [Authorize]
+        [HttpGet("athlete/{athleteId}/analysis")]
+        [ProducesResponseType(typeof(TrainingStatus), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<List<TrainingStatus>> GetAthleteAnalysis([FromRoute] int athleteId)
+        {
+            var athlete = await _athleteService.GetAthleteByIdAsync(athleteId);
+            var trainingSessions = await _trainingSessionAthleteRepository.GetByAthleteIdAsync(athleteId);
+            List<TrainingStatus> analysis = _athleteAnalysisServices.Select(service => service.Analyze(athlete, trainingSessions)).ToList();
+            return analysis;
+        }
+        
     }
-
-    
-    
-
 }

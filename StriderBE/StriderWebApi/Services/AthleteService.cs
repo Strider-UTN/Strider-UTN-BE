@@ -1,8 +1,8 @@
 using StriderWebApi.Controllers;
 using StriderWebApi.Dto.Athlete;
-using StriderWebApi.Model;
 using StriderWebApi.Services.Interfaces;
 using StriderWebApi.Data.Repositories.Interfaces;
+using StriderWebApi.Domain.DomainClasses;
 
 
 namespace StriderWebApi.Services
@@ -14,14 +14,14 @@ namespace StriderWebApi.Services
 
         public async Task<Athlete> GetAthleteByIdAsync(int athleteId)
         {
-            Domain.DomainClasses.Athlete athlete = await _athleteRepository.GetAthleteByIdAsync(athleteId) ?? throw new AthleteNotFoundException();
+            Athlete athlete = await _athleteRepository.GetAthleteByIdAsync(athleteId) ?? throw new AthleteNotFoundException();
             return new Athlete
             {
                 Id = athlete.Id,
                 PhoneNumber = athlete.PhoneNumber,
                 CreatedBy = athlete.CreatedBy,
                 Username = athlete.Username,
-                Name = athlete.FullName,
+                FullName = athlete.FullName,
                 Email = athlete.Email,
                 Gender = athlete.Gender,
                 Address = athlete.Address,
@@ -47,7 +47,7 @@ namespace StriderWebApi.Services
             {
                 Id = athlete.Id,
                 Username = athlete.Username,
-                FullName = athlete.Name,
+                FullName = athlete.FullName,
                 PhoneNumber = athlete.PhoneNumber ?? "" ,
                 Email = athlete.Email,
                 Gender = athlete.Gender,

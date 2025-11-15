@@ -21,5 +21,8 @@ namespace StriderWebApi.Domain.DomainClasses
         public Team? Team { get; set; }
         public virtual List<AthleteInjury> Injuries { get; set; } = [];
         public virtual List<Workout> Workouts { get; set; } = [];
+        public double RestingHeartRate { get; set; }
+        public double MaximumHeartRate { get; set; }
+        public double ThresholdHeartRate { get; set; }
     }
 }

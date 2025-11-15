@@ -1,9 +1,9 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using StriderWebApi.GarminApi.DTOs;
-using StriderWebApi.Model;
 using StriderWebApi.Services.Interfaces;
+using StriderWebApi.Domain.DomainClasses;
+using StriderWebApi.GarminApi.DTOs;
 
 namespace StriderWebApi.GarminApi;
 
@@ -22,7 +22,7 @@ public class GarminService(string host, int port, IHttpClientHandler? client) : 
             throw new Exception("API Responded with error: " + message);
         }
     }
-    public async Task DeleteUser(User user)
+    public async Task DeleteUser(Athlete user)
     {
         var token = GetAPIToken();
         var headers = new Dictionary<string, string>
@@ -34,7 +34,7 @@ public class GarminService(string host, int port, IHttpClientHandler? client) : 
     }
 
 #pragma warning disable CS8604
-    public async Task<List<Workout>> GetWorkouts(Athlete user, DateTime start, DateTime end, string garminName, string garminPassword)
+    public async Task<List<GarminWorkout>> GetWorkouts(Athlete user, DateTime start, DateTime end, string garminName, string garminPassword)
     {
 
         var requestData = new
@@ -57,7 +57,7 @@ public class GarminService(string host, int port, IHttpClientHandler? client) : 
         var response = JsonSerializer.Deserialize<APIResponse>(await result.Content.ReadAsStringAsync()) ?? throw new Exception("No activities found");
         object Data = response.Data ?? throw new Exception("No activities found");
 
-        var activities = JsonSerializer.Deserialize<List<APIWorkout>>(Data.ToString()).Select(a => a.ToWorkout(user)).ToList() ?? throw new Exception("No activities found");
+        var activities = JsonSerializer.Deserialize<List<GarminWorkout>>(Data.ToString()) ?? throw new Exception("No activities found");
 
         return activities;
         
