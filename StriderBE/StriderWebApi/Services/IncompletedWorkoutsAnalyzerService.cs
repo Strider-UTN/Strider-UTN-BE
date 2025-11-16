@@ -1,8 +1,9 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using StriderWebApi.Domain.Enums;
 using StriderWebApi.Domain.DomainClasses;
+using StriderWebApi.Domain.Enums;
+using StriderWebApi.Dto.Athlete;
 using StriderWebApi.Services.Interfaces;
 
 namespace StriderWebApi.Services;
@@ -11,7 +12,7 @@ public class IncompletedWorkoutsAnalyzerService(int incompletedWorkoutsThreshold
 {
     private readonly int _incompletedWorkoutsThreshold = incompletedWorkoutsThreshold;
 
-    public TrainingStatus Analyze(Athlete athlete, IEnumerable<TrainingSession> trainingSessions)
+    public AthleteAnalysisResultResponseDto Analyze(Athlete athlete, IEnumerable<TrainingSession> trainingSessions)
     {
         var incompletedTrainingSessions = trainingSessions
             .Where(s => s.Date < DateTime.Now.AddDays(-1) &&
@@ -28,19 +29,19 @@ public class IncompletedWorkoutsAnalyzerService(int incompletedWorkoutsThreshold
             string trainingSessionDetails = string.Join("\n", incompletedTrainingSessions.Select(s =>
                 $"   • {s.Date:MMM dd, yyyy} - {s.Name ?? "Unnamed Session"}"));
 
-            return new TrainingStatus
+            return new AthleteAnalysisResultResponseDto
             {
                 Title = $"Athlete {athlete.FullName} has {incompletedWorkouts} incomplete workouts during the last week",
                 Description = $"The following workouts were not completed:\n\n{trainingSessionDetails}\n\n",
-                Type = TrainingStatusType.Warning
+                Type = AthleteAnalysisResultType.Warning
             };
         }
 
-        return new TrainingStatus
+        return new AthleteAnalysisResultResponseDto
         {
             Title = $"Athlete {athlete.FullName} has completed all workouts during the last week",
             Description = $"Good job! The athlete has completed all workouts during the last week.",
-            Type = TrainingStatusType.Ok
+            Type = AthleteAnalysisResultType.Ok
         };
 
     }

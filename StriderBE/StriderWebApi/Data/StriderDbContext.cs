@@ -17,9 +17,8 @@ namespace StriderWebApi.Data
         public DbSet<User> Users => Set<User>();
         public DbSet<Coach> Coaches => Set<Coach>();
         public DbSet<Athlete> Athletes => Set<Athlete>();
-        public DbSet<Session> Sessions => Set<Session>();
         public DbSet<Workout> Workouts => Set<Workout>();
-        public DbSet<Interval> Intervals => Set<Interval>();
+
         public DbSet<Lap> Laps => Set<Lap>();
         public DbSet<Team> Teams => Set<Team>();
         public DbSet<TrainingLocation> TrainingLocations => Set<TrainingLocation>();
@@ -70,17 +69,11 @@ namespace StriderWebApi.Data
                 .HasIndex(u => new { u.Username, u.UserType })
                 .IsUnique();
 
-            modelBuilder.Entity<Session>()
-                .Property(s => s.Id)
-                .ValueGeneratedOnAdd();
 
             modelBuilder.Entity<Workout>()
                 .Property(w => w.Id)
                 .ValueGeneratedOnAdd();
 
-            modelBuilder.Entity<Interval>()
-                .Property(i => i.Id)
-                .ValueGeneratedOnAdd();
 
             modelBuilder.Entity<Lap>()
                 .Property(l => l.Id)

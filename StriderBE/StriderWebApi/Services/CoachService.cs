@@ -1,9 +1,9 @@
 using StriderWebApi.Data.Repositories.Interfaces;
 using StriderWebApi.Domain.Enums;
+using StriderWebApi.Domain.DomainClasses;
 using StriderWebApi.Dto.Coach;
 using StriderWebApi.Dto.Injuries;
 using StriderWebApi.Exceptions.Coach;
-using StriderWebApi.Model;
 using StriderWebApi.Services.Interfaces;
 using System.Linq;
 
@@ -19,48 +19,35 @@ public class CoachService(
     private readonly IAthleteService _athleteService = athleteService;
     private readonly IAthleteInjuryRepository _athleteInjuryRepository = athleteInjuryRepository;
 
-    public async Task<Coach> GetCoachById(int id)
-    {
-        Domain.DomainClasses.Coach coach = await _coachRepository.GetCoachByIdAsync(id) ?? throw new CoachNotFoundException();
-        return new Coach
-        {
-            Id = coach.Id,
-            CreatedBy = coach.CreatedBy,
-            PhoneNumber = coach.PhoneNumber,
-            Username = coach.Username,
-            Name = coach.FullName,
-            Email = coach.Email,
-            Gender = coach.Gender,
-            Address = coach.Address,
-            BirthDate = coach.BirthDate
-        };
-    }
-
     public async Task<CoachResponseDTO> GetCoachIndividualAthletes(int coachId)
     {
-        Coach coach = await GetCoachById(coachId);
+        Coach coach = await _coachRepository.GetCoachByIdAsync(coachId) ?? throw new CoachNotFoundException();
+        
+        // Calculate workouts completed (placeholder - needs proper implementation)
+        int workoutsCompleted = 0; // TODO: Implement TotalWorkoutsCompletedByIndividualAthletes
+        
         var response = new CoachResponseDTO
         {
-            Name = coach.Name,
-            WorkoutsCompleted = coach.TotalWorkoutsCompletedByIndividualAthletes(),
+            Name = coach.FullName,
+            WorkoutsCompleted = workoutsCompleted,
             Athletes = coach.Athletes.Select(a => new CoachResponseDTO.Athlete
             {
                 Id = a.Id,
-                Name = a.Name,
+                Name = a.FullName,
                 Email = a.Email,
                 PhoneNumber = a.PhoneNumber,
-                Experience = a.YearsOfExperience(),
-                WeeklyDistance = a.WeeklyDistance(),
-                Age = a.Age(),
+                Experience = a.YearsOfExperience,
+                WeeklyDistance = 0, // TODO: Implement WeeklyDistance calculation
+                Age = DateTime.Now.Year - a.BirthDate.Year - (DateTime.Now.DayOfYear < a.BirthDate.DayOfYear ? 1 : 0),
                 BirthYear = a.BirthDate.Year,
                 Height = a.Height,
                 Weight = a.Weight,
-                MonthlyDistance = a.MonthlyDistance(),
+                MonthlyDistance = 0, // TODO: Implement MonthlyDistance calculation
                 EmergencyContactName = a.EmergencyContactName,
                 EmergencyContactPhone = a.EmergencyContactPhone,
                 EmergencyContactRelationship = a.EmergencyContactRelationship,
                 RegistrationDate = a.CreatedDate,
-                LastActivityDate = a.GetLastWorkoutDate()
+                LastActivityDate = a.Workouts.Any() ? a.Workouts.Max(w => w.Date) : a.CreatedDate
 
             }).ToList()
         };
@@ -83,11 +70,18 @@ public class CoachService(
     public async Task PostWorkoutFeedbackAsync(int athleteId, int workoutId, CoachFeedbackDTO feedback)
     {
         Athlete athlete = await _athleteService.GetAthleteByIdAsync(athleteId);
-        Workout workout = athlete.GetWorkoutById(workoutId);
+        Workout? workout = athlete.Workouts.FirstOrDefault(w => w.Id == workoutId);
+        if (workout == null)
+        {
+            throw new Exception($"Workout with id {workoutId} not found for athlete {athleteId}");
+        }
         workout.CoachFeedback = feedback.Feedback;
         foreach (int index in feedback.LapFeedbacks.Keys) {
-            Lap lap = workout.GetLap(index);
-            lap.CoachFeedback = feedback.LapFeedbacks[index];
+            Lap? lap = workout.Laps.FirstOrDefault(l => l.Index == index);
+            if (lap != null)
+            {
+                lap.CoachFeedback = feedback.LapFeedbacks[index];
+            }
         }
         await _athleteService.UpdateAthlete(athlete);
     }

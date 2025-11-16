@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StriderWebApi.Services.Interfaces;
-using StriderWebApi.Model;
+using StriderWebApi.Domain.DomainClasses;
 
 namespace StriderWebApi.Controllers
 {
@@ -24,15 +24,13 @@ namespace StriderWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<List<Workout>>> GetWorkouts([FromRoute] int userId, [FromQuery] DateTime start, [FromQuery] DateTime end, [FromQuery] string garminName, [FromQuery] string garminPassword)
+        public async Task<ActionResult<List<GarminWorkout>>> GetWorkouts([FromRoute] int userId, [FromQuery] DateTime start, [FromQuery] DateTime end, [FromQuery] string garminName, [FromQuery] string garminPassword)
         {
 
             try
             {
                 Athlete athlete = await _athleteService.GetAthleteByIdAsync(userId);
                 var workouts = await _garminService.GetWorkouts(athlete, start, end, garminName, garminPassword);
-                athlete.AddWorkouts(workouts);
-                await _athleteService.UpdateAthlete(athlete);
                 return Ok(workouts);
             }
             catch (Exception ex)

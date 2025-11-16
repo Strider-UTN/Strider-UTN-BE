@@ -56,7 +56,7 @@ namespace StriderWebApi.Services
                 MedicalConditions = athlete.MedicalConditions,
                 Objectives = athlete.Objectives,
                 BirthDate = athlete.BirthDate,
-                Workouts = athlete.Workouts.Select(w => new Domain.DomainClasses.Workout
+                Workouts = athlete.Workouts.Select(w => new Workout
                 {
                     Id = w.Id,
                     Name = w.Name,
@@ -70,8 +70,9 @@ namespace StriderWebApi.Services
                     CoachFeedback = w.CoachFeedback,
                     IsReviewed = w.IsReviewed,
                     AthleteId = w.Athlete.Id,
-                    SessionId = w.Session?.Id,
-                    Laps = w.Laps.Select(l => new Domain.DomainClasses.Lap
+                    TrainingSessionId = w.TrainingSessionId,
+                    TrainingSession = w.TrainingSession,
+                    Laps = w.Laps.Select(l => new Lap
                     {
                         Id = l.Id,
                         Index = l.Index,

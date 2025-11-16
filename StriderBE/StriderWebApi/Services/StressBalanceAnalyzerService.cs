@@ -1,7 +1,9 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
-using StriderWebApi.Domain.Enums;
 using StriderWebApi.Domain.DomainClasses;
+using StriderWebApi.Domain.Enums;
+using StriderWebApi.Dto.Athlete;
 using StriderWebApi.Services.Interfaces;
 
 namespace StriderWebApi.Services;
@@ -21,7 +23,7 @@ public class StressBalanceAnalyzerService(
 	private readonly int _competitionLookForwardInDays = competitionLookForwardInDays;
 	private readonly double _weightFactor = weightFactor;
 
-	public TrainingStatus Analyze(Athlete athlete, IEnumerable<TrainingSession> trainingSessions)
+	public AthleteAnalysisResultResponseDto Analyze(Athlete athlete, IEnumerable<TrainingSession> trainingSessions)
 	{
 		DateTime nextCompetition = trainingSessions
 			.Where(s =>
@@ -37,19 +39,19 @@ public class StressBalanceAnalyzerService(
 
 		if (stressBalance < _stressBalanceThreshold)
 		{
-			return new TrainingStatus()
+			return new AthleteAnalysisResultResponseDto()
 			{
 				Title = $"Athlete {athlete.FullName} may be overloaded for competitions",
 				Description = $"The athlete's stress balance is {stressBalance}. Set limit was {_stressBalanceThreshold} for competitions. Athlete may be overloaded for competition in the next {nextCompetition.Subtract(DateTime.Now).Days} days.",
-				Type = TrainingStatusType.Warning
+				Type = AthleteAnalysisResultType.Warning
 			};
 		}
 
-		return new TrainingStatus()
+		return new AthleteAnalysisResultResponseDto()
 		{
 			Title = $"Athlete {athlete.FullName} is not overloaded for competitions",
 			Description = $"The athlete's stress balance is {stressBalance}. Set limit was {_stressBalanceThreshold} for competitions. Athlete is not overloaded for competitions.",
-			Type = TrainingStatusType.Ok
+			Type = AthleteAnalysisResultType.Ok
 		};
 	}
 

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using StriderWebApi.Domain.Enums;
 using StriderWebApi.Domain.DomainClasses;
+using StriderWebApi.Dto.Athlete;
 using StriderWebApi.Services.Interfaces;
 
 namespace StriderWebApi.Services;
@@ -22,7 +22,7 @@ public class LoadBalanceAnalyzerService(
 	private readonly double _overreachThreshold = overreachThreshold;
 	private readonly double _overTrainingThreshold = overTrainingThreshold;
 
-	public TrainingStatus Analyze(Athlete athlete, IEnumerable<TrainingSession> trainingSessions)
+	public AthleteAnalysisResultResponseDto Analyze(Athlete athlete, IEnumerable<TrainingSession> trainingSessions)
 	{
 		double chronicTrainingLoad = _calculator.ExponentialAverageTrainingLoad(athlete, _chronicLookBackInDays, _weightFactor);
 		double acuteTrainingLoad = _calculator.ExponentialAverageTrainingLoad(athlete, _acuteLookBackInDays, _weightFactor);
@@ -30,39 +30,39 @@ public class LoadBalanceAnalyzerService(
 
 		if (acRatio < _undertrainmentThreshold)
 		{
-			return new TrainingStatus()
+			return new AthleteAnalysisResultResponseDto()
 			{
 				Title = $"Athlete {athlete.FullName} may be undertrained",
 				Description = $"The athlete's acute-chronic ratio is {acRatio}. Set minimum limit for undertraining was {_undertrainmentThreshold}. Athlete may be undertraining.",
-				Type = TrainingStatusType.Warning
+				Type = AthleteAnalysisResultType.Warning
 			};
 		}
 
 		if (acRatio > _overreachThreshold && acRatio < _overTrainingThreshold)
 		{
-			return new TrainingStatus()
+			return new AthleteAnalysisResultResponseDto()
 			{
 				Title = $"Athlete {athlete.FullName} may be overreaching",
 				Description = $"The athlete's acute-chronic ratio is {acRatio}. Set limits for overreach were {_overreachThreshold} and {_overTrainingThreshold}. Athlete may be overreaching.",
-				Type = TrainingStatusType.Warning
+				Type = AthleteAnalysisResultType.Warning
 			};
 		}
 
 		if (acRatio > _overTrainingThreshold)
 		{
-			return new TrainingStatus()
+			return new AthleteAnalysisResultResponseDto()
 			{
 				Title = $"Athlete {athlete.FullName} may be overtrained",
 				Description = $"The athlete's acute-chronic ratio is {acRatio}. Set limit for overtraining was {_overTrainingThreshold}. Athlete may be overtraining.",
-				Type = TrainingStatusType.Warning
+				Type = AthleteAnalysisResultType.Warning
 			};
 		}
 
-		return new TrainingStatus()
+		return new AthleteAnalysisResultResponseDto()
 		{
 			Title = $"Athlete {athlete.FullName} is in a good load balance",
 			Description = $"The athlete's acute-chronic ratio is {acRatio}. Set limits for overreach were {_overreachThreshold} and {_overTrainingThreshold}. Athlete may be overreaching.",
-			Type = TrainingStatusType.Ok
+			Type = AthleteAnalysisResultType.Ok
 		};
 	}
 

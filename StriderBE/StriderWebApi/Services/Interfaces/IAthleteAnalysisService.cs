@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using StriderWebApi.Domain.DomainClasses;
+using StriderWebApi.Dto.Athlete;
 
 namespace StriderWebApi.Services.Interfaces;
 
 public interface IAthleteAnalysisService
 {
-    TrainingStatus Analyze(Athlete athlete, IEnumerable<TrainingSession> trainingSessions);
+    AthleteAnalysisResultResponseDto Analyze(Athlete athlete, IEnumerable<TrainingSession> trainingSessions);
 }
 

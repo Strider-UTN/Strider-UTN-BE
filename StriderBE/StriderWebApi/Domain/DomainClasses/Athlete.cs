@@ -21,8 +21,10 @@ namespace StriderWebApi.Domain.DomainClasses
         public Team? Team { get; set; }
         public virtual List<AthleteInjury> Injuries { get; set; } = [];
         public virtual List<Workout> Workouts { get; set; } = [];
-        public double RestingHeartRate { get; set; }
-        public double MaximumHeartRate { get; set; }
-        public double ThresholdHeartRate { get; set; }
+
+        // TODO :: Should be getting these from SOMEWHERE else. Maybe Garmin?
+        public double RestingHeartRate { get; set; } = 60;
+        public double MaximumHeartRate { get; set; } = 200;
+        public double ThresholdHeartRate { get; set; } = 150;
     }
 }

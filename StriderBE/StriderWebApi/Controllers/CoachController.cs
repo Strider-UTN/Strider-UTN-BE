@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using StriderWebApi.Data.Repositories;
 using StriderWebApi.Dto.Coach;
 using StriderWebApi.Exceptions.Coach;
-using StriderWebApi.Model;
+using StriderWebApi.Domain.DomainClasses;
 using StriderWebApi.Services.Interfaces;
 
 namespace StriderWebApi.Controllers

@@ -100,13 +100,13 @@ namespace StriderWebApi.Controllers
 
         [Authorize]
         [HttpGet("athlete/{athleteId}/analysis")]
-        [ProducesResponseType(typeof(TrainingStatus), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AthleteAnalysisResultResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<List<TrainingStatus>> GetAthleteAnalysis([FromRoute] int athleteId)
+        public async Task<List<AthleteAnalysisResultResponseDto>> GetAthleteAnalysis([FromRoute] int athleteId)
         {
             var athlete = await _athleteService.GetAthleteByIdAsync(athleteId);
             var trainingSessions = await _trainingSessionAthleteRepository.GetByAthleteIdAsync(athleteId);
-            List<TrainingStatus> analysis = _athleteAnalysisServices.Select(service => service.Analyze(athlete, trainingSessions)).ToList();
+            List<AthleteAnalysisResultResponseDto> analysis = _athleteAnalysisServices.Select(service => service.Analyze(athlete, trainingSessions)).ToList();
             return analysis;
         }
         
