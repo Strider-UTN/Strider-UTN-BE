@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StriderWebApi.Data;
@@ -12,9 +13,11 @@ using StriderWebApi.Data;
 namespace StriderWebApi.Migrations
 {
     [DbContext(typeof(StriderDbContext))]
-    partial class StriderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251116034516_AddHeartRateFields")]
+    partial class AddHeartRateFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
