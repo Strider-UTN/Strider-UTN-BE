@@ -11,19 +11,19 @@ namespace StriderWebApi.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
-    public class AthleteController(IAthleteService athleteService, IJwtService jwtService, List<IAthleteAnalysisService> athleteAnalysisServices, ITrainingSessionsRepository trainingSessionAthleteRepository) : ControllerBase
+    public class AthleteController(IAthleteService athleteService, IJwtService jwtService, IEnumerable<IAthleteAnalysisService> athleteAnalysisServices, ITrainingSessionsRepository trainingSessionAthleteRepository) : ControllerBase
     {
 
         private readonly IAthleteService _athleteService = athleteService;
         private readonly IJwtService _jwtService = jwtService;
 
-        private readonly List<IAthleteAnalysisService> _athleteAnalysisServices = athleteAnalysisServices;
+        private readonly IEnumerable<IAthleteAnalysisService> _athleteAnalysisServices = athleteAnalysisServices;
 
         private readonly ITrainingSessionsRepository _trainingSessionAthleteRepository = trainingSessionAthleteRepository;
 
 
         [Authorize]
-        [HttpGet("athletes/{athleteId}/feedback")]
+        [HttpGet("{athleteId}/feedback")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetAthleteFeedback([FromRoute] int athleteId)
@@ -44,7 +44,7 @@ namespace StriderWebApi.Controllers
         }
 
         [Authorize]
-        [HttpGet("me/status")]
+        [HttpGet("status")]
         [ProducesResponseType(typeof(AthleteStatusResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -68,7 +68,7 @@ namespace StriderWebApi.Controllers
         }
 
         [Authorize]
-        [HttpPut("me/status")]
+        [HttpPut("status")]
         [ProducesResponseType(typeof(AthleteStatusResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -99,16 +99,25 @@ namespace StriderWebApi.Controllers
 
 
         [Authorize]
-        [HttpGet("athlete/{athleteId}/analysis")]
+        [HttpGet("{athleteId}/analysis")]
         [ProducesResponseType(typeof(AthleteAnalysisResultResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<List<AthleteAnalysisResultResponseDto>> GetAthleteAnalysis([FromRoute] int athleteId)
+        public async Task<ActionResult<List<AthleteAnalysisResultResponseDto>>> GetAthleteAnalysis([FromRoute] int athleteId)
         {
-            var athlete = await _athleteService.GetAthleteByIdAsync(athleteId);
-            var trainingSessions = await _trainingSessionAthleteRepository.GetByAthleteIdAsync(athleteId);
-            List<AthleteAnalysisResultResponseDto> analysis = _athleteAnalysisServices.Select(service => service.Analyze(athlete, trainingSessions)).ToList();
-            return analysis;
+            try
+            {
+                var athlete = await _athleteService.GetAthleteByIdAsync(athleteId);
+                var trainingSessions = await _trainingSessionAthleteRepository.GetByAthleteIdAsync(athleteId);
+                List<AthleteAnalysisResultResponseDto> analysis = _athleteAnalysisServices
+                    .Select(service => service.Analyze(athlete, trainingSessions))
+                    .ToList();
+                return Ok(analysis);
+            }
+            catch (Exception e)
+            {
+                return Problem("An error occurred while retrieving athlete analysis: " + e.Message);
+            }
         }
-        
     }
 }
+

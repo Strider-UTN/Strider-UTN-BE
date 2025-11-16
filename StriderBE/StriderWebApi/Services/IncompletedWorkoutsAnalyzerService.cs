@@ -14,6 +14,17 @@ public class IncompletedWorkoutsAnalyzerService(int incompletedWorkoutsThreshold
 
     public AthleteAnalysisResultResponseDto Analyze(Athlete athlete, IEnumerable<TrainingSession> trainingSessions)
     {
+
+        if (trainingSessions.Count() == 0)
+        {
+            return new AthleteAnalysisResultResponseDto
+            {
+                Title = $"No se encontraron sesiones de entrenamiento",
+                Description = $"No se puede proporcionar un análisis de entrenamientos incompletos para el atleta {athlete.FullName}. No hay sesiones de entrenamiento para analizar.",
+                Type = AthleteAnalysisResultType.NoData
+            };
+        }
+
         var incompletedTrainingSessions = trainingSessions
             .Where(s => s.Date < DateTime.Now.AddDays(-1) &&
                         s.Date > DateTime.Now.AddDays(-7) &&
@@ -27,20 +38,20 @@ public class IncompletedWorkoutsAnalyzerService(int incompletedWorkoutsThreshold
         if (incompletedWorkouts > _incompletedWorkoutsThreshold)
         {
             string trainingSessionDetails = string.Join("\n", incompletedTrainingSessions.Select(s =>
-                $"   • {s.Date:MMM dd, yyyy} - {s.Name ?? "Unnamed Session"}"));
+                $"   • {s.Date:MMM dd, yyyy} - {s.Name ?? "Sesión sin nombre"}"));
 
             return new AthleteAnalysisResultResponseDto
             {
-                Title = $"Athlete {athlete.FullName} has {incompletedWorkouts} incomplete workouts during the last week",
-                Description = $"The following workouts were not completed:\n\n{trainingSessionDetails}\n\n",
+                Title = $"El atleta {athlete.FullName} tiene {incompletedWorkouts} entrenamientos incompletos durante la última semana",
+                Description = $"Los siguientes entrenamientos no fueron completados:\n\n{trainingSessionDetails}\n\n",
                 Type = AthleteAnalysisResultType.Warning
             };
         }
 
         return new AthleteAnalysisResultResponseDto
         {
-            Title = $"Athlete {athlete.FullName} has completed all workouts during the last week",
-            Description = $"Good job! The athlete has completed all workouts during the last week.",
+            Title = $"El atleta {athlete.FullName} ha completado todos los entrenamientos durante la última semana",
+            Description = $"¡Buen trabajo! El atleta ha completado todos los entrenamientos durante la última semana.",
             Type = AthleteAnalysisResultType.Ok
         };
 

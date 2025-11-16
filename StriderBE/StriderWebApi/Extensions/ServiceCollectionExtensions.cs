@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using StriderWebApi.Data;
 using StriderWebApi.Data.Repositories;
@@ -93,7 +94,8 @@ namespace StriderWebApi.Extensions
             services.AddScoped<IPeriodService, PeriodService>();
             services.AddScoped<ITrainingLoadCalculatorService, TrainingLoadCalculatorService>();
 
-            services.AddScoped<IAthleteAnalysisService>(provider =>
+            // Register all IAthleteAnalysisService implementations
+            services.AddTransient<IAthleteAnalysisService, LoadBalanceAnalyzerService>(provider =>
             {
                 var calculator = provider.GetRequiredService<ITrainingLoadCalculatorService>();
                 var config = provider.GetRequiredService<IConfiguration>();
@@ -115,7 +117,7 @@ namespace StriderWebApi.Extensions
                     overTrainingThreshold);
             });
 
-            services.AddScoped<IAthleteAnalysisService>(provider =>
+            services.AddTransient<IAthleteAnalysisService, IncompletedWorkoutsAnalyzerService>(provider =>
             {
                 var config = provider.GetRequiredService<IConfiguration>();
                 var incompletedWorkoutsThreshold = config.GetValue<int>("IncompletedWorkouts:Threshold", defaultValue: 3);
@@ -123,7 +125,7 @@ namespace StriderWebApi.Extensions
                 return new IncompletedWorkoutsAnalyzerService(incompletedWorkoutsThreshold);
             });
 
-            services.AddScoped<IAthleteAnalysisService>(provider =>
+            services.AddTransient<IAthleteAnalysisService, StressBalanceAnalyzerService>(provider =>
             {
                 var calculator = provider.GetRequiredService<ITrainingLoadCalculatorService>();
                 var config = provider.GetRequiredService<IConfiguration>();

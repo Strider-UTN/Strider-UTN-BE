@@ -25,7 +25,7 @@ public class StressBalanceAnalyzerService(
 
 	public AthleteAnalysisResultResponseDto Analyze(Athlete athlete, IEnumerable<TrainingSession> trainingSessions)
 	{
-		DateTime nextCompetition = trainingSessions
+		var nextCompetition = trainingSessions
 			.Where(s =>
 				s.Date > DateTime.Now &&
 				s.Date < DateTime.Now.AddDays(_competitionLookForwardInDays) &&
@@ -33,25 +33,36 @@ public class StressBalanceAnalyzerService(
 				(s.Category == TrainingCategory.PrepCompetition || s.Category == TrainingCategory.MainCompetition)
 			)
 			.OrderBy(s => s.Date)
-			.First()
-			.Date;
+			.FirstOrDefault();
+		
+		if (nextCompetition == null)
+		{
+			return new AthleteAnalysisResultResponseDto()
+			{
+				Title = $"Datos insuficientes para el análisis de balance de estrés",
+				Description = $"No se puede analizar el balance de estrés para el atleta {athlete.FullName}. No hay competencias próximas programadas dentro de los próximos {_competitionLookForwardInDays} días.",
+				Type = AthleteAnalysisResultType.NoData
+			};
+		}
+		
+		DateTime nextCompetitionDate = nextCompetition.Date;
 		double stressBalance =  CalculateTrainingStressBalance(athlete);
 
 		if (stressBalance < _stressBalanceThreshold)
 		{
 			return new AthleteAnalysisResultResponseDto()
 			{
-				Title = $"Athlete {athlete.FullName} may be overloaded for competitions",
-				Description = $"The athlete's stress balance is {stressBalance}. Set limit was {_stressBalanceThreshold} for competitions. Athlete may be overloaded for competition in the next {nextCompetition.Subtract(DateTime.Now).Days} days.",
+				Title = $"El atleta {athlete.FullName} puede estar sobrecargado para las competencias",
+				Description = $"El balance de estrés del atleta es {stressBalance:F2}. El límite establecido fue {_stressBalanceThreshold:F2} para competencias. El atleta puede estar sobrecargado para la competencia en los próximos {nextCompetitionDate.Subtract(DateTime.Now).Days} días.",
 				Type = AthleteAnalysisResultType.Warning
 			};
 		}
 
 		return new AthleteAnalysisResultResponseDto()
 		{
-			Title = $"Athlete {athlete.FullName} is not overloaded for competitions",
-			Description = $"The athlete's stress balance is {stressBalance}. Set limit was {_stressBalanceThreshold} for competitions. Athlete is not overloaded for competitions.",
-			Type = AthleteAnalysisResultType.Ok
+			Title = $"No se detectaron problemas de balance de estrés",
+			Description = $"No se puede proporcionar un análisis de balance de estrés para el atleta {athlete.FullName}. El balance de estrés del atleta ({stressBalance:F2}) está dentro de los límites aceptables (umbral: {_stressBalanceThreshold:F2}).",
+			Type = AthleteAnalysisResultType.NoData
 		};
 	}
 

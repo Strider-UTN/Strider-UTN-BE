@@ -26,14 +26,25 @@ public class LoadBalanceAnalyzerService(
 	{
 		double chronicTrainingLoad = _calculator.ExponentialAverageTrainingLoad(athlete, _chronicLookBackInDays, _weightFactor);
 		double acuteTrainingLoad = _calculator.ExponentialAverageTrainingLoad(athlete, _acuteLookBackInDays, _weightFactor);
+		
+		if (chronicTrainingLoad == 0 && acuteTrainingLoad == 0)
+		{
+			return new AthleteAnalysisResultResponseDto()
+			{
+				Title = $"Datos insuficientes para el análisis de balance de carga",
+				Description = $"No se puede analizar el balance de carga para el atleta {athlete.FullName}. No hay datos de carga de entrenamiento disponibles para los períodos requeridos.",
+				Type = AthleteAnalysisResultType.NoData
+			};
+		}
+		
 		double acRatio = acuteTrainingLoad / (chronicTrainingLoad + 0.0000001);
 
 		if (acRatio < _undertrainmentThreshold)
 		{
 			return new AthleteAnalysisResultResponseDto()
 			{
-				Title = $"Athlete {athlete.FullName} may be undertrained",
-				Description = $"The athlete's acute-chronic ratio is {acRatio}. Set minimum limit for undertraining was {_undertrainmentThreshold}. Athlete may be undertraining.",
+				Title = $"El atleta {athlete.FullName} puede estar subentrenado",
+				Description = $"La relación aguda-crónica del atleta es {acRatio:F2}. El límite mínimo establecido para subentrenamiento fue {_undertrainmentThreshold:F2}. El atleta puede estar subentrenando.",
 				Type = AthleteAnalysisResultType.Warning
 			};
 		}
@@ -42,8 +53,8 @@ public class LoadBalanceAnalyzerService(
 		{
 			return new AthleteAnalysisResultResponseDto()
 			{
-				Title = $"Athlete {athlete.FullName} may be overreaching",
-				Description = $"The athlete's acute-chronic ratio is {acRatio}. Set limits for overreach were {_overreachThreshold} and {_overTrainingThreshold}. Athlete may be overreaching.",
+				Title = $"El atleta {athlete.FullName} puede estar sobrecargándose",
+				Description = $"La relación aguda-crónica del atleta es {acRatio:F2}. Los límites establecidos para sobrecarga fueron {_overreachThreshold:F2} y {_overTrainingThreshold:F2}. El atleta puede estar sobrecargándose.",
 				Type = AthleteAnalysisResultType.Warning
 			};
 		}
@@ -52,16 +63,16 @@ public class LoadBalanceAnalyzerService(
 		{
 			return new AthleteAnalysisResultResponseDto()
 			{
-				Title = $"Athlete {athlete.FullName} may be overtrained",
-				Description = $"The athlete's acute-chronic ratio is {acRatio}. Set limit for overtraining was {_overTrainingThreshold}. Athlete may be overtraining.",
+				Title = $"El atleta {athlete.FullName} puede estar sobreentrenado",
+				Description = $"La relación aguda-crónica del atleta es {acRatio:F2}. El límite establecido para sobreentrenamiento fue {_overTrainingThreshold:F2}. El atleta puede estar sobreentrenando.",
 				Type = AthleteAnalysisResultType.Warning
 			};
 		}
 
 		return new AthleteAnalysisResultResponseDto()
 		{
-			Title = $"Athlete {athlete.FullName} is in a good load balance",
-			Description = $"The athlete's acute-chronic ratio is {acRatio}. Set limits for overreach were {_overreachThreshold} and {_overTrainingThreshold}. Athlete may be overreaching.",
+			Title = $"El atleta {athlete.FullName} tiene un buen balance de carga",
+			Description = $"La relación aguda-crónica del atleta es {acRatio:F2}. Los límites establecidos para sobrecarga fueron {_overreachThreshold:F2} y {_overTrainingThreshold:F2}. El atleta tiene un balance de carga adecuado.",
 			Type = AthleteAnalysisResultType.Ok
 		};
 	}
