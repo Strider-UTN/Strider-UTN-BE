@@ -3,8 +3,9 @@ namespace StriderWebApi.Test;
 using System.Net;
 using Moq;
 using StriderWebApi.GarminApi;
-using StriderWebApi.Model;
+using StriderWebApi.Domain.DomainClasses;
 using StriderWebApi.Domain.Enums;
+using StriderWebApi.Dto.Garmin;
 
 public class GarminTests
 {
@@ -15,7 +16,7 @@ public class GarminTests
     { 
         Id = 1, 
         Username = "Test User", 
-        Name = "test", 
+        FullName = "Test User", 
         Email = "test", 
         Gender = Gender.MALE, 
         Address = "test", 
@@ -60,7 +61,7 @@ public class GarminTests
     public async Task TestUserDeletion()
     {
         _mockService.Setup(m => m.DeleteAsync("users/1", It.IsAny<Dictionary<string, string>?>())).Returns(Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)));
-        GarminService garminService = new("localhost", 8080, _mockService.Object);
+        GarminService garminService = new(_mockService.Object, "token_test");
         await garminService.DeleteUser(_user);
         _mockService.Verify(m => m.DeleteAsync("users/1", It.IsAny<Dictionary<string, string>?>()), Times.Once);
     }
@@ -72,7 +73,7 @@ public class GarminTests
         {
             Content = new StringContent("{\"message\":\"Test message\"}", System.Text.Encoding.UTF8, "application/json")
         }));
-        GarminService garminService = new("localhost", 8080, _mockService.Object);
+        GarminService garminService = new(_mockService.Object, "token_test");
         await Assert.ThrowsAsync<Exception>(() => garminService.DeleteUser(_user));
     }
 
@@ -84,8 +85,12 @@ public class GarminTests
         {
             Content = new StringContent(_sampleResponse, System.Text.Encoding.UTF8, "application/json")
         }));
-        GarminService garminService = new("localhost", 8080, _mockService.Object);
-        List<Workout> workouts = await garminService.GetWorkouts(_user, new DateTime(2022, 1, 1), new DateTime(2022, 1, 2), "test", "test");
+        GarminService garminService = new(_mockService.Object, "token_test");
+        List<GarminWorkoutDto> workouts = await garminService.GetWorkouts(_user, new GarminWorkoutRequestDto()
+        {
+            StartDate = new DateTime(2022, 1, 1),
+            EndDate = new DateTime(2022, 1, 2)
+        });
 
         Assert.Equal(3600, workouts[0].Laps[0].Duration);
     }
@@ -97,9 +102,13 @@ public class GarminTests
         {
             Content = new StringContent("{\"message\":\"Test message\"}", System.Text.Encoding.UTF8, "application/json")
         }));
-        GarminService garminService = new("localhost", 8080, _mockService.Object);
+        GarminService garminService = new(_mockService.Object, "token_test");
        
-        await Assert.ThrowsAsync<Exception>(() => garminService.GetWorkouts(_user, new DateTime(2022, 1, 1), new DateTime(2022, 1, 2), "test", "test"));
+        await Assert.ThrowsAsync<Exception>(() => garminService.GetWorkouts(_user, new GarminWorkoutRequestDto()
+        {
+            StartDate = new DateTime(2022, 1, 1),
+            EndDate = new DateTime(2022, 1, 2)
+        }));
     }
 
 
