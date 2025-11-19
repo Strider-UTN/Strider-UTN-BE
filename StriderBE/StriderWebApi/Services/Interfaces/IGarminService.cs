@@ -1,10 +1,13 @@
 using StriderWebApi.Domain.DomainClasses;
+using StriderWebApi.Dto.Garmin;
 
 namespace StriderWebApi.Services.Interfaces;
 
 public interface IGarminService
 {
-    Task DeleteUser(Athlete athlete);
-    Task<List<GarminWorkout>> GetWorkouts(Athlete athlete, DateTime start, DateTime end, string garminName, string garminPassword);
+
+    Task<GarminLoginResponseDto> Login(Athlete athlete, GarminLoginRequestDto garminLoginRequestDto);
+
+    Task<List<GarminWorkoutDto>> GetWorkouts(Athlete athlete, GarminWorkoutRequestDto garminWorkoutRequestDto);
 }
 

@@ -213,11 +213,6 @@ namespace StriderWebApi.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
-                    b.Property<string>("Source")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.Property<int>("TrainingSessionAthleteId")
                         .HasColumnType("integer");
 

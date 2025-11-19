@@ -25,7 +25,6 @@ namespace StriderWebApi.Migrations
                     AverageHR = table.Column<double>(type: "double precision", nullable: false),
                     Comments = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
                     TrainingSessionAthleteId = table.Column<int>(type: "integer", nullable: false),
-                    Source = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },

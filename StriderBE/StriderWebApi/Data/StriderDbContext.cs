@@ -380,10 +380,6 @@ namespace StriderWebApi.Data
                 entity.Property(e => e.Comments)
                     .HasMaxLength(2000);
 
-                entity.Property(e => e.Source)
-                    .IsRequired()
-                    .HasConversion<string>()
-                    .HasMaxLength(20);
 
                 entity.Property(e => e.Rating)
                     .HasConversion<string>()

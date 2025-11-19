@@ -23,9 +23,6 @@ namespace StriderWebApi.Domain.DomainClasses
         public int TrainingSessionAthleteId { get; set; }
         public TrainingSessionAthlete TrainingSessionAthlete { get; set; } = null!;
 
-        // Fuente de carga (manual o Garmin)
-        public WorkoutSource Source { get; set; } = WorkoutSource.Manual;
-
         // Calificación general del entrenamiento (asignada por el entrenador)
         public WorkoutRating? Rating { get; set; }
 

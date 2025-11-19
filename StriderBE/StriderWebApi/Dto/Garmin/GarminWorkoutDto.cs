@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
 
-namespace StriderWebApi.Domain.DomainClasses;
+namespace StriderWebApi.Dto.Garmin;
 
-public class GarminWorkout
+public class GarminWorkoutDto
 {
-    public int Id { get; set; }
+    public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public double Distance { get; set; }
-    public DateTime Date { get; set; }
+    public string Date { get; set; } = string.Empty;
     public double Duration { get; set; }
     public double AverageHR { get; set; }
-    public List<GarminLap> Laps { get; set; } = [];
+    public List<GarminLapDto> Laps { get; set; } = [];
 }
 

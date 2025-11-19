@@ -9,6 +9,7 @@ using StriderWebApi.Data.Repositories.Interfaces;
 using StriderWebApi.Domain.DomainClasses;
 using StriderWebApi.Services;
 using StriderWebApi.Services.Interfaces;
+using StriderWebApi.GarminApi;
 using System.Text;
 
 namespace StriderWebApi.Extensions
@@ -166,6 +167,23 @@ namespace StriderWebApi.Extensions
             services.AddScoped<IAthleteInjuryService, AthleteInjuryService>();
             services.AddScoped<ICompletedWorkoutRepository, CompletedWorkoutRepository>();
             services.AddScoped<ICompletedWorkoutService, CompletedWorkoutService>();
+
+            // Garmin Service Registration
+            services.AddScoped<IHttpClientHandler>(provider =>
+            {
+                var config = provider.GetRequiredService<IConfiguration>();
+                var host = config.GetValue<string>("Garmin:Host") ?? throw new InvalidOperationException("Garmin:Host configuration is required");
+                var port = config.GetValue<int>("Garmin:Port");
+                return new GarminApi.HttpClientHandler(host, port);
+            });
+
+            services.AddScoped<IGarminService>(provider =>
+            {
+                var httpClientHandler = provider.GetRequiredService<IHttpClientHandler>();
+                var config = provider.GetRequiredService<IConfiguration>();
+                var token = config.GetValue<string>("Garmin:Token") ?? throw new InvalidOperationException("Garmin:Token configuration is required");
+                return new GarminService(httpClientHandler, token);
+            });
 
             return services;
         }
