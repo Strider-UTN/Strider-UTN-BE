@@ -8,10 +8,9 @@ namespace StriderWebApi.Dto.CompletedWorkout
         public string Name { get; set; } = string.Empty;
         public double Distance { get; set; } // km
         public DateTime Date { get; set; }
-        public string Duration { get; set; } = string.Empty; // formato mm:ss (se convertirá a segundos)
+        public double Duration { get; set; }
         public double AverageHR { get; set; } // bpm
         public string? Comments { get; set; }
-        public WorkoutSource Source { get; set; } = WorkoutSource.Manual;
         
         // Sensaciones (opcional pero recomendado)
         public CreateWorkoutSensationsDto? Sensations { get; set; }
@@ -60,7 +59,6 @@ namespace StriderWebApi.Dto.CompletedWorkout
         public double Duration { get; set; } // segundos (se puede convertir a mm:ss en el frontend)
         public double AverageHR { get; set; } // bpm
         public string? Comments { get; set; }
-        public WorkoutSource Source { get; set; }
         
         // Relaciones
         public int TrainingSessionAthleteId { get; set; }
@@ -76,6 +74,9 @@ namespace StriderWebApi.Dto.CompletedWorkout
         public string? MesocycleName { get; set; }
         public int? MicrocycleId { get; set; }
         public string? MicrocycleName { get; set; }
+        
+        // Categoría de la sesión
+        public TrainingCategory? Category { get; set; }
         
         // Entidades relacionadas
         public WorkoutSensationsResponseDto? Sensations { get; set; }

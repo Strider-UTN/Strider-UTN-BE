@@ -9,12 +9,8 @@ namespace StriderWebApi.Domain.DomainClasses
         public string? Description { get; set; }
         public DateTime CreatedDate { get; set; }
         public bool IsActive { get; set; }
-        
-        // Navigation properties
         public int CoachId { get; set; }
         public Coach Coach { get; set; } = null!;
-        
-        // Collections
-        public List<Session> Sessions { get; set; } = [];
+        public List<TrainingSession> Sessions { get; set; } = [];
     }
 } 

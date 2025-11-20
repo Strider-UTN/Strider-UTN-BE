@@ -41,12 +41,6 @@ namespace StriderWebApi.Services
             }
 
             // Convertir duración de mm:ss a segundos
-            var durationSeconds = ParseDurationToSeconds(dto.Duration);
-            if (durationSeconds <= 0)
-            {
-                throw new System.ComponentModel.DataAnnotations.ValidationException("La duración debe estar en formato mm:ss y ser mayor a 0");
-            }
-
             // Validar sensaciones si se proporcionan
             if (dto.Sensations != null)
             {
@@ -60,10 +54,9 @@ namespace StriderWebApi.Services
                 Name = dto.Name,
                 Distance = dto.Distance,
                 Date = dto.Date.Kind == DateTimeKind.Utc ? dto.Date : DateTime.SpecifyKind(dto.Date, DateTimeKind.Utc),
-                Duration = durationSeconds,
+                Duration = dto.Duration,
                 AverageHR = dto.AverageHR,
                 Comments = dto.Comments,
-                Source = dto.Source
             };
 
             // Agregar sensaciones si se proporcionan
@@ -139,12 +132,6 @@ namespace StriderWebApi.Services
             }
 
             // Convertir duración
-            var durationSeconds = ParseDurationToSeconds(dto.Duration);
-            if (durationSeconds <= 0)
-            {
-                throw new System.ComponentModel.DataAnnotations.ValidationException("La duración debe estar en formato mm:ss y ser mayor a 0");
-            }
-
             // Validar sensaciones si se proporcionan
             if (dto.Sensations != null)
             {
@@ -155,10 +142,9 @@ namespace StriderWebApi.Services
             existingWorkout.Name = dto.Name;
             existingWorkout.Distance = dto.Distance;
             existingWorkout.Date = dto.Date.Kind == DateTimeKind.Utc ? dto.Date : DateTime.SpecifyKind(dto.Date, DateTimeKind.Utc);
-            existingWorkout.Duration = durationSeconds;
+            existingWorkout.Duration = dto.Duration;
             existingWorkout.AverageHR = dto.AverageHR;
             existingWorkout.Comments = dto.Comments;
-            existingWorkout.Source = dto.Source;
 
             // Actualizar sensaciones
             if (dto.Sensations != null)
@@ -366,7 +352,6 @@ namespace StriderWebApi.Services
                 Duration = workout.Duration,
                 AverageHR = workout.AverageHR,
                 Comments = workout.Comments,
-                Source = workout.Source,
                 TrainingSessionAthleteId = workout.TrainingSessionAthleteId,
                 TrainingSessionId = workout.TrainingSessionAthlete.TrainingSession.Id,
                 TrainingSessionName = workout.TrainingSessionAthlete.TrainingSession.Name,
@@ -378,6 +363,7 @@ namespace StriderWebApi.Services
                 MesocycleName = workout.TrainingSessionAthlete.TrainingSession.Microcycle?.Mesocycle?.Name,
                 MicrocycleId = workout.TrainingSessionAthlete.TrainingSession.MicrocycleId,
                 MicrocycleName = workout.TrainingSessionAthlete.TrainingSession.Microcycle?.Name,
+                Category = workout.TrainingSessionAthlete.TrainingSession.Category,
                 Sensations = workout.Sensations != null ? new WorkoutSensationsResponseDto
                 {
                     Id = workout.Sensations.Id,

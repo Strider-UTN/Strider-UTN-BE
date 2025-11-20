@@ -12,6 +12,16 @@ namespace StriderWebApi.Services
 
         private readonly IAthleteRepository _athleteRepository = athleteRepository;
 
+        public async Task<Athlete> GetAthleteByIdAsync(int athleteId)
+        {
+            var athlete = await _athleteRepository.GetAthleteByIdAsync(athleteId);
+            if (athlete == null)
+            {
+                throw new AthleteNotFoundException();
+            }
+            return athlete;
+        }
+
         public async Task UpdateAthlete(Athlete athlete)
         {
             await _athleteRepository.UpdateAthleteAsync(athlete);

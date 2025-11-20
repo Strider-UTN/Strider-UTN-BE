@@ -6,6 +6,7 @@ namespace StriderWebApi.Services.Interfaces;
 public interface IAthleteService
 {
     Task UpdateAthlete(Athlete athlete);
+    Task<Athlete> GetAthleteByIdAsync(int athlete);
     Task<bool> GetActiveStatusAsync(int athleteId, CancellationToken cancellationToken = default);
     Task UpdateActiveStatusAsync(int athleteId, bool isActive, CancellationToken cancellationToken = default);
 }

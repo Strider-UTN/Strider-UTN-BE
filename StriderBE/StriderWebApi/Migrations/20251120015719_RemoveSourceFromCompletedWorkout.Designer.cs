@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StriderWebApi.Data;
@@ -12,9 +13,11 @@ using StriderWebApi.Data;
 namespace StriderWebApi.Migrations
 {
     [DbContext(typeof(StriderDbContext))]
-    partial class StriderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251120015719_RemoveSourceFromCompletedWorkout")]
+    partial class RemoveSourceFromCompletedWorkout
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1319,53 +1322,6 @@ namespace StriderWebApi.Migrations
                     b.UseTphMappingStrategy();
                 });
 
-            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.VO2MaxSuggestion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AthleteId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CoachId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Message")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("RespondedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Status")
-                        .HasMaxLength(50)
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("SuggestedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("SuggestedVO2Max")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AthleteId");
-
-                    b.HasIndex("CoachId");
-
-                    b.ToTable("VO2MaxSuggestions");
-                });
-
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Workout", b =>
                 {
                     b.Property<int>("Id")
@@ -2016,25 +1972,6 @@ namespace StriderWebApi.Migrations
                     b.HasOne("StriderWebApi.Domain.DomainClasses.Coach", null)
                         .WithMany("Templates")
                         .HasForeignKey("CoachId");
-                });
-
-            modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.VO2MaxSuggestion", b =>
-                {
-                    b.HasOne("StriderWebApi.Domain.DomainClasses.User", "Athlete")
-                        .WithMany()
-                        .HasForeignKey("AthleteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StriderWebApi.Domain.DomainClasses.User", "Coach")
-                        .WithMany()
-                        .HasForeignKey("CoachId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Athlete");
-
-                    b.Navigation("Coach");
                 });
 
             modelBuilder.Entity("StriderWebApi.Domain.DomainClasses.Workout", b =>

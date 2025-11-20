@@ -355,7 +355,8 @@ namespace StriderWebApi.Services
                     LastActivity = lastIso,
                     DaysSinceLastWorkout = act.days,
                     TrainingStartDate = trainingStartDate,
-                    VO2Max = athlete?.VO2Max
+                    VO2Max = athlete?.VO2Max,
+                    BirthDate = r.Athlete.BirthDate
                 };
             }).ToList();
         }

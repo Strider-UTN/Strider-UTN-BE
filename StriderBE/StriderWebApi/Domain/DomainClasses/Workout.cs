@@ -20,10 +20,10 @@ namespace StriderWebApi.Domain.DomainClasses
         // Navigation properties
         public int AthleteId { get; set; }
         public Athlete Athlete { get; set; } = null!;
-        
-        public int? SessionId { get; set; }
-        public Session? Session { get; set; }
-        
+
+        public int? TrainingSessionId { get; set; }
+        public TrainingSession? TrainingSession { get; set; }
+
         // Collections
         public List<Lap> Laps { get; set; } = [];
     }
