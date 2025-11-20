@@ -119,6 +119,46 @@ namespace StriderWebApi.Services
                 {
                     throw new ValidationException($"La serie {i + 1} debe contener al menos un intervalo.");
                 }
+
+                // Validar intervalos
+                for (int j = 0; j < series[i].Intervals.Count; j++)
+                {
+                    var interval = series[i].Intervals[j];
+                    ValidateIntervalPaceType(interval, i + 1, j + 1);
+                }
+            }
+        }
+
+        private static void ValidateIntervalPaceType(CreateTrainingIntervalDto interval, int seriesIndex, int intervalIndex)
+        {
+            // Si el intervalo tiene distancia (seleccionado por distancia), validar PaceType
+            if (interval.Distance > 0)
+            {
+                if (interval.PaceType == Domain.Enums.PaceType.Fixed)
+                {
+                    // Para Fixed, debe tener Pace o TargetSpeed
+                    if (!interval.Pace.HasValue && string.IsNullOrWhiteSpace(interval.TargetSpeed))
+                    {
+                        throw new ValidationException(
+                            $"El intervalo {intervalIndex} de la serie {seriesIndex} tiene PaceType 'Fixed' pero no tiene un valor de velocidad fija (Pace o TargetSpeed).");
+                    }
+                }
+                else if (interval.PaceType == Domain.Enums.PaceType.Vo2MaxPercentage)
+                {
+                    // Para Vo2MaxPercentage, debe tener Vo2MaxPercentage
+                    if (!interval.Vo2MaxPercentage.HasValue)
+                    {
+                        throw new ValidationException(
+                            $"El intervalo {intervalIndex} de la serie {seriesIndex} tiene PaceType 'Vo2MaxPercentage' pero no tiene un porcentaje de VO2Max especificado.");
+                    }
+
+                    // Validar que el porcentaje esté en el rango válido
+                    if (interval.Vo2MaxPercentage.Value < 0 || interval.Vo2MaxPercentage.Value > 100)
+                    {
+                        throw new ValidationException(
+                            $"El intervalo {intervalIndex} de la serie {seriesIndex} tiene un porcentaje de VO2Max inválido. Debe estar entre 0 y 100.");
+                    }
+                }
             }
         }
 

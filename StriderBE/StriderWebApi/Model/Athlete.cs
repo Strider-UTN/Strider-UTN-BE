@@ -12,7 +12,7 @@ public class Athlete : User
     public string EmergencyContactPhone { get; set; } = string.Empty;
     public string EmergencyContactRelationship { get; set; } = string.Empty;
     public DateTime DateStartedRunning { get; set; }
-    public double? VO2Max { get; set; }
+    public string? VO2Max { get; set; } // Velocidad máxima por km en formato mm:ss (ejemplo: "03:30")
     public int MinHeartRate { get; set; }
     public int MaxHeartRate { get; set; }
     public int ThresholdHeartRate { get; set; }
@@ -21,8 +21,30 @@ public class Athlete : User
     public List<AthleteInjury> Injuries { get; set; } = [];
     public List<Workout> Workouts { get; set; } = [];
     public void AddWorkouts(List<Workout> workouts) => Workouts.AddRange(workouts);
-    public void UpdateVO2Max(double vO2Max) => VO2Max = vO2Max;
-    public double Speed(int percentage) => VO2Max.HasValue? VO2Max.Value * percentage / 100 : 0;
+    public void UpdateVO2Max(string vO2Max) => VO2Max = vO2Max;
+    
+    /// <summary>
+    /// Calcula la velocidad basada en un porcentaje del VO2Max.
+    /// Retorna los segundos totales por km (ejemplo: 210 para 03:30).
+    /// </summary>
+    public double Speed(int percentage)
+    {
+        if (string.IsNullOrWhiteSpace(VO2Max))
+            return 0;
+        
+        // Parsear formato mm:ss a segundos totales
+        var parts = VO2Max.Split(':');
+        if (parts.Length != 2 || !int.TryParse(parts[0], out var minutes) || !int.TryParse(parts[1], out var seconds))
+            return 0;
+        
+        var totalSeconds = minutes * 60 + seconds;
+        
+        // Aplicar porcentaje (si el porcentaje es 100, retorna el mismo tiempo)
+        // Si el porcentaje es menor, el tiempo aumenta (más lento)
+        // Si el porcentaje es mayor, el tiempo disminuye (más rápido)
+        return totalSeconds * 100.0 / percentage;
+    }
+    
     public void AddMedicalCondition(string medicalCondition) => MedicalConditions.Add(medicalCondition);
     public double WeeklyDistance() => Workouts.Where(w => w.Date > DateTime.Now.AddDays(-7)).Sum(w => w.TotalDistance());
     public double MonthlyDistance() => Workouts.Where(w => w.Date > DateTime.Now.AddDays(-30)).Sum(w => w.TotalDistance());

@@ -1,5 +1,6 @@
 ﻿using StriderWebApi.Data.Repositories.Interfaces;
 using StriderWebApi.Domain;
+using StriderWebApi.Domain.DomainClasses;
 using StriderWebApi.Domain.Enums;
 using StriderWebApi.Dto.Invitation;
 using StriderWebApi.Services.Interfaces;
@@ -12,6 +13,7 @@ namespace StriderWebApi.Services
     public class CoachAthleteRelationshipService(
         ICoachAthleteRelationshipRepository relationshipRepository,
         IUserRepository userRepository,
+        ICompletedWorkoutRepository completedWorkoutRepository,
         IJwtService jwtService,
         ILogger<CoachAthleteRelationshipService> logger) : ICoachAthleteRelationshipService
     {
@@ -315,15 +317,46 @@ namespace StriderWebApi.Services
                 statusEnum,
                 cancellationToken);
 
-            return relationships.Select(r => new AthleteResponseDto
+            // Calcular último workout por atleta
+            var today = DateTime.UtcNow.Date;
+            var activityByAthlete = new Dictionary<int, (DateTime? last, int? days)>();
+            foreach (var r in relationships)
             {
-                Id = r.Athlete.Id,
-                RelationshipId = r.Id, // ✅ Importante: incluir el ID de la relación
-                Name = r.Athlete.FullName ?? r.Athlete.Username,
-                Email = r.Athlete.Email,
-                Phone = r.Athlete.PhoneNumber,
-                Status = r.Status.ToString(),
-                LinkedSince = r.LinkedSince?.ToString("yyyy-MM-ddTHH:mm:ssZ") ?? ""
+                var workouts = await completedWorkoutRepository.GetByAthleteIdAsync(r.Athlete.Id, cancellationToken);
+                var last = workouts.OrderByDescending(w => w.Date).FirstOrDefault();
+                if (last != null)
+                {
+                    var lastDate = last.Date.Date;
+                    activityByAthlete[r.Athlete.Id] = (lastDate, (today - lastDate).Days);
+                }
+                else
+                {
+                    activityByAthlete[r.Athlete.Id] = (null, null);
+                }
+            }
+
+            return relationships.Select(r =>
+            {
+                var athlete = r.Athlete as Athlete;
+                var trainingStartDate = athlete?.TrainingStartDate?.ToString("yyyy-MM") ?? null;
+
+                activityByAthlete.TryGetValue(r.Athlete.Id, out var act);
+                var lastIso = act.last.HasValue ? act.last.Value.ToString("yyyy-MM-ddTHH:mm:ssZ") : null;
+
+                return new AthleteResponseDto
+                {
+                    Id = r.Athlete.Id,
+                    RelationshipId = r.Id, // ✅ Importante: incluir el ID de la relación
+                    Name = r.Athlete.FullName ?? r.Athlete.Username,
+                    Email = r.Athlete.Email,
+                    Phone = r.Athlete.PhoneNumber,
+                    Status = r.Status.ToString(),
+                    LinkedSince = r.LinkedSince?.ToString("yyyy-MM-ddTHH:mm:ssZ") ?? "",
+                    LastActivity = lastIso,
+                    DaysSinceLastWorkout = act.days,
+                    TrainingStartDate = trainingStartDate,
+                    VO2Max = athlete?.VO2Max
+                };
             }).ToList();
         }
 

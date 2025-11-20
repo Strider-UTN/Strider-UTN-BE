@@ -19,7 +19,7 @@ public class GarminTests
         Email = "test", 
         Gender = Gender.MALE, 
         Address = "test", 
-        VO2Max = 0, 
+        //VO2Max = 0, 
         MedicalConditions = new(), 
         Objectives = new(),
         CreatedBy = "test",

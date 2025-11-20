@@ -80,7 +80,6 @@ namespace StriderWebApi.Extensions
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAthleteService, AthleteService>();
-            services.AddScoped<ICoachService, CoachService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<ITrainingTemplateService, TrainingTemplateService>();
             services.AddScoped<IJwtService, JwtService>();

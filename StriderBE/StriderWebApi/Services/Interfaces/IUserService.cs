@@ -9,5 +9,7 @@ namespace StriderWebApi.Services.Interfaces
         Task CreateAthleteAsync(CreateAthleteDto dto);
         Task ActivateAccountAsync(ActivateAccountDto dto);
         Task<bool> UpdateUserThemeAsync(int userId, ThemePreference theme);
+        Task<bool> UpdateUserProfileAsync(int userId, UpdateUserProfileDto dto);
+        Task<UserProfileResponseDto?> GetUserProfileAsync(int userId);
     }
 }

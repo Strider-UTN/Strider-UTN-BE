@@ -80,5 +80,8 @@ namespace StriderWebApi.Dto.Invitation
         public string Status { get; set; } = string.Empty;
         public string LinkedSince { get; set; } = string.Empty;
         public string? LastActivity { get; set; }
+        public int? DaysSinceLastWorkout { get; set; } // Días desde el último entrenamiento completado
+        public string? TrainingStartDate { get; set; } // Fecha de inicio de entrenamiento (formato: YYYY-MM)
+        public string? VO2Max { get; set; } // Velocidad máxima por km en formato mm:ss (ejemplo: "03:30")
     }
 }

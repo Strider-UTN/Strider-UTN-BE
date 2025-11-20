@@ -22,7 +22,7 @@ namespace StriderWebApi.Test
                 CreatedBy = "system",
                 BirthDate = DateTime.Now.AddYears(-25),
                 Gender = Gender.MALE,
-                VO2Max = 50.0, // 50 km/h max speed
+                //VO2Max = 50.0, // 50 km/h max speed
                 Height = 175.0,
                 Weight = 70.0,
                 DateStartedRunning = DateTime.Now.AddYears(-5)

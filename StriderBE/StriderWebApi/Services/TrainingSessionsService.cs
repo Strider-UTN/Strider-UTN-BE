@@ -289,7 +289,11 @@ namespace StriderWebApi.Services
                     continue;
                 }
 
-                totalDistanceMeters += set.Intervals.Sum(interval => interval.Distance * interval.Repetitions);
+                // Calcular la distancia base de la serie (suma de intervalos * repeticiones de intervalo)
+                var seriesBaseDistanceMeters = set.Intervals.Sum(interval => interval.Distance * interval.Repetitions);
+                // Multiplicar por las repeticiones de la serie
+                var seriesRepetitions = set.Repetitions > 0 ? set.Repetitions : 1;
+                totalDistanceMeters += seriesBaseDistanceMeters * seriesRepetitions;
             }
 
             return totalDistanceMeters / 1000m;
@@ -307,6 +311,46 @@ namespace StriderWebApi.Services
                 if (series[seriesIndex].Intervals == null || series[seriesIndex].Intervals.Count == 0)
                 {
                     throw new ValidationException($"La serie {seriesIndex + 1} debe contener al menos un intervalo.");
+                }
+
+                // Validar intervalos
+                for (int intervalIndex = 0; intervalIndex < series[seriesIndex].Intervals.Count; intervalIndex++)
+                {
+                    var interval = series[seriesIndex].Intervals[intervalIndex];
+                    ValidateIntervalPaceType(interval, seriesIndex + 1, intervalIndex + 1);
+                }
+            }
+        }
+
+        private static void ValidateIntervalPaceType(CreateTrainingIntervalDto interval, int seriesIndex, int intervalIndex)
+        {
+            // Si el intervalo tiene distancia (seleccionado por distancia), validar PaceType
+            if (interval.Distance > 0)
+            {
+                if (interval.PaceType == PaceType.Fixed)
+                {
+                    // Para Fixed, debe tener Pace o TargetSpeed
+                    if (!interval.Pace.HasValue && string.IsNullOrWhiteSpace(interval.TargetSpeed))
+                    {
+                        throw new ValidationException(
+                            $"El intervalo {intervalIndex} de la serie {seriesIndex} tiene PaceType 'Fixed' pero no tiene un valor de velocidad fija (Pace o TargetSpeed).");
+                    }
+                }
+                else if (interval.PaceType == PaceType.Vo2MaxPercentage)
+                {
+                    // Para Vo2MaxPercentage, debe tener Vo2MaxPercentage
+                    if (!interval.Vo2MaxPercentage.HasValue)
+                    {
+                        throw new ValidationException(
+                            $"El intervalo {intervalIndex} de la serie {seriesIndex} tiene PaceType 'Vo2MaxPercentage' pero no tiene un porcentaje de VO2Max especificado.");
+                    }
+
+                    // Validar que el porcentaje esté en el rango válido
+                    if (interval.Vo2MaxPercentage.Value < 0 || interval.Vo2MaxPercentage.Value > 100)
+                    {
+                        throw new ValidationException(
+                            $"El intervalo {intervalIndex} de la serie {seriesIndex} tiene un porcentaje de VO2Max inválido. Debe estar entre 0 y 100.");
+                    }
                 }
             }
         }
@@ -372,7 +416,11 @@ namespace StriderWebApi.Services
                         continue;
                     }
 
-                    sessionVolume += set.Intervals.Sum(interval => (interval.Distance * interval.Repetitions) / 1000m);
+                    // Calcular la distancia base de la serie (suma de intervalos * repeticiones de intervalo)
+                    var seriesBaseDistanceMeters = set.Intervals.Sum(interval => interval.Distance * interval.Repetitions);
+                    // Multiplicar por las repeticiones de la serie
+                    var seriesRepetitions = set.Repetitions > 0 ? set.Repetitions : 1;
+                    sessionVolume += (seriesBaseDistanceMeters * seriesRepetitions) / 1000m;
                 }
             }
 
