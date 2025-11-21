@@ -36,13 +36,33 @@ namespace StriderWebApi.Services
             // Validate if user already exists based on username or email
             await ValidateUserUniquenessAsync(dto.Email, dto.Username, UserTypeEnum.Athlete);
 
+            // Calcular TrainingStartDate: si YearsOfExperience es 0 o no se especifica, usar mes y año actual con día 1
+            DateTime? trainingStartDate = null;
+            if (dto.YearsOfExperience == 0)
+            {
+                var today = DateTime.UtcNow;
+                trainingStartDate = new DateTime(today.Year, today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            }
+            else
+            {
+                var today = DateTime.UtcNow;
+                trainingStartDate = new DateTime(today.Year - dto.YearsOfExperience, today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            }
+
+            // Normalizar BirthDate a UTC si viene Unspecified/Local
+            var normalizedBirthDate = dto.BirthDate;
+            if (normalizedBirthDate.Kind != DateTimeKind.Utc)
+            {
+                normalizedBirthDate = DateTime.SpecifyKind(normalizedBirthDate, DateTimeKind.Utc);
+            }
+
             // Create a new athlete instance
             var newAthlete = new Athlete
             {
                 Username = dto.Username,
                 FullName = dto.FullName,
                 Email = dto.Email,
-                BirthDate = dto.BirthDate,
+                BirthDate = normalizedBirthDate,
                 Address = dto.Address,
                 Gender = dto.Gender,
                 Height = dto.HeightCm,
@@ -57,6 +77,7 @@ namespace StriderWebApi.Services
                 EmergencyContactPhone = dto.EmergencyContactPhone,
                 EmergencyContactRelationship = dto.EmergencyContactRelationship,
                 YearsOfExperience = dto.YearsOfExperience,
+                TrainingStartDate = trainingStartDate,
                 TrainingVolumeType = dto.VolumeType,
                 TrainingVolumeKm = dto.TrainingVolumeKm,
             };
@@ -66,14 +87,18 @@ namespace StriderWebApi.Services
 
             // Save the new athlete to the repository
             await athleteRepository.AddAthleteAsync(newAthlete);
-
-            // Add email notification for account activation
-            //await _emailService.SendAccountActivationEmailAsync(newAthlete.Email, newAthlete.Username, newAthlete.ActivationToken);
         }
         public async Task CreateCoachAsync(CreateCoachDto dto)
         {
             // Validate if user already exists based on username or email
             await ValidateUserUniquenessAsync(dto.Email, dto.Username, UserTypeEnum.Coach);
+
+            // Normalizar BirthDate a UTC
+            var normalizedBirthDate = dto.BirthDate;
+            if (normalizedBirthDate.Kind != DateTimeKind.Utc)
+            {
+                normalizedBirthDate = DateTime.SpecifyKind(normalizedBirthDate, DateTimeKind.Utc);
+            }
 
             // Create a new coach instance
             var newCoach = new Coach
@@ -81,7 +106,7 @@ namespace StriderWebApi.Services
                 Username = dto.Username,
                 FullName = dto.FullName,
                 Email = dto.Email,
-                BirthDate = dto.BirthDate,
+                BirthDate = normalizedBirthDate,
                 Address = dto.Address,
                 Gender = dto.Gender,
                 Active = true, // Default to false, until account is verified
@@ -96,9 +121,6 @@ namespace StriderWebApi.Services
 
             // Save the new athlete to the repository
             await coachRepository.AddCoachAsync(newCoach);
-
-            // Send email notification for account activation
-            //await _emailService.SendAccountActivationEmailAsync(newCoach.Email, newCoach.Username, newCoach.ActivationToken);
         }
 
         private async Task ValidateUserUniquenessAsync(string email, string username, UserTypeEnum userType)
@@ -129,11 +151,220 @@ namespace StriderWebApi.Services
                 user.UpdatedBy = jwtService.GetCurrentUserName();
                 user.UpdatedDate = DateTime.UtcNow;
 
-                return await userRepository.UpdateUserAsync(user);
+                // Guardar cambios usando el repositorio específico según el tipo
+                if (user.UserType == UserTypeEnum.Athlete && user is Athlete athlete)
+                {
+                    await athleteRepository.UpdateAthleteAsync(athlete);
+                }
+                else if (user.UserType == UserTypeEnum.Coach && user is Coach coach)
+                {
+                    await coachRepository.UpdateCoachAsync(coach);
+                }
+                else
+                {
+                    return await userRepository.UpdateUserAsync(user);
+                }
+
+                return true;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error al actualizar el tema del usuario {UserId}", userId);
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateUserProfileAsync(int userId, UpdateUserProfileDto dto)
+        {
+            try
+            {
+                var user = await userRepository.GetUserByIdAsync(userId);
+                if (user == null)
+                {
+                    logger.LogWarning("Usuario con ID {UserId} no encontrado", userId);
+                    return false;
+                }
+
+                // Actualizar campos comunes
+                if (!string.IsNullOrWhiteSpace(dto.FullName))
+                {
+                    user.FullName = dto.FullName;
+                }
+
+                if (dto.PhoneNumber != null)
+                {
+                    user.PhoneNumber = dto.PhoneNumber;
+                }
+
+                if (!string.IsNullOrWhiteSpace(dto.Address))
+                {
+                    user.Address = dto.Address;
+                }
+
+                if (dto.ProfilePictureUrl != null)
+                {
+                    user.ProfilePictureUrl = dto.ProfilePictureUrl;
+                }
+
+                if (dto.BirthDate.HasValue)
+                {
+                    var bd = dto.BirthDate.Value;
+                    if (bd.Kind != DateTimeKind.Utc)
+                    {
+                        bd = DateTime.SpecifyKind(bd, DateTimeKind.Utc);
+                    }
+                    user.BirthDate = bd;
+                }
+
+                if (!string.IsNullOrWhiteSpace(dto.Bio))
+                {
+                    user.Bio = dto.Bio;
+                }
+
+                user.UpdatedBy = jwtService.GetCurrentUserName();
+                user.UpdatedDate = DateTime.UtcNow;
+
+                // Actualizar campos específicos de atletas SOLO si es atleta
+                if (user.UserType == UserTypeEnum.Athlete && user is Athlete athlete)
+                {
+                    if (dto.Height.HasValue)
+                    {
+                        athlete.Height = dto.Height.Value;
+                    }
+
+                    if (dto.Weight.HasValue)
+                    {
+                        athlete.Weight = dto.Weight.Value;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(dto.EmergencyContactName))
+                    {
+                        athlete.EmergencyContactName = dto.EmergencyContactName;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(dto.EmergencyContactPhone))
+                    {
+                        athlete.EmergencyContactPhone = dto.EmergencyContactPhone;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(dto.EmergencyContactRelationship))
+                    {
+                        athlete.EmergencyContactRelationship = dto.EmergencyContactRelationship;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(dto.Country))
+                    {
+                        athlete.Country = dto.Country;
+                    }
+
+                    // Permitir actualizar VO2Max incluso si viene como null (para limpiar el campo)
+                    if (dto.VO2Max != null)
+                    {
+                        athlete.VO2Max = string.IsNullOrWhiteSpace(dto.VO2Max) ? null : dto.VO2Max;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(dto.TrainingStartDate))
+                    {
+                        // Parsear formato YYYY-MM y crear fecha con día 1 (UTC)
+                        if (DateTime.TryParseExact(dto.TrainingStartDate + "-01", "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out var tsd))
+                        {
+                            if (tsd.Kind != DateTimeKind.Utc)
+                            {
+                                tsd = DateTime.SpecifyKind(tsd, DateTimeKind.Utc);
+                            }
+                            athlete.TrainingStartDate = tsd;
+                            // Calcular años de experiencia automáticamente
+                            var today = DateTime.UtcNow;
+                            var yearsOfExperience = today.Year - tsd.Year;
+                            if (today.Month < tsd.Month || (today.Month == tsd.Month && today.Day < tsd.Day))
+                            {
+                                yearsOfExperience--;
+                            }
+                            athlete.YearsOfExperience = Math.Max(0, yearsOfExperience);
+                        }
+                    }
+
+                    if (dto.TrainingVolumeType.HasValue)
+                    {
+                        athlete.TrainingVolumeType = dto.TrainingVolumeType.Value;
+                    }
+
+                    if (dto.TrainingVolumeKm.HasValue)
+                    {
+                        athlete.TrainingVolumeKm = dto.TrainingVolumeKm.Value;
+                    }
+
+                    // Guardar cambios del atleta usando el repositorio específico
+                    await athleteRepository.UpdateAthleteAsync(athlete);
+                }
+                else if (user.UserType == UserTypeEnum.Coach && user is Coach coach)
+                {
+                    // Guardar cambios del coach usando el repositorio específico
+                    await coachRepository.UpdateCoachAsync(coach);
+                }
+                else
+                {
+                    // Guardar cambios del usuario común
+                    return await userRepository.UpdateUserAsync(user);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al actualizar el perfil del usuario {UserId}", userId);
+                throw;
+            }
+        }
+
+        public async Task<UserProfileResponseDto?> GetUserProfileAsync(int userId)
+        {
+            try
+            {
+                var user = await userRepository.GetUserByIdAsync(userId);
+                if (user == null)
+                {
+                    logger.LogWarning("Usuario con ID {UserId} no encontrado", userId);
+                    return null;
+                }
+
+                var response = new UserProfileResponseDto
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    FullName = user.FullName ?? user.Username,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                    BirthDate = user.BirthDate,
+                    Address = user.Address,
+                    Gender = user.Gender,
+                    ProfilePictureUrl = user.ProfilePictureUrl,
+                    UserType = user.UserType,
+                    PreferredTheme = user.PreferredTheme,
+                    Bio = user.Bio
+                };
+
+                // Si es atleta, agregar campos específicos
+                if (user.UserType == UserTypeEnum.Athlete && user is Athlete athlete)
+                {
+                    response.Height = athlete.Height;
+                    response.Weight = athlete.Weight;
+                    response.EmergencyContactName = athlete.EmergencyContactName;
+                    response.EmergencyContactPhone = athlete.EmergencyContactPhone;
+                    response.EmergencyContactRelationship = athlete.EmergencyContactRelationship;
+                    response.Country = athlete.Country;
+                    response.VO2Max = athlete.VO2Max;
+                    response.YearsOfExperience = athlete.YearsOfExperience;
+                    response.TrainingStartDate = athlete.TrainingStartDate?.ToString("yyyy-MM");
+                    response.TrainingVolumeType = athlete.TrainingVolumeType;
+                    response.TrainingVolumeKm = athlete.TrainingVolumeKm;
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al obtener el perfil del usuario {UserId}", userId);
                 throw;
             }
         }

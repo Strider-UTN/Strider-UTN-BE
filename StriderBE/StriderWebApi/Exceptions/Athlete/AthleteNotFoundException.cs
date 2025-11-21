@@ -1,7 +1,7 @@
-namespace StriderWebApi.Controllers
+namespace StriderWebApi.Exceptions.Athlete
 {
     [Serializable]
-    internal class AthleteNotFoundException : Exception
+    public class AthleteNotFoundException : Exception
     {
         public AthleteNotFoundException()
         {

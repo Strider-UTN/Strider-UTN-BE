@@ -35,6 +35,10 @@ namespace StriderWebApi.Services
         {
             if (userType == UserTypeEnum.Athlete)
             {
+                // Establecer TrainingStartDate al mes y año actual con día 1
+                var today = DateTime.UtcNow;
+                var trainingStartDate = new DateTime(today.Year, today.Month, 1);
+
                 var newUser = new Athlete
                 {
                     Username = payload.Email.Split('@')[0], // Use email prefix as username
@@ -47,6 +51,8 @@ namespace StriderWebApi.Services
                     Active = true, // Assuming Google users are automatically active
                     CreatedBy = "Google SSO",
                     CreatedDate = DateTime.UtcNow,
+                    TrainingStartDate = trainingStartDate,
+                    YearsOfExperience = 0 // Default to 0 for Google users
                 };
 
                 await _athleteRepository.AddAthleteAsync(newUser);

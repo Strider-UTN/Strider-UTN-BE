@@ -11,8 +11,9 @@ namespace StriderWebApi.Domain.DomainClasses
         public string EmergencyContactPhone { get; set; } = string.Empty;
         public string EmergencyContactRelationship { get; set; } = string.Empty;
         public string Country { get; set; } = string.Empty;
-        public double? VO2Max { get; set; }
+        public string? VO2Max { get; set; } // Velocidad máxima por km en formato mm:ss (ejemplo: "03:30")
         public int YearsOfExperience { get; set; } = 0; // Default to 0 if not provided
+        public DateTime? TrainingStartDate { get; set; } // Fecha aproximada de inicio de entrenamiento (mes y año, día 1)
         public TrainingVolumeType TrainingVolumeType { get; set; } = TrainingVolumeType.Weekly; // Default to Weekly if not provided
         public int TrainingVolumeKm { get; set; } = 0; // Default to 0 if not provided
         public List<string> MedicalConditions { get; set; } = [];
@@ -21,5 +22,10 @@ namespace StriderWebApi.Domain.DomainClasses
         public Team? Team { get; set; }
         public virtual List<AthleteInjury> Injuries { get; set; } = [];
         public virtual List<Workout> Workouts { get; set; } = [];
+
+        // TODO :: Should be getting these from SOMEWHERE else. Maybe Garmin?
+        public double RestingHeartRate { get; set; } = 60;
+        public double MaximumHeartRate { get; set; } = 200;
+        public double ThresholdHeartRate { get; set; } = 150;
     }
 }

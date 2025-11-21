@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using StriderWebApi.Data;
 using StriderWebApi.Data.Repositories;
@@ -8,6 +9,7 @@ using StriderWebApi.Data.Repositories.Interfaces;
 using StriderWebApi.Domain.DomainClasses;
 using StriderWebApi.Services;
 using StriderWebApi.Services.Interfaces;
+using StriderWebApi.GarminApi;
 using System.Text;
 
 namespace StriderWebApi.Extensions
@@ -80,7 +82,6 @@ namespace StriderWebApi.Extensions
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAthleteService, AthleteService>();
-            services.AddScoped<ICoachService, CoachService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<ITrainingTemplateService, TrainingTemplateService>();
             services.AddScoped<IJwtService, JwtService>();
@@ -91,6 +92,58 @@ namespace StriderWebApi.Extensions
             services.AddScoped<IMesocycleService, MesocycleService>();
             services.AddScoped<IMicrocycleService, MicrocycleService>();
             services.AddScoped<IPeriodService, PeriodService>();
+            services.AddScoped<ITrainingLoadCalculatorService, TrainingLoadCalculatorService>();
+
+            // Register all IAthleteAnalysisService implementations
+            services.AddTransient<IAthleteAnalysisService, LoadBalanceAnalyzerService>(provider =>
+            {
+                var calculator = provider.GetRequiredService<ITrainingLoadCalculatorService>();
+                var config = provider.GetRequiredService<IConfiguration>();
+
+                var acuteLookBackInDays = config.GetValue<int>("TrainingLoad:AcuteLookBackInDays");
+                var chronicLookBackInDays = config.GetValue<int>("TrainingLoad:ChronicLookBackInDays");
+                var weightFactor = config.GetValue<double>("TrainingLoad:WeightFactor");
+                var undertrainmentThreshold = config.GetValue<double>("TrainingLoad:UndertrainmentThreshold");
+                var overreachThreshold = config.GetValue<double>("TrainingLoad:OverreachThreshold");
+                var overTrainingThreshold = config.GetValue<double>("TrainingLoad:OverTrainingThreshold");
+
+                return new LoadBalanceAnalyzerService(
+                    calculator,
+                    acuteLookBackInDays,
+                    chronicLookBackInDays,
+                    weightFactor,
+                    undertrainmentThreshold,
+                    overreachThreshold,
+                    overTrainingThreshold);
+            });
+
+            services.AddTransient<IAthleteAnalysisService, IncompletedWorkoutsAnalyzerService>(provider =>
+            {
+                var config = provider.GetRequiredService<IConfiguration>();
+                var incompletedWorkoutsThreshold = config.GetValue<int>("IncompletedWorkouts:Threshold", defaultValue: 3);
+                
+                return new IncompletedWorkoutsAnalyzerService(incompletedWorkoutsThreshold);
+            });
+
+            services.AddTransient<IAthleteAnalysisService, StressBalanceAnalyzerService>(provider =>
+            {
+                var calculator = provider.GetRequiredService<ITrainingLoadCalculatorService>();
+                var config = provider.GetRequiredService<IConfiguration>();
+
+                var acuteLookBackInDays = config.GetValue<int>("StressBalance:AcuteLookBackInDays");
+                var chronicLookBackInDays = config.GetValue<int>("StressBalance:ChronicLookBackInDays");
+                var stressBalanceThreshold = config.GetValue<double>("StressBalance:StressBalanceThreshold");
+                var competitionLookForwardInDays = config.GetValue<int>("StressBalance:CompetitionLookForwardInDays");
+                var weightFactor = config.GetValue<double>("StressBalance:WeightFactor");
+
+                return new StressBalanceAnalyzerService(
+                    calculator,
+                    acuteLookBackInDays,
+                    chronicLookBackInDays,
+                    stressBalanceThreshold,
+                    competitionLookForwardInDays,
+                    weightFactor);
+            });
 
             // Repositories Registrations
             services.AddScoped<IUserRepository, UserRepository>();
@@ -113,6 +166,24 @@ namespace StriderWebApi.Extensions
             services.AddScoped<IAthleteInjuryService, AthleteInjuryService>();
             services.AddScoped<ICompletedWorkoutRepository, CompletedWorkoutRepository>();
             services.AddScoped<ICompletedWorkoutService, CompletedWorkoutService>();
+            services.AddScoped<IVO2MaxSuggestionRepository, VO2MaxSuggestionRepository>();
+            services.AddScoped<IVO2MaxSuggestionService, VO2MaxSuggestionService>();
+
+            // Garmin Service Registration
+            services.AddScoped<IHttpClientHandler>(provider =>
+            {
+                var config = provider.GetRequiredService<IConfiguration>();
+                var garminApiUrl = config.GetValue<string>("Garmin:GarminApiUrl") ?? throw new InvalidOperationException("Garmin:GarminApiUrl configuration is required");
+                return new GarminApi.HttpClientHandler(garminApiUrl);
+            });
+
+            services.AddScoped<IGarminService>(provider =>
+            {
+                var httpClientHandler = provider.GetRequiredService<IHttpClientHandler>();
+                var config = provider.GetRequiredService<IConfiguration>();
+                var token = config.GetValue<string>("Garmin:Token") ?? throw new InvalidOperationException("Garmin:Token configuration is required");
+                return new GarminService(httpClientHandler, token);
+            });
 
             return services;
         }

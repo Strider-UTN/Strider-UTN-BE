@@ -123,5 +123,67 @@ namespace StriderWebApi.Controllers
                 return StatusCode(500, new { message = "Error al actualizar el tema", error = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Obtiene el perfil del usuario actual
+        /// </summary>
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetProfile()
+        {
+            try
+            {
+                var userId = jwtService.GetCurrentUserId();
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "Usuario no autenticado" });
+                }
+
+                var profile = await userService.GetUserProfileAsync(userId.Value);
+
+                if (profile == null)
+                {
+                    return NotFound(new { message = "Usuario no encontrado" });
+                }
+
+                return Ok(profile);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al obtener el perfil", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Actualiza el perfil del usuario actual
+        /// </summary>
+        [HttpPut("profile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserProfileDto dto)
+        {
+            try
+            {
+                var userId = jwtService.GetCurrentUserId();
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "Usuario no autenticado" });
+                }
+
+                var result = await userService.UpdateUserProfileAsync(userId.Value, dto);
+
+                if (result)
+                {
+                    return Ok(new { message = "Perfil actualizado exitosamente" });
+                }
+                else
+                {
+                    return NotFound(new { message = "Usuario no encontrado" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al actualizar el perfil", error = ex.Message });
+            }
+        }
     }
 }

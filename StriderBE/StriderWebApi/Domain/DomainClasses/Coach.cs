@@ -7,7 +7,7 @@ namespace StriderWebApi.Domain.DomainClasses
         // Collections to match model
         public List<Team> Teams { get; set; } = [];
         public List<TrainingPlan> TrainingPlans { get; set; } = [];
-        public List<Session> Templates { get; set; } = [];
+        public List<TrainingTemplate> Templates { get; set; } = [];
         public List<Athlete> Athletes { get; set; } = [];
     }
 }

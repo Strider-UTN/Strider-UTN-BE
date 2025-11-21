@@ -1,39 +1,27 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StriderWebApi.Data.Repositories;
+using StriderWebApi.Data.Repositories.Interfaces;
+using StriderWebApi.Domain.DomainClasses;
 using StriderWebApi.Dto.Athlete;
 using StriderWebApi.Services.Interfaces;
+using StriderWebApi.Exceptions.Athlete;
 
 namespace StriderWebApi.Controllers
 {
 
     [ApiController]
     [Route("api/[controller]")]
-    public class AthleteController(IAthleteService athleteService, IJwtService jwtService) : ControllerBase
+    public class AthleteController(IAthleteService athleteService, IJwtService jwtService, IEnumerable<IAthleteAnalysisService> athleteAnalysisServices, ITrainingSessionsRepository trainingSessionAthleteRepository) : ControllerBase
     {
 
         private readonly IAthleteService _athleteService = athleteService;
         private readonly IJwtService _jwtService = jwtService;
 
-        [Authorize]
-        [HttpGet("athletes/{athleteId}/feedback")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetAthleteFeedback([FromRoute] int athleteId)
-        {
-            try
-            {
-                AthleteFeedbackResponseDTO athleteFeedback = await _athleteService.GetAthleteFeedback(athleteId);
-                return Ok(athleteFeedback);
-            }
-            catch (AthleteNotFoundException e)
-            {
-                return NotFound("Athlete not found: " + e.Message);
-            }
-            catch (Exception e)
-            {
-                return Problem("An error occurred while retrieving athlete feedback: " + e.Message);
-            }
-        }
+        private readonly IEnumerable<IAthleteAnalysisService> _athleteAnalysisServices = athleteAnalysisServices;
+
+        private readonly ITrainingSessionsRepository _trainingSessionAthleteRepository = trainingSessionAthleteRepository;
+
 
         [Authorize]
         [HttpGet("me/status")]
@@ -88,9 +76,28 @@ namespace StriderWebApi.Controllers
                 return NotFound();
             }
         }
+
+
+        [Authorize]
+        [HttpGet("{athleteId}/analysis")]
+        [ProducesResponseType(typeof(AthleteAnalysisResultResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<List<AthleteAnalysisResultResponseDto>>> GetAthleteAnalysis([FromRoute] int athleteId)
+        {
+            try
+            {
+                var athlete = await _athleteService.GetAthleteByIdAsync(athleteId);
+                var trainingSessions = await _trainingSessionAthleteRepository.GetByAthleteIdAsync(athleteId);
+                List<AthleteAnalysisResultResponseDto> analysis = _athleteAnalysisServices
+                    .Select(service => service.Analyze(athlete, trainingSessions))
+                    .ToList();
+                return Ok(analysis);
+            }
+            catch (Exception e)
+            {
+                return Problem("An error occurred while retrieving athlete analysis: " + e.Message);
+            }
+        }
     }
-
-    
-    
-
 }
+

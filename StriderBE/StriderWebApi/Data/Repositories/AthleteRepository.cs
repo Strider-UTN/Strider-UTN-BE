@@ -19,6 +19,7 @@ namespace StriderWebApi.Data.Repositories
         {
             return await _context.Athletes
                 .Include(a => a.Injuries)
+                .Include(a => a.Workouts)
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 

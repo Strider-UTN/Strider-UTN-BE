@@ -26,5 +26,8 @@ namespace StriderWebApi.Domain.DomainClasses
         public string? UpdatedBy { get; set; } // Nullable to allow for initial creation without updates
         public DateTime? UpdatedDate { get; set; }
         public DateTime CreatedDate { get; set; }
+
+        // Sobre ti / biografía breve
+        public string? Bio { get; set; }
     }
 }
