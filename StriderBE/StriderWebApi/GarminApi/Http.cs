@@ -12,11 +12,11 @@ public class HttpClientHandler : IHttpClientHandler
 
     private HttpClient Client { get; set; }
 
-    public HttpClientHandler(string host, int port)
+    public HttpClientHandler(string garminApiUrl)
     {
         Client = new()
         {
-            BaseAddress = new Uri($"http://{host}:{port}")
+            BaseAddress = new Uri(garminApiUrl)
         };
     }
 

@@ -173,9 +173,8 @@ namespace StriderWebApi.Extensions
             services.AddScoped<IHttpClientHandler>(provider =>
             {
                 var config = provider.GetRequiredService<IConfiguration>();
-                var host = config.GetValue<string>("Garmin:Host") ?? throw new InvalidOperationException("Garmin:Host configuration is required");
-                var port = config.GetValue<int>("Garmin:Port");
-                return new GarminApi.HttpClientHandler(host, port);
+                var garminApiUrl = config.GetValue<string>("Garmin:GarminApiUrl") ?? throw new InvalidOperationException("Garmin:GarminApiUrl configuration is required");
+                return new GarminApi.HttpClientHandler(garminApiUrl);
             });
 
             services.AddScoped<IGarminService>(provider =>
