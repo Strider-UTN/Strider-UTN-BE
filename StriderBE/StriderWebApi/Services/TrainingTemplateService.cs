@@ -173,7 +173,7 @@ namespace StriderWebApi.Services
                 {
                     TrainingTemplateId = templateId,
                     Name = seriesDto.Name.Trim(),
-                    Repetitions = seriesDto.Repetitions,
+                    Repetitions = seriesDto.Repetitions > 0 ? seriesDto.Repetitions : 1,
                     RecoveryBetweenSets = seriesDto.RecoveryBetweenSets?.Trim() ?? "00:00",
                     OrderIndex = seriesDto.OrderIndex,
                     Notes = seriesDto.Notes?.Trim(),
@@ -184,7 +184,7 @@ namespace StriderWebApi.Services
                         .Select(intervalDto => new TrainingInterval
                         {
                             Type = intervalDto.Type,
-                            Repetitions = intervalDto.Repetitions,
+                            Repetitions = intervalDto.Repetitions > 0 ? intervalDto.Repetitions : 1,
                             Distance = intervalDto.Distance,
                             TargetTime = intervalDto.TargetTime?.Trim(),
                             RecoveryTime = intervalDto.RecoveryTime?.Trim() ?? "00:00",

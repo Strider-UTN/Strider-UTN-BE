@@ -16,7 +16,8 @@ namespace StriderWebApi.Services
          IPlanningRepository planningRepository,
          IMicrocycleService microcycleService,
          ITrainingSessionAthleteRepository trainingSessionAthleteRepository,
-         ITrainingTemplateRepository trainingTemplateRepository) : ITrainingSessionService
+         ITrainingTemplateRepository trainingTemplateRepository,
+         IUserRepository userRepository) : ITrainingSessionService
     {
         public async Task<TrainingSessionResponseDto> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
@@ -26,19 +27,29 @@ namespace StriderWebApi.Services
                 throw new NotFoundException("Sesión de entrenamiento no encontrada");
             }
 
-            return MapToTrainingSessionResponseDto(session, null);
+            return await MapToTrainingSessionResponseDtoAsync(session, null, cancellationToken);
         }
 
         public async Task<IEnumerable<TrainingSessionResponseDto>> GetByPlanningIdAsync(int planningId, CancellationToken cancellationToken = default)
         {
             var sessions = await trainingSessionRepository.GetByPlanningIdAsync(planningId, cancellationToken);
-            return sessions.Select(session => MapToTrainingSessionResponseDto(session, null));
+            var result = new List<TrainingSessionResponseDto>();
+            foreach (var session in sessions)
+            {
+                result.Add(await MapToTrainingSessionResponseDtoAsync(session, null, cancellationToken));
+            }
+            return result;
         }
 
         public async Task<IEnumerable<TrainingSessionResponseDto>> GetByMicrocycleIdAsync(int microcycleId, CancellationToken cancellationToken = default)
         {
             var sessions = await trainingSessionRepository.GetByMicrocycleIdAsync(microcycleId, cancellationToken);
-            return sessions.Select(session => MapToTrainingSessionResponseDto(session, null));
+            var result = new List<TrainingSessionResponseDto>();
+            foreach (var session in sessions)
+            {
+                result.Add(await MapToTrainingSessionResponseDtoAsync(session, null, cancellationToken));
+            }
+            return result;
         }
 
         public Task<TrainingSessionResponseDto> CreateAsync(CreateTrainingSessionDto dto, int coachId, CancellationToken cancellationToken = default)
@@ -122,7 +133,7 @@ namespace StriderWebApi.Services
             await microcycleRepository.UpdateAsync(microcycle, cancellationToken);
 
             var sessionWithSeries = await trainingSessionRepository.GetByIdWithAthletesAsync(createdSession.Id, cancellationToken);
-            return MapToTrainingSessionResponseDto(sessionWithSeries ?? createdSession, null);
+            return await MapToTrainingSessionResponseDtoAsync(sessionWithSeries ?? createdSession, null, cancellationToken);
         }
 
         public async Task<TrainingSessionResponseDto> UpdateAsync(int id, UpdateTrainingSessionDto dto, int coachId, CancellationToken cancellationToken = default)
@@ -190,7 +201,7 @@ namespace StriderWebApi.Services
             await microcycleService.UpdateVolumeAutomaticallyAsync(session.MicrocycleId, cancellationToken);
 
             var sessionWithSeries = await trainingSessionRepository.GetByIdWithAthletesAsync(session.Id, cancellationToken);
-            return MapToTrainingSessionResponseDto(sessionWithSeries ?? session, null);
+            return await MapToTrainingSessionResponseDtoAsync(sessionWithSeries ?? session, null, cancellationToken);
         }
 
         public async Task<bool> DeleteAsync(int id, int coachId, CancellationToken cancellationToken = default)
@@ -246,7 +257,7 @@ namespace StriderWebApi.Services
             var result = new List<TrainingSessionResponseDto>();
             foreach (var session in sessions)
             {
-                result.Add(MapToTrainingSessionResponseDto(session, athleteId));
+                result.Add(await MapToTrainingSessionResponseDtoAsync(session, athleteId, cancellationToken));
             }
             return result;
         }
@@ -272,7 +283,7 @@ namespace StriderWebApi.Services
             var result = new List<TrainingSessionResponseDto>();
             foreach (var session in sessions)
             {
-                result.Add(MapToTrainingSessionResponseDto(session, athleteId));
+                result.Add(await MapToTrainingSessionResponseDtoAsync(session, athleteId, cancellationToken));
             }
             return result;
         }
@@ -367,7 +378,7 @@ namespace StriderWebApi.Services
                     TrainingSessionId = sessionId,
                     TrainingTemplateId = templateId,
                     Name = seriesDto.Name.Trim(),
-                    Repetitions = seriesDto.Repetitions,
+                    Repetitions = seriesDto.Repetitions > 0 ? seriesDto.Repetitions : 1,
                     RecoveryBetweenSets = seriesDto.RecoveryBetweenSets?.Trim() ?? "00:00",
                     OrderIndex = seriesDto.OrderIndex,
                     Notes = seriesDto.Notes?.Trim(),
@@ -378,7 +389,7 @@ namespace StriderWebApi.Services
                         .Select(intervalDto => new TrainingInterval
                         {
                             Type = intervalDto.Type,
-                            Repetitions = intervalDto.Repetitions,
+                            Repetitions = intervalDto.Repetitions > 0 ? intervalDto.Repetitions : 1,
                             Distance = intervalDto.Distance,
                             TargetTime = intervalDto.TargetTime?.Trim(),
                             RecoveryTime = intervalDto.RecoveryTime?.Trim() ?? "00:00",
@@ -403,7 +414,7 @@ namespace StriderWebApi.Services
             return list;
         }
 
-        private TrainingSessionResponseDto MapToTrainingSessionResponseDto(TrainingSession session, int? athleteId = null)
+        private async Task<TrainingSessionResponseDto> MapToTrainingSessionResponseDtoAsync(TrainingSession session, int? athleteId = null, CancellationToken cancellationToken = default)
         {
             decimal sessionVolume = 0;
 
@@ -428,7 +439,19 @@ namespace StriderWebApi.Services
             var orderedIntervals = orderedSeries
                 .SelectMany(s => (s.Intervals ?? new List<TrainingInterval>()).OrderBy(i => i.OrderIndex))
                 .ToList();
-            var (estimatedWorkSeconds, estimatedRecoverySeconds) = CalculateEstimatedTimes(orderedSeries);
+            
+            // Obtener VO2Max del atleta si está disponible
+            string? athleteVO2Max = null;
+            if (athleteId.HasValue)
+            {
+                var athlete = await userRepository.GetUserByIdAsync(athleteId.Value);
+                if (athlete is Athlete athleteUser)
+                {
+                    athleteVO2Max = athleteUser.VO2Max;
+                }
+            }
+            
+            var (estimatedWorkSeconds, estimatedRecoverySeconds) = CalculateEstimatedTimes(orderedSeries, athleteVO2Max);
             var structureType = DetermineStructureType(session);
 
             // Obtener el TrainingSessionAthleteId si se proporciona un athleteId específico
@@ -510,7 +533,7 @@ namespace StriderWebApi.Services
             };
         }
 
-        private static (int WorkSeconds, int RecoverySeconds) CalculateEstimatedTimes(IEnumerable<TrainingSeries> seriesCollection)
+        private static (int WorkSeconds, int RecoverySeconds) CalculateEstimatedTimes(IEnumerable<TrainingSeries> seriesCollection, string? athleteVO2Max = null)
         {
             var totalWorkSeconds = 0;
             var totalRecoverySeconds = 0;
@@ -535,15 +558,13 @@ namespace StriderWebApi.Services
                     continue;
                 }
 
-                foreach (var interval in series.Intervals)
+                var intervalsList = series.Intervals.Where(i => i != null).ToList();
+                var intervalIndex = 0;
+                
+                foreach (var interval in intervalsList)
                 {
-                    if (interval == null)
-                    {
-                        continue;
-                    }
-
                     var intervalRepetitions = Math.Max(interval.Repetitions, 1);
-                    var paceSeconds = ParsePaceSeconds(interval);
+                    var paceSeconds = ParsePaceSeconds(interval, athleteVO2Max);
                     var distanceKm = interval.Distance > 0 ? (double)interval.Distance / 1000d : 0d;
 
                     if (paceSeconds > 0 && distanceKm > 0)
@@ -563,17 +584,38 @@ namespace StriderWebApi.Services
                     }
 
                     var intervalRecoverySeconds = ParseTimeStringToSeconds(interval.RecoveryTime) ?? 0;
-                    if (intervalRecoverySeconds > 0 && intervalRepetitions > 1)
+                    if (intervalRecoverySeconds > 0)
                     {
-                        totalRecoverySeconds += intervalRecoverySeconds * (intervalRepetitions - 1) * seriesRepetitions;
+                        // Sumar recuperación entre repeticiones del mismo intervalo: (repeticiones - 1) veces
+                        // Si hay 2 repeticiones, hay 1 recuperación entre ellas
+                        // Si hay 3 repeticiones, hay 2 recuperaciones entre ellas
+                        var recoveryBetweenRepetitions = intervalRepetitions > 1 ? (intervalRepetitions - 1) : 0;
+                        totalRecoverySeconds += intervalRecoverySeconds * recoveryBetweenRepetitions * seriesRepetitions;
+                        
+                        // Sumar recuperación después de cada intervalo (excepto el último intervalo de la serie)
+                        // La recuperación después del intervalo se aplica una vez por cada repetición de la serie
+                        var isLastInterval = intervalIndex == intervalsList.Count - 1;
+                        if (!isLastInterval)
+                        {
+                            // Si hay múltiples intervalos, cada intervalo (excepto el último) tiene recuperación después
+                            totalRecoverySeconds += intervalRecoverySeconds * seriesRepetitions;
+                        }
+                        else if (intervalsList.Count == 1)
+                        {
+                            // Si hay solo un intervalo en la serie, sumar la recuperación una vez
+                            // (representa la recuperación final después del único intervalo)
+                            totalRecoverySeconds += intervalRecoverySeconds * seriesRepetitions;
+                        }
                     }
+                    
+                    intervalIndex++;
                 }
             }
 
             return (totalWorkSeconds, totalRecoverySeconds);
         }
 
-        private static int ParsePaceSeconds(TrainingInterval interval)
+        private static int ParsePaceSeconds(TrainingInterval interval, string? athleteVO2Max = null)
         {
             if (!string.IsNullOrWhiteSpace(interval.TargetSpeed))
             {
@@ -588,6 +630,26 @@ namespace StriderWebApi.Services
                 if (seconds.HasValue && seconds.Value > 0)
                 {
                     return seconds.Value;
+                }
+            }
+
+            // Si el paceType es Vo2MaxPercentage y tenemos el VO2Max del atleta, calcular el ritmo
+            if (interval.PaceType == PaceType.Vo2MaxPercentage && 
+                interval.Vo2MaxPercentage.HasValue && 
+                !string.IsNullOrWhiteSpace(athleteVO2Max))
+            {
+                var vo2MaxSeconds = ParseTimeStringToSeconds(athleteVO2Max);
+                if (vo2MaxSeconds.HasValue && vo2MaxSeconds.Value > 0)
+                {
+                    // Calcular ritmo objetivo: ritmo_vo2max / (porcentaje / 100)
+                    // Ejemplo: VO2Max = 3:30 (210 seg), porcentaje = 100% -> ritmo = 210 / 1.0 = 210 seg
+                    // Ejemplo: VO2Max = 3:30 (210 seg), porcentaje = 80% -> ritmo = 210 / 0.8 = 262.5 seg
+                    var percentage = (double)interval.Vo2MaxPercentage.Value / 100.0;
+                    if (percentage > 0)
+                    {
+                        var targetPaceSeconds = (int)Math.Round(vo2MaxSeconds.Value / percentage);
+                        return targetPaceSeconds;
+                    }
                 }
             }
 
