@@ -83,5 +83,37 @@ namespace StriderWebApi.Data.Repositories
                 .OrderByDescending(injury => injury.DiagnosisDate)
                 .ToListAsync(cancellationToken);
         }
+
+        public async Task<List<AthleteInjury>> GetTop3RecentInjuriesForAthleteAsync(int athleteId, CancellationToken cancellationToken = default)
+        {
+            // Primero obtener todas las lesiones del atleta
+            var allInjuries = await _context.AthleteInjuries
+                .Include(injury => injury.Athlete)
+                .Where(injury => injury.AthleteId == athleteId)
+                .ToListAsync(cancellationToken);
+
+            // Separar activas/tratamiento del resto
+            var activeInjuries = allInjuries
+                .Where(injury => injury.Status == InjuryStatus.Active || injury.Status == InjuryStatus.UnderTreatment)
+                .OrderByDescending(injury => injury.CreatedAt)
+                .ToList();
+
+            var otherInjuries = allInjuries
+                .Where(injury => injury.Status != InjuryStatus.Active && injury.Status != InjuryStatus.UnderTreatment)
+                .OrderByDescending(injury => injury.CreatedAt)
+                .ToList();
+
+            // Priorizar activas, luego agregar del resto hasta completar 3
+            var result = new List<AthleteInjury>();
+            result.AddRange(activeInjuries.Take(3));
+            
+            if (result.Count < 3)
+            {
+                var remainingCount = 3 - result.Count;
+                result.AddRange(otherInjuries.Take(remainingCount));
+            }
+
+            return result.Take(3).ToList();
+        }
     }
 }

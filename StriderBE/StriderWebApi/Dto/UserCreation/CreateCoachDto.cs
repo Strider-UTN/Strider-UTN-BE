@@ -11,5 +11,6 @@ namespace StriderWebApi.Dto.UserCreation
         public DateTime BirthDate { get; set; }
         public required string Address { get; set; }
         public Gender Gender { get; set; }
+        public string? PhoneNumber { get; set; }
     }
 }

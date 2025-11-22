@@ -139,6 +139,30 @@ namespace StriderWebApi.Services
                     Status = injury.Status,
                     DiagnosisDate = injury.DiagnosisDate,
                     RecoveryEstimateDate = injury.RecoveryEstimateDate,
+                    RecoveryDate = injury.RecoveryDate,
+                    CreatedAt = injury.CreatedAt,
+                    Treatment = injury.Treatment,
+                    ImpactOnTraining = injury.ImpactOnTraining
+                })
+                .ToList();
+        }
+
+        public async Task<IReadOnlyCollection<CoachRecentInjuryDto>> GetTop3RecentInjuriesForAthleteAsync(int athleteId, CancellationToken cancellationToken = default)
+        {
+            var injuries = await _athleteInjuryRepository.GetTop3RecentInjuriesForAthleteAsync(athleteId, cancellationToken);
+
+            return injuries
+                .Select(injury => new CoachRecentInjuryDto
+                {
+                    InjuryId = injury.Id,
+                    AthleteId = injury.AthleteId,
+                    AthleteName = injury.Athlete?.FullName ?? injury.Athlete?.Username ?? "Atleta",
+                    Title = injury.Title,
+                    Severity = injury.Severity,
+                    Status = injury.Status,
+                    DiagnosisDate = injury.DiagnosisDate,
+                    RecoveryEstimateDate = injury.RecoveryEstimateDate,
+                    RecoveryDate = injury.RecoveryDate,
                     CreatedAt = injury.CreatedAt,
                     Treatment = injury.Treatment,
                     ImpactOnTraining = injury.ImpactOnTraining

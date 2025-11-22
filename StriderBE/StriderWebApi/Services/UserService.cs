@@ -36,17 +36,35 @@ namespace StriderWebApi.Services
             // Validate if user already exists based on username or email
             await ValidateUserUniquenessAsync(dto.Email, dto.Username, UserTypeEnum.Athlete);
 
-            // Calcular TrainingStartDate: si YearsOfExperience es 0 o no se especifica, usar mes y año actual con día 1
+            // Parsear TrainingStartDate desde formato YYYY-MM
             DateTime? trainingStartDate = null;
-            if (dto.YearsOfExperience == 0)
+            int yearsOfExperience = 0;
+            if (!string.IsNullOrWhiteSpace(dto.TrainingStartDate))
             {
-                var today = DateTime.UtcNow;
-                trainingStartDate = new DateTime(today.Year, today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+                // Parsear formato YYYY-MM y crear fecha con día 1 (UTC)
+                if (DateTime.TryParseExact(dto.TrainingStartDate + "-01", "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out var tsd))
+                {
+                    if (tsd.Kind != DateTimeKind.Utc)
+                    {
+                        tsd = DateTime.SpecifyKind(tsd, DateTimeKind.Utc);
+                    }
+                    trainingStartDate = tsd;
+                    // Calcular años de experiencia automáticamente
+                    var today = DateTime.UtcNow;
+                    yearsOfExperience = today.Year - tsd.Year;
+                    if (today.Month < tsd.Month || (today.Month == tsd.Month && today.Day < tsd.Day))
+                    {
+                        yearsOfExperience--;
+                    }
+                    yearsOfExperience = Math.Max(0, yearsOfExperience);
+                }
             }
             else
             {
+                // Si no se proporciona TrainingStartDate, usar mes y año actual
                 var today = DateTime.UtcNow;
-                trainingStartDate = new DateTime(today.Year - dto.YearsOfExperience, today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+                trainingStartDate = new DateTime(today.Year, today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+                yearsOfExperience = 0;
             }
 
             // Normalizar BirthDate a UTC si viene Unspecified/Local
@@ -65,6 +83,7 @@ namespace StriderWebApi.Services
                 BirthDate = normalizedBirthDate,
                 Address = dto.Address,
                 Gender = dto.Gender,
+                PhoneNumber = dto.PhoneNumber ?? string.Empty,
                 Height = dto.HeightCm,
                 Weight = dto.WeightKg,
                 Country = dto.Country,
@@ -76,11 +95,29 @@ namespace StriderWebApi.Services
                 EmergencyContactName = dto.EmergencyContactName,
                 EmergencyContactPhone = dto.EmergencyContactPhone,
                 EmergencyContactRelationship = dto.EmergencyContactRelationship,
-                YearsOfExperience = dto.YearsOfExperience,
+                YearsOfExperience = yearsOfExperience,
                 TrainingStartDate = trainingStartDate,
                 TrainingVolumeType = dto.VolumeType,
                 TrainingVolumeKm = dto.TrainingVolumeKm,
+                // Información médica
+                HasHealthInsurance = dto.HasHealthInsurance,
+                HealthInsuranceProvider = dto.HealthInsuranceProvider ?? string.Empty,
+                HealthInsuranceMemberNumber = dto.HealthInsuranceMemberNumber ?? string.Empty,
+                MedicalConditions = dto.MedicalConditions ?? new List<string>(),
             };
+
+            // Manejar LastCheckupDate y calcular MedicalClearanceExpiryDate
+            if (dto.LastCheckupDate.HasValue)
+            {
+                var lastCheckup = dto.LastCheckupDate.Value;
+                if (lastCheckup.Kind != DateTimeKind.Utc)
+                {
+                    lastCheckup = DateTime.SpecifyKind(lastCheckup, DateTimeKind.Utc);
+                }
+                newAthlete.LastCheckupDate = lastCheckup;
+                // Calcular automáticamente la fecha de expiración (1 año después)
+                newAthlete.MedicalClearanceExpiryDate = lastCheckup.AddYears(1);
+            }
 
             // Hash the password
             newAthlete.PasswordHash = passwordHasher.HashPassword(newAthlete, dto.Password);
@@ -109,6 +146,7 @@ namespace StriderWebApi.Services
                 BirthDate = normalizedBirthDate,
                 Address = dto.Address,
                 Gender = dto.Gender,
+                PhoneNumber = dto.PhoneNumber,
                 Active = true, // Default to false, until account is verified
                 CreatedBy = "Coach Creation",
                 CreatedDate = DateTime.UtcNow,
@@ -216,6 +254,11 @@ namespace StriderWebApi.Services
                     user.BirthDate = bd;
                 }
 
+                if (dto.Gender.HasValue)
+                {
+                    user.Gender = dto.Gender.Value;
+                }
+
                 if (!string.IsNullOrWhiteSpace(dto.Bio))
                 {
                     user.Bio = dto.Bio;
@@ -294,6 +337,43 @@ namespace StriderWebApi.Services
                         athlete.TrainingVolumeKm = dto.TrainingVolumeKm.Value;
                     }
 
+                    // Información médica
+                    if (dto.HasHealthInsurance.HasValue)
+                    {
+                        athlete.HasHealthInsurance = dto.HasHealthInsurance.Value;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(dto.HealthInsuranceProvider))
+                    {
+                        athlete.HealthInsuranceProvider = dto.HealthInsuranceProvider;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(dto.HealthInsuranceMemberNumber))
+                    {
+                        athlete.HealthInsuranceMemberNumber = dto.HealthInsuranceMemberNumber;
+                    }
+
+                    if (dto.LastCheckupDate.HasValue)
+                    {
+                        athlete.LastCheckupDate = dto.LastCheckupDate.Value;
+                        // Calcular automáticamente la fecha de expiración (1 año después)
+                        athlete.MedicalClearanceExpiryDate = dto.LastCheckupDate.Value.AddYears(1);
+                    }
+                    else if (dto.MedicalClearanceExpiryDate.HasValue)
+                    {
+                        // Permitir actualizar manualmente la fecha de expiración si se envía
+                        athlete.MedicalClearanceExpiryDate = dto.MedicalClearanceExpiryDate.Value;
+                    }
+
+                    if (dto.MedicalConditions != null)
+                    {
+                        // Filtrar condiciones vacías y actualizar la lista
+                        athlete.MedicalConditions = dto.MedicalConditions
+                            .Where(c => !string.IsNullOrWhiteSpace(c))
+                            .Select(c => c.Trim())
+                            .ToList();
+                    }
+
                     // Guardar cambios del atleta usando el repositorio específico
                     await athleteRepository.UpdateAthleteAsync(athlete);
                 }
@@ -358,7 +438,13 @@ namespace StriderWebApi.Services
                     response.TrainingStartDate = athlete.TrainingStartDate?.ToString("yyyy-MM");
                     response.TrainingVolumeType = athlete.TrainingVolumeType;
                     response.TrainingVolumeKm = athlete.TrainingVolumeKm;
-                }
+                response.HasHealthInsurance = athlete.HasHealthInsurance;
+                response.HealthInsuranceProvider = athlete.HealthInsuranceProvider;
+                response.HealthInsuranceMemberNumber = athlete.HealthInsuranceMemberNumber;
+                response.LastCheckupDate = athlete.LastCheckupDate;
+                response.MedicalClearanceExpiryDate = athlete.MedicalClearanceExpiryDate;
+                response.MedicalConditions = athlete.MedicalConditions ?? new List<string>();
+            }
 
                 return response;
             }
