@@ -33,6 +33,11 @@ namespace StriderWebApi.Dto.UserCreation
         public DateTime? BirthDate { get; set; }
 
         /// <summary>
+        /// Género del usuario
+        /// </summary>
+        public Domain.Enums.Gender? Gender { get; set; }
+
+        /// <summary>
         /// Sobre ti / biografía breve
         /// </summary>
         public string? Bio { get; set; }
@@ -89,6 +94,38 @@ namespace StriderWebApi.Dto.UserCreation
         /// Volumen de entrenamiento en km (solo para atletas)
         /// </summary>
         public int? TrainingVolumeKm { get; set; }
+
+        // Información médica (solo para atletas)
+        /// <summary>
+        /// Indica si el atleta tiene prepaga/obra social
+        /// </summary>
+        public bool? HasHealthInsurance { get; set; }
+
+        /// <summary>
+        /// Nombre de la prepaga/obra social (solo para atletas)
+        /// </summary>
+        public string? HealthInsuranceProvider { get; set; }
+
+        /// <summary>
+        /// Número de afiliado de la prepaga/obra social (solo para atletas)
+        /// </summary>
+        public string? HealthInsuranceMemberNumber { get; set; }
+
+        /// <summary>
+        /// Fecha del último chequeo médico/apto físico (solo para atletas)
+        /// </summary>
+        public DateTime? LastCheckupDate { get; set; }
+
+        /// <summary>
+        /// Fecha de expiración del apto físico (solo para atletas)
+        /// Se calcula automáticamente como 1 año después de LastCheckupDate
+        /// </summary>
+        public DateTime? MedicalClearanceExpiryDate { get; set; }
+
+        /// <summary>
+        /// Lista de condiciones médicas del atleta (solo para atletas)
+        /// </summary>
+        public List<string>? MedicalConditions { get; set; }
     }
 }
 

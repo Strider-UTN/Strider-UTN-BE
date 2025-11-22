@@ -27,5 +27,12 @@ namespace StriderWebApi.Domain.DomainClasses
         public double RestingHeartRate { get; set; } = 60;
         public double MaximumHeartRate { get; set; } = 200;
         public double ThresholdHeartRate { get; set; } = 150;
+
+        // Información médica
+        public bool HasHealthInsurance { get; set; } = false;
+        public string HealthInsuranceProvider { get; set; } = string.Empty;
+        public string HealthInsuranceMemberNumber { get; set; } = string.Empty;
+        public DateTime? LastCheckupDate { get; set; }
+        public DateTime? MedicalClearanceExpiryDate { get; set; }
     }
 }

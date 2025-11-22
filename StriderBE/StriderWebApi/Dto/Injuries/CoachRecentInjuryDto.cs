@@ -13,6 +13,7 @@ namespace StriderWebApi.Dto.Injuries
         public InjuryStatus Status { get; set; }
         public DateTime DiagnosisDate { get; set; }
         public DateTime? RecoveryEstimateDate { get; set; }
+        public DateTime? RecoveryDate { get; set; }
         public DateTime CreatedAt { get; set; }
         public InjuryTreatmentType? Treatment { get; set; }
         public InjuryImpactLevel? ImpactOnTraining { get; set; }

@@ -82,15 +82,19 @@ namespace StriderWebApi.Services
         {
             var dbUser = await _userRepository.GetUserByEmailAsync(email, userType);
 
+            // Si el usuario no existe, lanzar excepción de no autorizado
+            if (dbUser == null)
+                throw new UnauthorizedAccessException("Email o contraseña inválidos.");
+
             var isGoogleRegistered = dbUser.CreatedBy == "Google SSO";
 
             if (isGoogleRegistered)
                 throw new UnauthorizedAccessException("Registro con google detectado. Por favor, ingresa seleccionando la opción de 'Iniciar sesión con Google'");
 
-            var passwordIsValid = dbUser != null && !string.IsNullOrEmpty(dbUser.PasswordHash) && PasswordHasher.VerifyHashedPassword(dbUser, dbUser.PasswordHash, password) == PasswordVerificationResult.Success;
+            var passwordIsValid = !string.IsNullOrEmpty(dbUser.PasswordHash) && PasswordHasher.VerifyHashedPassword(dbUser, dbUser.PasswordHash, password) == PasswordVerificationResult.Success;
 
             if (!passwordIsValid)
-                throw new UnauthorizedAccessException("Email o Contraseña inválidos. Por favor, revisa e intenta de nuevo.");
+                throw new UnauthorizedAccessException("Email o contraseña inválidos.");
 
             return GetToken(dbUser, dbUser.Username);
         }

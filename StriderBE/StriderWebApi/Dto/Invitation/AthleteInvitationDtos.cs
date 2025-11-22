@@ -84,5 +84,16 @@ namespace StriderWebApi.Dto.Invitation
         public string? TrainingStartDate { get; set; } // Fecha de inicio de entrenamiento (formato: YYYY-MM)
         public string? VO2Max { get; set; } // Velocidad máxima por km en formato mm:ss (ejemplo: "03:30")
         public DateTime? BirthDate { get; set; } // Fecha de nacimiento completa
+        public double? Height { get; set; }
+        public double? Weight { get; set; }
+        public string? EmergencyContactName { get; set; }
+        public string? EmergencyContactPhone { get; set; }
+        public string? EmergencyContactRelationship { get; set; }
+        public bool HasHealthInsurance { get; set; }
+        public string? HealthInsuranceProvider { get; set; }
+        public string? HealthInsuranceMemberNumber { get; set; }
+        public DateTime? LastCheckupDate { get; set; }
+        public DateTime? MedicalClearanceExpiryDate { get; set; }
+        public List<string> MedicalConditions { get; set; } = [];
     }
 }

@@ -356,7 +356,18 @@ namespace StriderWebApi.Services
                     DaysSinceLastWorkout = act.days,
                     TrainingStartDate = trainingStartDate,
                     VO2Max = athlete?.VO2Max,
-                    BirthDate = r.Athlete.BirthDate
+                    BirthDate = r.Athlete.BirthDate,
+                    Height = athlete?.Height,
+                    Weight = athlete?.Weight,
+                    EmergencyContactName = athlete?.EmergencyContactName,
+                    EmergencyContactPhone = athlete?.EmergencyContactPhone,
+                    EmergencyContactRelationship = athlete?.EmergencyContactRelationship,
+                    HasHealthInsurance = athlete?.HasHealthInsurance ?? false,
+                    HealthInsuranceProvider = athlete?.HealthInsuranceProvider,
+                    HealthInsuranceMemberNumber = athlete?.HealthInsuranceMemberNumber,
+                    LastCheckupDate = athlete?.LastCheckupDate,
+                    MedicalClearanceExpiryDate = athlete?.MedicalClearanceExpiryDate,
+                    MedicalConditions = athlete?.MedicalConditions ?? new List<string>()
                 };
             }).ToList();
         }

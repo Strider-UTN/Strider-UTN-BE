@@ -30,6 +30,14 @@ namespace StriderWebApi.Dto.UserCreation
         public string? TrainingStartDate { get; set; } // Formato: YYYY-MM
         public TrainingVolumeType TrainingVolumeType { get; set; }
         public int TrainingVolumeKm { get; set; }
+
+        // Información médica (solo para atletas)
+        public bool HasHealthInsurance { get; set; }
+        public string? HealthInsuranceProvider { get; set; }
+        public string? HealthInsuranceMemberNumber { get; set; }
+        public DateTime? LastCheckupDate { get; set; }
+        public DateTime? MedicalClearanceExpiryDate { get; set; }
+        public List<string>? MedicalConditions { get; set; }
     }
 }
 

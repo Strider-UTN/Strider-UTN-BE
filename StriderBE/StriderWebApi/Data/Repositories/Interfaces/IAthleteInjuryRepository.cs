@@ -13,5 +13,6 @@ namespace StriderWebApi.Data.Repositories.Interfaces
         Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
         Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default);
         Task<List<AthleteInjury>> GetRecentInjuriesForCoachAsync(int coachId, CancellationToken cancellationToken = default);
+        Task<List<AthleteInjury>> GetTop3RecentInjuriesForAthleteAsync(int athleteId, CancellationToken cancellationToken = default);
     }
 }
