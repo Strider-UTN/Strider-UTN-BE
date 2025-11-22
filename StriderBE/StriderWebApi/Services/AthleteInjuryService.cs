@@ -133,7 +133,7 @@ namespace StriderWebApi.Services
                 {
                     InjuryId = injury.Id,
                     AthleteId = injury.AthleteId,
-                    AthleteName = injury.Athlete?.FullName ?? injury.Athlete?.Username ?? "Atleta",
+                    AthleteName = injury.Athlete?.FullName ?? "Atleta",
                     Title = injury.Title,
                     Severity = injury.Severity,
                     Status = injury.Status,
@@ -156,7 +156,7 @@ namespace StriderWebApi.Services
                 {
                     InjuryId = injury.Id,
                     AthleteId = injury.AthleteId,
-                    AthleteName = injury.Athlete?.FullName ?? injury.Athlete?.Username ?? "Atleta",
+                    AthleteName = injury.Athlete?.FullName ?? "Atleta",
                     Title = injury.Title,
                     Severity = injury.Severity,
                     Status = injury.Status,

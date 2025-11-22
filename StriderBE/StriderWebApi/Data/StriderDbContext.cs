@@ -66,10 +66,6 @@ namespace StriderWebApi.Data
                 .HasIndex(u => new { u.Email, u.UserType })
                 .IsUnique();
 
-            modelBuilder.Entity<User>()
-                .HasIndex(u => new { u.Username, u.UserType })
-                .IsUnique();
-
             modelBuilder.Entity<Athlete>()
                 .Property(a => a.RestingHeartRate)
                 .HasDefaultValue(60.0)

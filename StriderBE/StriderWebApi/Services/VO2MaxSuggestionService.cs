@@ -254,10 +254,10 @@ namespace StriderWebApi.Services
             {
                 Id = suggestion.Id,
                 CoachId = suggestion.CoachId,
-                CoachName = suggestion.Coach.FullName ?? suggestion.Coach.Username,
+                CoachName = suggestion.Coach.FullName,
                 CoachEmail = suggestion.Coach.Email,
                 AthleteId = suggestion.AthleteId,
-                AthleteName = suggestion.Athlete.FullName ?? suggestion.Athlete.Username,
+                AthleteName = suggestion.Athlete.FullName,
                 AthleteEmail = suggestion.Athlete.Email,
                 SuggestedVO2Max = suggestion.SuggestedVO2Max,
                 Message = suggestion.Message,

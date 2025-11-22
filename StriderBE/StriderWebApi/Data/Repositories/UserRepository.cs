@@ -25,19 +25,9 @@ namespace StriderWebApi.Data.Repositories
                                                                  (userType == null || u.UserType == userType));
         }
 
-        public async Task<User?> GetUserByUsernameAsync(string username)
-        {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
-        }
-
         public async Task<bool> UserExistsByEmailAsync(string email, UserTypeEnum userType)
         {
             return await _context.Users.AnyAsync(u => u.Email == email && u.UserType == userType);
-        }
-
-        public async Task<bool> UserExistsByUsernameAsync(string username, UserTypeEnum userType)
-        {
-            return await _context.Users.AnyAsync(u => u.Username == username && u.UserType == userType);
         }
 
         public async Task<bool> UpdateUserAsync(User user)

@@ -28,7 +28,7 @@ namespace StriderWebApi.Services
             if (dbUser == null)
                 dbUser = await CreateNewUserFromGooglePayload(payload, userType);
 
-            return GetToken(dbUser, payload.Name);
+            return GetToken(dbUser, dbUser.FullName);
         }
 
         private async Task<User?> CreateNewUserFromGooglePayload(GoogleJsonWebSignature.Payload payload, UserTypeEnum userType)
@@ -37,11 +37,10 @@ namespace StriderWebApi.Services
             {
                 // Establecer TrainingStartDate al mes y año actual con día 1
                 var today = DateTime.UtcNow;
-                var trainingStartDate = new DateTime(today.Year, today.Month, 1);
+                var trainingStartDate = new DateTime(today.Year, today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
                 var newUser = new Athlete
                 {
-                    Username = payload.Email.Split('@')[0], // Use email prefix as username
                     Email = payload.Email,
                     FullName = payload.Name,
                     Address = "Not provided", // Default address for Google users
@@ -62,7 +61,6 @@ namespace StriderWebApi.Services
             {
                 var newUser = new Coach
                 {
-                    Username = payload.Email.Split('@')[0], // Use email prefix as username
                     Email = payload.Email,
                     FullName = payload.Name,
                     Address = "Not provided", // Default address for Google users
@@ -96,15 +94,15 @@ namespace StriderWebApi.Services
             if (!passwordIsValid)
                 throw new UnauthorizedAccessException("Email o contraseña inválidos.");
 
-            return GetToken(dbUser, dbUser.Username);
+            return GetToken(dbUser, dbUser.FullName);
         }
 
-        private string GetToken(User user, string username)
+        private string GetToken(User user, string name)
         {
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim("Name", username),
+                new Claim("Name", name),
                 new Claim("Role", user.UserType.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim("theme", user.PreferredTheme.ToString().ToLowerInvariant())

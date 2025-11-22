@@ -5,7 +5,6 @@ namespace StriderWebApi.Data.Repositories.Interfaces
     public interface ICoachRepository
     {
         Task<Coach?> GetCoachByIdAsync(int id);
-        Task<Coach?> GetCoachByUsernameAsync(string username);
         Task<Coach?> GetCoachByEmailAsync(string email);
         Task<List<Coach>> GetAllCoachesAsync();
 

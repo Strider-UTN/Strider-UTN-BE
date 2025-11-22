@@ -6,7 +6,6 @@ namespace StriderWebApi.Domain.DomainClasses
     {
         public int Id { get; set; }
 
-        public required string Username { get; set; }
         public required string FullName { get; set; }
         public required string Email { get; set; }
         public string PhoneNumber { get; set; } = string.Empty; // Default to empty if not provided
