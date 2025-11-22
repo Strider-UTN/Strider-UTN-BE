@@ -23,13 +23,6 @@ namespace StriderWebApi.Data.Repositories
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 
-        public async Task<Athlete?> GetAthleteByUsernameAsync(string username)
-        {
-            return await _context.Athletes
-                .Include(a => a.Injuries)
-                .FirstOrDefaultAsync(a => a.Username == username);
-        }
-
         public async Task<Athlete?> GetAthleteByEmailAsync(string email)
         {
             return await _context.Athletes

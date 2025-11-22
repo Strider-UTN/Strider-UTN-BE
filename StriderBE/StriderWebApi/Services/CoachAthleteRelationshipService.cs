@@ -270,7 +270,7 @@ namespace StriderWebApi.Services
             {
                 Id = r.Coach.Id,
                 RelationshipId = r.Id,
-                Name = r.Coach.FullName ?? r.Coach.Username,
+                Name = r.Coach.FullName,
                 Email = r.Coach.Email,
                 Phone = r.Coach.PhoneNumber,
                 Status = r.Status.ToString(),
@@ -347,7 +347,7 @@ namespace StriderWebApi.Services
                 {
                     Id = r.Athlete.Id,
                     RelationshipId = r.Id, // ✅ Importante: incluir el ID de la relación
-                    Name = r.Athlete.FullName ?? r.Athlete.Username,
+                    Name = r.Athlete.FullName,
                     Email = r.Athlete.Email,
                     Phone = r.Athlete.PhoneNumber,
                     Status = r.Status.ToString(),
@@ -421,10 +421,10 @@ namespace StriderWebApi.Services
             {
                 Id = relationship.Id,
                 CoachId = relationship.CoachId,
-                CoachName = relationship.Coach.FullName ?? relationship.Coach.Username,
+                CoachName = relationship.Coach.FullName,
                 CoachEmail = relationship.Coach.Email,
                 AthleteId = relationship.AthleteId,
-                AthleteName = relationship.Athlete.FullName ?? relationship.Athlete.Username,
+                AthleteName = relationship.Athlete.FullName,
                 AthleteEmail = relationship.Athlete.Email,
                 Status = relationship.Status.ToString(),
                 InvitationMessage = relationship.InvitationMessage,

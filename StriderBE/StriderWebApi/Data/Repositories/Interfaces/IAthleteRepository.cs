@@ -5,7 +5,6 @@ namespace StriderWebApi.Data.Repositories.Interfaces
     public interface IAthleteRepository
     {
         Task<Athlete?> GetAthleteByIdAsync(int id);
-        Task<Athlete?> GetAthleteByUsernameAsync(string username);
         Task<Athlete?> GetAthleteByEmailAsync(string email);
         Task<List<Athlete>> GetAllAthletesAsync();
         Task<List<Athlete>> GetByIdsWithDetailsAsync(IEnumerable<int> athleteIds, CancellationToken cancellationToken = default);

@@ -22,7 +22,7 @@ namespace StriderWebApi.Controllers
             try
             {
                 await userService.CreateCoachAsync(dto);
-                return CreatedAtAction(nameof(CreateCoach), new { username = dto.Username }, null);
+                return CreatedAtAction(nameof(CreateCoach), new { email = dto.Email }, null);
             }
             catch (UserAlreadyExistsException ex)
             {
@@ -43,7 +43,7 @@ namespace StriderWebApi.Controllers
             try
             {
                 await userService.CreateAthleteAsync(dto);
-                return CreatedAtAction(nameof(CreateAthlete), new { username = dto.Username }, null);
+                return CreatedAtAction(nameof(CreateAthlete), new { email = dto.Email }, null);
             }
             catch (UserAlreadyExistsException ex)
             {

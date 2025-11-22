@@ -50,6 +50,10 @@ namespace StriderWebApi.Controllers
             {
                 return Unauthorized(new { message = "Invalid Google token", detail = ex.Message });
             }
+            catch (Exception ex)
+            {
+                return Problem("Algo salió mal al ingresar al sistema con Google", ex.Message);
+            }
         }
     }
 }

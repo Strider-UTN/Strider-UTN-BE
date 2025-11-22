@@ -295,7 +295,7 @@ namespace StriderWebApi.Services
                     return new CompletedWorkoutsGroupedByAthleteDto
                     {
                         AthleteId = g.Key.AthleteId,
-                        AthleteName = g.Key.Athlete.FullName ?? g.Key.Athlete.Username,
+                        AthleteName = g.Key.Athlete.FullName,
                         TrainingGroupId = athleteGroupMember?.TrainingGroupId,
                         TrainingGroupName = athleteGroupMember?.TrainingGroup?.Name,
                         Workouts = g.Select(MapToResponseDto).OrderByDescending(w => w.Date).ThenByDescending(w => w.CreatedAt).ToList()
@@ -356,7 +356,7 @@ namespace StriderWebApi.Services
                 TrainingSessionId = workout.TrainingSessionAthlete.TrainingSession.Id,
                 TrainingSessionName = workout.TrainingSessionAthlete.TrainingSession.Name,
                 AthleteId = workout.TrainingSessionAthlete.AthleteId,
-                AthleteName = workout.TrainingSessionAthlete.Athlete.FullName ?? workout.TrainingSessionAthlete.Athlete.Username,
+                AthleteName = workout.TrainingSessionAthlete.Athlete.FullName,
                 PlanningId = workout.TrainingSessionAthlete.TrainingSession.Planning?.Id,
                 PlanningName = workout.TrainingSessionAthlete.TrainingSession.Planning?.Name,
                 MesocycleId = workout.TrainingSessionAthlete.TrainingSession.Microcycle?.MesocycleId,
@@ -397,7 +397,7 @@ namespace StriderWebApi.Services
                     Id = workout.Feedback.Id,
                     CoachId = workout.Feedback.CoachId,
                     CoachName = workout.Feedback.Coach != null 
-                        ? (workout.Feedback.Coach.FullName ?? workout.Feedback.Coach.Username)
+                        ? workout.Feedback.Coach.FullName
                         : "Entrenador",
                     Feedback = workout.Feedback.Feedback,
                     Recommendations = workout.Feedback.Recommendations,
@@ -581,7 +581,7 @@ namespace StriderWebApi.Services
                 Id = feedback.Id,
                 CoachId = feedback.CoachId,
                 CoachName = feedback.Coach != null 
-                    ? (feedback.Coach.FullName ?? feedback.Coach.Username)
+                    ? feedback.Coach.FullName
                     : "Entrenador",
                 Feedback = feedback.Feedback,
                 Recommendations = feedback.Recommendations,

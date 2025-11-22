@@ -17,11 +17,6 @@ namespace StriderWebApi.Data.Repositories
             return await _context.Coaches.FindAsync(id);
         }
 
-        public async Task<Coach?> GetCoachByUsernameAsync(string username)
-        {
-            return await _context.Coaches.FirstOrDefaultAsync(c => c.Username == username);
-        }
-
         public async Task<Coach?> GetCoachByEmailAsync(string email)
         {
             return await _context.Coaches.FirstOrDefaultAsync(c => c.Email == email);

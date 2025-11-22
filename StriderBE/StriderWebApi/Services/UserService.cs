@@ -34,7 +34,7 @@ namespace StriderWebApi.Services
         public async Task CreateAthleteAsync(CreateAthleteDto dto)
         {
             // Validate if user already exists based on username or email
-            await ValidateUserUniquenessAsync(dto.Email, dto.Username, UserTypeEnum.Athlete);
+            await ValidateUserUniquenessAsync(dto.Email, UserTypeEnum.Athlete);
 
             // Parsear TrainingStartDate desde formato YYYY-MM
             DateTime? trainingStartDate = null;
@@ -77,7 +77,6 @@ namespace StriderWebApi.Services
             // Create a new athlete instance
             var newAthlete = new Athlete
             {
-                Username = dto.Username,
                 FullName = dto.FullName,
                 Email = dto.Email,
                 BirthDate = normalizedBirthDate,
@@ -128,7 +127,7 @@ namespace StriderWebApi.Services
         public async Task CreateCoachAsync(CreateCoachDto dto)
         {
             // Validate if user already exists based on username or email
-            await ValidateUserUniquenessAsync(dto.Email, dto.Username, UserTypeEnum.Coach);
+            await ValidateUserUniquenessAsync(dto.Email, UserTypeEnum.Coach);
 
             // Normalizar BirthDate a UTC
             var normalizedBirthDate = dto.BirthDate;
@@ -138,10 +137,9 @@ namespace StriderWebApi.Services
             }
 
             // Create a new coach instance
-            var newCoach = new Coach
-            {
-                Username = dto.Username,
-                FullName = dto.FullName,
+                var newCoach = new Coach
+                {
+                    FullName = dto.FullName,
                 Email = dto.Email,
                 BirthDate = normalizedBirthDate,
                 Address = dto.Address,
@@ -161,16 +159,11 @@ namespace StriderWebApi.Services
             await coachRepository.AddCoachAsync(newCoach);
         }
 
-        private async Task ValidateUserUniquenessAsync(string email, string username, UserTypeEnum userType)
+        private async Task ValidateUserUniquenessAsync(string email, UserTypeEnum userType)
         {
             if (await userRepository.UserExistsByEmailAsync(email, userType))
             {
                 throw new UserAlreadyExistsException($"Ya existe un usuario {userType} con el email indicado");
-            }
-
-            if (await userRepository.UserExistsByUsernameAsync(username, userType))
-            {
-                throw new UserAlreadyExistsException($"Ya existe un usuario {userType} con el nombre de usuario indicado");
             }
         }
 
@@ -411,8 +404,7 @@ namespace StriderWebApi.Services
                 var response = new UserProfileResponseDto
                 {
                     Id = user.Id,
-                    Username = user.Username,
-                    FullName = user.FullName ?? user.Username,
+                    FullName = user.FullName,
                     Email = user.Email,
                     PhoneNumber = user.PhoneNumber,
                     BirthDate = user.BirthDate,
