@@ -7,6 +7,7 @@ namespace StriderWebApi.Services.Interfaces
         Task<MicrocycleResponseDto> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<IEnumerable<MicrocycleResponseDto>> GetByMesocycleIdAsync(int mesocycleId, CancellationToken cancellationToken = default);
         Task<IEnumerable<MicrocycleResponseDto>> GetByPeriodIdAsync(int periodId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<MicrocycleResponseDto>> GetByPlanningIdAsync(int planningId, CancellationToken cancellationToken = default);
         Task<MicrocycleResponseDto> UpdateAsync(int id, UpdateMicrocycleDto dto, int coachId, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(int id, int coachId, CancellationToken cancellationToken = default);
 

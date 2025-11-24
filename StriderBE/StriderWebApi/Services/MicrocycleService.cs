@@ -60,6 +60,22 @@ namespace StriderWebApi.Services
             return microcycles.Select(MapToMicrocycleResponseDto);
         }
 
+        public async Task<IEnumerable<MicrocycleResponseDto>> GetByPlanningIdAsync(int planningId, CancellationToken cancellationToken = default)
+        {
+            var microcycles = await microcycleRepository.GetByPlanningIdAsync(planningId, cancellationToken);
+
+            if (!microcycles.Any())
+            {
+                return Enumerable.Empty<MicrocycleResponseDto>();
+            }
+
+            // OPTIMIZADO: Calcular volumen y sesiones para todos los microciclos en una sola operación
+            await RecalculateVolumeAndSessionsBatchAsync(microcycles, cancellationToken);
+
+            // Usar los microciclos ya actualizados en memoria, sin necesidad de recargar desde DB
+            return microcycles.Select(MapToMicrocycleResponseDto);
+        }
+
         public async Task<MicrocycleResponseDto> UpdateAsync(int id, UpdateMicrocycleDto dto, int coachId, CancellationToken cancellationToken = default)
         {
             var microcycle = await microcycleRepository.GetByIdAsync(id, cancellationToken);

@@ -8,6 +8,7 @@ namespace StriderWebApi.Data.Repositories.Interfaces
         Task<IEnumerable<Microcycle>> GetAllAsync(CancellationToken cancellationToken = default);
         Task<List<Microcycle>> GetByMesocycleIdAsync(int mesocycleId, CancellationToken cancellationToken = default);
         Task<IEnumerable<Microcycle>> GetByPeriodIdAsync(int periodId, CancellationToken cancellationToken = default);
+        Task<List<Microcycle>> GetByPlanningIdAsync(int planningId, CancellationToken cancellationToken = default);
         Task<Microcycle> CreateAsync(Microcycle microcycle, CancellationToken cancellationToken = default);
         Task<Microcycle> UpdateAsync(Microcycle microcycle, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);

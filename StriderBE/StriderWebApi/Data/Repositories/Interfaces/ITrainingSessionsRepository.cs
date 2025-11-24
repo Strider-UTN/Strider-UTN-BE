@@ -8,6 +8,7 @@ namespace StriderWebApi.Data.Repositories.Interfaces
         Task<IEnumerable<TrainingSession>> GetAllAsync(CancellationToken cancellationToken = default);
         Task<IEnumerable<TrainingSession>> GetByPlanningIdAsync(int planningId, CancellationToken cancellationToken = default);
         Task<IEnumerable<TrainingSession>> GetByMicrocycleIdAsync(int microcycleId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<TrainingSession>> GetByMesocycleIdAsync(int mesocycleId, CancellationToken cancellationToken = default);
         Task<TrainingSession> CreateAsync(TrainingSession trainingSession, CancellationToken cancellationToken = default);
         Task<TrainingSession> UpdateAsync(TrainingSession trainingSession, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);

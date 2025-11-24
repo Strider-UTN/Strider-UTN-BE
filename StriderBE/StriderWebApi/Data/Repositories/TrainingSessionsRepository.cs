@@ -44,7 +44,22 @@ namespace StriderWebApi.Data.Repositories
             return await context.TrainingSessions
                 .Include(s => s.Series)
                     .ThenInclude(series => series.Intervals)
+                .Include(s => s.Athletes)
+                    .ThenInclude(a => a.Athlete)
                 .Where(s => s.MicrocycleId == microcycleId)
+                .OrderBy(s => s.Date)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<TrainingSession>> GetByMesocycleIdAsync(int mesocycleId, CancellationToken cancellationToken = default)
+        {
+            return await context.TrainingSessions
+                .Include(s => s.Microcycle)
+                .Include(s => s.Series)
+                    .ThenInclude(series => series.Intervals)
+                .Include(s => s.Athletes)
+                    .ThenInclude(a => a.Athlete)
+                .Where(s => s.Microcycle != null && s.Microcycle.MesocycleId == mesocycleId)
                 .OrderBy(s => s.Date)
                 .ToListAsync(cancellationToken);
         }

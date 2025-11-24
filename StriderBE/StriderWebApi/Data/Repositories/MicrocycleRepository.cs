@@ -31,6 +31,16 @@ namespace StriderWebApi.Data.Repositories
                 .ToListAsync(cancellationToken);
         }
 
+        public async Task<List<Microcycle>> GetByPlanningIdAsync(int planningId, CancellationToken cancellationToken = default)
+        {
+            return await context.Microcycles
+                .Include(m => m.Mesocycle)
+                .Where(m => m.Mesocycle != null && m.Mesocycle.PlanningId == planningId)
+                .OrderBy(m => m.StartDate)
+                .ThenBy(m => m.WeekNumber)
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task<IEnumerable<Microcycle>> GetByPeriodIdAsync(int periodId, CancellationToken cancellationToken = default)
         {
             return await context.Microcycles
