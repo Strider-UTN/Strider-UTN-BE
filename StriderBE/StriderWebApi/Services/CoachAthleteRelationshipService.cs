@@ -317,19 +317,34 @@ namespace StriderWebApi.Services
                 statusEnum,
                 cancellationToken);
 
-            // Calcular último workout por atleta
+            // Calcular último workout por atleta - OPTIMIZADO: una sola consulta para todos los atletas
             var today = DateTime.UtcNow.Date;
+            var athleteIds = relationships.Select(r => r.Athlete.Id).ToList();
             var activityByAthlete = new Dictionary<int, (DateTime? last, int? days)>();
-            foreach (var r in relationships)
+            
+            if (athleteIds.Any())
             {
-                var workouts = await completedWorkoutRepository.GetByAthleteIdAsync(r.Athlete.Id, cancellationToken);
-                var last = workouts.OrderByDescending(w => w.Date).FirstOrDefault();
-                if (last != null)
+                // Obtener solo las fechas del último workout de cada atleta en una sola consulta optimizada
+                var lastWorkoutDates = await completedWorkoutRepository.GetLastWorkoutDatesByAthleteIdsAsync(athleteIds, cancellationToken);
+                var lastWorkoutDatesDict = lastWorkoutDates.ToDictionary(x => x.AthleteId, x => x.Date);
+                
+                foreach (var athleteId in athleteIds)
                 {
-                    var lastDate = last.Date.Date;
-                    activityByAthlete[r.Athlete.Id] = (lastDate, (today - lastDate).Days);
+                    if (lastWorkoutDatesDict.TryGetValue(athleteId, out var lastDate))
+                    {
+                        var lastDateOnly = lastDate.Date;
+                        activityByAthlete[athleteId] = (lastDateOnly, (today - lastDateOnly).Days);
+                    }
+                    else
+                    {
+                        activityByAthlete[athleteId] = (null, null);
+                    }
                 }
-                else
+            }
+            else
+            {
+                // Si no hay atletas, inicializar el diccionario vacío
+                foreach (var r in relationships)
                 {
                     activityByAthlete[r.Athlete.Id] = (null, null);
                 }

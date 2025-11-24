@@ -19,6 +19,9 @@ namespace StriderWebApi.Data.Repositories.Interfaces
         Task<IEnumerable<CompletedWorkout>> GetByAthleteIdAndDateAsync(int athleteId, DateTime date, CancellationToken cancellationToken = default);
         Task<IEnumerable<CompletedWorkout>> GetByAthleteIdAndDateRangeAsync(int athleteId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
         
+        // Búsqueda optimizada para múltiples atletas (solo para obtener última actividad)
+        Task<IEnumerable<(int AthleteId, DateTime Date)>> GetLastWorkoutDatesByAthleteIdsAsync(List<int> athleteIds, CancellationToken cancellationToken = default);
+        
         // Búsquedas por TrainingSession
         Task<IEnumerable<CompletedWorkout>> GetByTrainingSessionIdAsync(int trainingSessionId, CancellationToken cancellationToken = default);
         
