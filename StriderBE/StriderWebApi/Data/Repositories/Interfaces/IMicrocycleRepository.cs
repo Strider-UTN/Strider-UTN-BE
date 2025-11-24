@@ -8,6 +8,7 @@ namespace StriderWebApi.Data.Repositories.Interfaces
         Task<IEnumerable<Microcycle>> GetAllAsync(CancellationToken cancellationToken = default);
         Task<List<Microcycle>> GetByMesocycleIdAsync(int mesocycleId, CancellationToken cancellationToken = default);
         Task<IEnumerable<Microcycle>> GetByPeriodIdAsync(int periodId, CancellationToken cancellationToken = default);
+        Task<List<Microcycle>> GetByPlanningIdAsync(int planningId, CancellationToken cancellationToken = default);
         Task<Microcycle> CreateAsync(Microcycle microcycle, CancellationToken cancellationToken = default);
         Task<Microcycle> UpdateAsync(Microcycle microcycle, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
@@ -18,5 +19,9 @@ namespace StriderWebApi.Data.Repositories.Interfaces
         Task<IEnumerable<Microcycle>> GetByPeriodIdWithSessionsAsync(int periodId, CancellationToken cancellationToken = default);
         Task<decimal> CalculateTotalVolumeAsync(int microcycleId, CancellationToken cancellationToken = default); // Calcula volumen basado en sesiones
         Task<bool> UpdateVolumeAsync(int microcycleId, decimal volume, CancellationToken cancellationToken = default);
+        
+        // Métodos optimizados para batch operations
+        Task<Dictionary<int, decimal>> CalculateTotalVolumeBatchAsync(List<int> microcycleIds, CancellationToken cancellationToken = default);
+        Task UpdateBatchAsync(List<Microcycle> microcycles, CancellationToken cancellationToken = default);
     }
 }

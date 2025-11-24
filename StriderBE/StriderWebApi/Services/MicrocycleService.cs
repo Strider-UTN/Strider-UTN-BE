@@ -31,15 +31,16 @@ namespace StriderWebApi.Services
         {
             var microcycles = await microcycleRepository.GetByMesocycleIdAsync(mesocycleId, cancellationToken);
 
-            // Recalcular volumen y sesiones para cada microciclo
-            foreach (var microcycle in microcycles)
+            if (!microcycles.Any())
             {
-                await RecalculateVolumeAndSessionsAsync(microcycle.Id, cancellationToken);
+                return Enumerable.Empty<MicrocycleResponseDto>();
             }
 
-            // Obtener los microciclos actualizados
-            microcycles = await microcycleRepository.GetByMesocycleIdAsync(mesocycleId, cancellationToken);
+            // OPTIMIZADO: Calcular volumen y sesiones para todos los microciclos en una sola operación
+            var microcycleIds = microcycles.Select(m => m.Id).ToList();
+            await RecalculateVolumeAndSessionsBatchAsync(microcycles, cancellationToken);
 
+            // Usar los microciclos ya actualizados en memoria, sin necesidad de recargar desde DB
             return microcycles.Select(MapToMicrocycleResponseDto);
         }
 
@@ -56,6 +57,22 @@ namespace StriderWebApi.Services
             // Obtener los microciclos actualizados
             microcycles = await microcycleRepository.GetByPeriodIdAsync(periodId, cancellationToken);
 
+            return microcycles.Select(MapToMicrocycleResponseDto);
+        }
+
+        public async Task<IEnumerable<MicrocycleResponseDto>> GetByPlanningIdAsync(int planningId, CancellationToken cancellationToken = default)
+        {
+            var microcycles = await microcycleRepository.GetByPlanningIdAsync(planningId, cancellationToken);
+
+            if (!microcycles.Any())
+            {
+                return Enumerable.Empty<MicrocycleResponseDto>();
+            }
+
+            // OPTIMIZADO: Calcular volumen y sesiones para todos los microciclos en una sola operación
+            await RecalculateVolumeAndSessionsBatchAsync(microcycles, cancellationToken);
+
+            // Usar los microciclos ya actualizados en memoria, sin necesidad de recargar desde DB
             return microcycles.Select(MapToMicrocycleResponseDto);
         }
 
@@ -155,6 +172,40 @@ namespace StriderWebApi.Services
 
             // Guardar los cambios
             await microcycleRepository.UpdateAsync(microcycle, cancellationToken);
+        }
+
+        /// <summary>
+        /// Recalcula el volumen y la cantidad de sesiones para múltiples microciclos de forma optimizada
+        /// </summary>
+        private async Task RecalculateVolumeAndSessionsBatchAsync(List<Microcycle> microcycles, CancellationToken cancellationToken = default)
+        {
+            if (!microcycles.Any())
+                return;
+
+            var microcycleIds = microcycles.Select(m => m.Id).ToList();
+
+            // Obtener conteo de sesiones para todos los microciclos en una consulta
+            var sessionsCounts = await trainingSessionRepository.GetSessionsCountByMicrocycleIdsAsync(microcycleIds, cancellationToken);
+
+            // Calcular volúmenes para todos los microciclos en una consulta optimizada
+            var volumes = await microcycleRepository.CalculateTotalVolumeBatchAsync(microcycleIds, cancellationToken);
+
+            // Actualizar todos los microciclos en memoria
+            foreach (var microcycle in microcycles)
+            {
+                if (sessionsCounts.TryGetValue(microcycle.Id, out var sessionsCount))
+                {
+                    microcycle.Sessions = sessionsCount;
+                }
+
+                if (volumes.TryGetValue(microcycle.Id, out var volume))
+                {
+                    microcycle.Volume = volume;
+                }
+            }
+
+            // Guardar todos los cambios en una sola operación
+            await microcycleRepository.UpdateBatchAsync(microcycles, cancellationToken);
         }
 
         private MicrocycleResponseDto MapToMicrocycleResponseDto(Microcycle microcycle)

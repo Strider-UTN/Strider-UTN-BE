@@ -29,6 +29,14 @@ namespace StriderWebApi.Controllers
             return Ok(microcycles);
         }
 
+        // GET: api/Microcycle/planning/{planningId}
+        [HttpGet("planning/{planningId}")]
+        public async Task<ActionResult<IEnumerable<MicrocycleResponseDto>>> GetByPlanningId(int planningId, CancellationToken cancellationToken)
+        {
+            var microcycles = await microcycleService.GetByPlanningIdAsync(planningId, cancellationToken);
+            return Ok(microcycles);
+        }
+
         // GET: api/Microcycle/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<MicrocycleResponseDto>> GetById(int id, CancellationToken cancellationToken)

@@ -31,6 +31,14 @@ namespace StriderWebApi.Controllers
             return Ok(sessions);
         }
 
+        // GET: api/TrainingSession/mesocycle/{mesocycleId}
+        [HttpGet("mesocycle/{mesocycleId}")]
+        public async Task<ActionResult<IEnumerable<TrainingSessionResponseDto>>> GetByMesocycleId(int mesocycleId, CancellationToken cancellationToken)
+        {
+            var sessions = await trainingSessionService.GetByMesocycleIdAsync(mesocycleId, cancellationToken);
+            return Ok(sessions);
+        }
+
         // GET: api/TrainingSession/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<TrainingSessionResponseDto>> GetById(int id, CancellationToken cancellationToken)

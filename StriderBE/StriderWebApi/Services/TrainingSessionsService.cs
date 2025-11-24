@@ -33,23 +33,25 @@ namespace StriderWebApi.Services
         public async Task<IEnumerable<TrainingSessionResponseDto>> GetByPlanningIdAsync(int planningId, CancellationToken cancellationToken = default)
         {
             var sessions = await trainingSessionRepository.GetByPlanningIdAsync(planningId, cancellationToken);
-            var result = new List<TrainingSessionResponseDto>();
-            foreach (var session in sessions)
-            {
-                result.Add(await MapToTrainingSessionResponseDtoAsync(session, null, cancellationToken));
-            }
+            
+            // OPTIMIZADO: Mapear sincrónicamente cuando no se necesita athleteId (más rápido que async innecesario)
+            var result = sessions.Select(session => MapToTrainingSessionResponseDto(session, null)).ToList();
+            
             return result;
         }
 
         public async Task<IEnumerable<TrainingSessionResponseDto>> GetByMicrocycleIdAsync(int microcycleId, CancellationToken cancellationToken = default)
         {
             var sessions = await trainingSessionRepository.GetByMicrocycleIdAsync(microcycleId, cancellationToken);
-            var result = new List<TrainingSessionResponseDto>();
-            foreach (var session in sessions)
-            {
-                result.Add(await MapToTrainingSessionResponseDtoAsync(session, null, cancellationToken));
-            }
-            return result;
+            // OPTIMIZADO: Mapear sincrónicamente cuando no se necesita athleteId
+            return sessions.Select(session => MapToTrainingSessionResponseDto(session, null)).ToList();
+        }
+
+        public async Task<IEnumerable<TrainingSessionResponseDto>> GetByMesocycleIdAsync(int mesocycleId, CancellationToken cancellationToken = default)
+        {
+            var sessions = await trainingSessionRepository.GetByMesocycleIdAsync(mesocycleId, cancellationToken);
+            // OPTIMIZADO: Mapear sincrónicamente cuando no se necesita athleteId
+            return sessions.Select(session => MapToTrainingSessionResponseDto(session, null)).ToList();
         }
 
         public Task<TrainingSessionResponseDto> CreateAsync(CreateTrainingSessionDto dto, int coachId, CancellationToken cancellationToken = default)
@@ -414,6 +416,96 @@ namespace StriderWebApi.Services
             return list;
         }
 
+        // Versión sincrónica optimizada para cuando no se necesita VO2Max del atleta
+        private TrainingSessionResponseDto MapToTrainingSessionResponseDto(TrainingSession session, int? athleteId = null)
+        {
+            decimal sessionVolume = 0;
+
+            if (session.Series != null)
+            {
+                foreach (var set in session.Series)
+                {
+                    if (set.Intervals == null)
+                    {
+                        continue;
+                    }
+
+                    // Calcular la distancia base de la serie (suma de intervalos * repeticiones de intervalo)
+                    var seriesBaseDistanceMeters = set.Intervals.Sum(interval => interval.Distance * interval.Repetitions);
+                    // Multiplicar por las repeticiones de la serie
+                    var seriesRepetitions = set.Repetitions > 0 ? set.Repetitions : 1;
+                    sessionVolume += (seriesBaseDistanceMeters * seriesRepetitions) / 1000m;
+                }
+            }
+
+            var orderedSeries = session.Series?.OrderBy(s => s.OrderIndex).ToList() ?? new List<TrainingSeries>();
+            var orderedIntervals = orderedSeries
+                .SelectMany(s => (s.Intervals ?? new List<TrainingInterval>()).OrderBy(i => i.OrderIndex))
+                .ToList();
+            
+            // Cuando athleteId es null, no necesitamos VO2Max (más rápido)
+            string? athleteVO2Max = null;
+            var (estimatedWorkSeconds, estimatedRecoverySeconds) = CalculateEstimatedTimes(orderedSeries, athleteVO2Max);
+            var structureType = DetermineStructureType(session);
+
+            // Obtener el TrainingSessionAthleteId si se proporciona un athleteId específico
+            int? trainingSessionAthleteId = null;
+            bool hasCompletedWorkout = false;
+            if (athleteId.HasValue && session.Athletes != null)
+            {
+                var trainingSessionAthlete = session.Athletes.FirstOrDefault(a => a.AthleteId == athleteId.Value);
+                trainingSessionAthleteId = trainingSessionAthlete?.Id;
+                
+                // Verificar si hay un completedWorkout para esta sesión y fecha (ya está incluido en el query)
+                if (trainingSessionAthlete != null && trainingSessionAthlete.CompletedWorkouts != null)
+                {
+                    var sessionDate = session.Date.Date;
+                    hasCompletedWorkout = trainingSessionAthlete.CompletedWorkouts
+                        .Any(cw => cw.Date.Date == sessionDate);
+                }
+            }
+
+            return new TrainingSessionResponseDto
+            {
+                Id = session.Id,
+                Name = session.Name,
+                Description = session.Description,
+                Date = session.Date,
+                Category = session.Category,
+                PlanningId = session.PlanningId,
+                MicrocycleId = session.MicrocycleId,
+                AthleteIds = session.Athletes?.Select(a => a.AthleteId).ToList() ?? new List<int>(),
+                TrainingSessionAthleteId = trainingSessionAthleteId,
+                Series = orderedSeries
+                    .Select(series => new TrainingSeriesResponseDto
+                    {
+                        Id = series.Id,
+                        Name = series.Name,
+                        Repetitions = series.Repetitions,
+                        RecoveryBetweenSets = series.RecoveryBetweenSets,
+                        OrderIndex = series.OrderIndex,
+                        Notes = series.Notes,
+                        Intervals = (series.Intervals ?? new List<TrainingInterval>())
+                            .OrderBy(interval => interval.OrderIndex)
+                            .Select(MapToTrainingIntervalResponseDto)
+                            .ToList()
+                    })
+                    .ToList(),
+                Intervals = orderedIntervals
+                    .Select(MapToTrainingIntervalResponseDto)
+                    .ToList(),
+                StructureType = structureType,
+                Notes = session.Notes,
+                Volume = sessionVolume,
+                EstimatedWorkSeconds = estimatedWorkSeconds,
+                EstimatedRecoverySeconds = estimatedRecoverySeconds,
+                CreatedAt = session.CreatedAt,
+                UpdatedAt = session.UpdatedAt,
+                HasCompletedWorkout = hasCompletedWorkout
+            };
+        }
+
+        // Versión async para cuando se necesita VO2Max del atleta
         private async Task<TrainingSessionResponseDto> MapToTrainingSessionResponseDtoAsync(TrainingSession session, int? athleteId = null, CancellationToken cancellationToken = default)
         {
             decimal sessionVolume = 0;

@@ -8,6 +8,7 @@ namespace StriderWebApi.Data.Repositories.Interfaces
         Task<IEnumerable<TrainingSession>> GetAllAsync(CancellationToken cancellationToken = default);
         Task<IEnumerable<TrainingSession>> GetByPlanningIdAsync(int planningId, CancellationToken cancellationToken = default);
         Task<IEnumerable<TrainingSession>> GetByMicrocycleIdAsync(int microcycleId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<TrainingSession>> GetByMesocycleIdAsync(int mesocycleId, CancellationToken cancellationToken = default);
         Task<TrainingSession> CreateAsync(TrainingSession trainingSession, CancellationToken cancellationToken = default);
         Task<TrainingSession> UpdateAsync(TrainingSession trainingSession, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
@@ -20,5 +21,8 @@ namespace StriderWebApi.Data.Repositories.Interfaces
         Task<TrainingSession?> GetByIdWithAthletesAsync(int id, CancellationToken cancellationToken = default);
         Task<IEnumerable<TrainingSession>> GetByAthleteIdAsync(int athleteId, int? planningId = null, CancellationToken cancellationToken = default);
         Task<IEnumerable<TrainingSession>> GetByAthleteIdAndDateAsync(int athleteId, DateTime date, CancellationToken cancellationToken = default);
+        
+        // Método optimizado para obtener conteo de sesiones por múltiples microciclos
+        Task<Dictionary<int, int>> GetSessionsCountByMicrocycleIdsAsync(List<int> microcycleIds, CancellationToken cancellationToken = default);
     }
 }
