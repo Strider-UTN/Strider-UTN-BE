@@ -133,5 +133,72 @@ namespace StriderWebApi.Data.Repositories
             await UpdateAsync(microcycle, cancellationToken);
             return true;
         }
+
+        public async Task<Dictionary<int, decimal>> CalculateTotalVolumeBatchAsync(List<int> microcycleIds, CancellationToken cancellationToken = default)
+        {
+            if (!microcycleIds.Any())
+            {
+                return new Dictionary<int, decimal>();
+            }
+
+            // Obtener todas las sesiones de todos los microciclos en una sola consulta
+            var allSessions = await context.TrainingSessions
+                .Where(s => microcycleIds.Contains(s.MicrocycleId))
+                .Include(s => s.Series)
+                    .ThenInclude(series => series.Intervals)
+                .ToListAsync(cancellationToken);
+
+            // Agrupar por microciclo y calcular volumen
+            var result = new Dictionary<int, decimal>();
+            var sessionsByMicrocycle = allSessions.GroupBy(s => s.MicrocycleId);
+
+            foreach (var group in sessionsByMicrocycle)
+            {
+                decimal totalVolumeMeters = 0;
+                foreach (var session in group)
+                {
+                    if (session.Series != null)
+                    {
+                        foreach (var series in session.Series)
+                        {
+                            if (series.Intervals != null)
+                            {
+                                foreach (var interval in series.Intervals)
+                                {
+                                    totalVolumeMeters += interval.Distance * interval.Repetitions * series.Repetitions;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                result[group.Key] = totalVolumeMeters / 1000m; // Convertir a km
+            }
+
+            // Inicializar con 0 para microciclos sin sesiones
+            foreach (var microcycleId in microcycleIds)
+            {
+                if (!result.ContainsKey(microcycleId))
+                {
+                    result[microcycleId] = 0;
+                }
+            }
+
+            return result;
+        }
+
+        public async Task UpdateBatchAsync(List<Microcycle> microcycles, CancellationToken cancellationToken = default)
+        {
+            if (!microcycles.Any())
+                return;
+
+            foreach (var microcycle in microcycles)
+            {
+                microcycle.UpdatedAt = DateTime.UtcNow;
+                context.Microcycles.Update(microcycle);
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+        }
     }
 }

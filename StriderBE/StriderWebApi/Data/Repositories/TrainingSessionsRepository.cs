@@ -178,5 +178,22 @@ namespace StriderWebApi.Data.Repositories
             return await context.TrainingSessions
                 .AnyAsync(ts => ts.MicrocycleId == microcycleId, cancellationToken);
         }
+
+        public async Task<Dictionary<int, int>> GetSessionsCountByMicrocycleIdsAsync(List<int> microcycleIds, CancellationToken cancellationToken = default)
+        {
+            if (!microcycleIds.Any())
+            {
+                return new Dictionary<int, int>();
+            }
+
+            // Consulta optimizada: solo contar sesiones por microciclo sin cargar datos
+            var counts = await context.TrainingSessions
+                .Where(s => microcycleIds.Contains(s.MicrocycleId))
+                .GroupBy(s => s.MicrocycleId)
+                .Select(g => new { MicrocycleId = g.Key, Count = g.Count() })
+                .ToListAsync(cancellationToken);
+
+            return counts.ToDictionary(x => x.MicrocycleId, x => x.Count);
+        }
     }
 }
