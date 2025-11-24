@@ -275,6 +275,30 @@ namespace StriderWebApi.Data.Repositories
                 .ThenByDescending(w => w.CreatedAt)
                 .ToListAsync(cancellationToken);
         }
+
+        public async Task<IEnumerable<(int AthleteId, DateTime Date)>> GetLastWorkoutDatesByAthleteIdsAsync(List<int> athleteIds, CancellationToken cancellationToken = default)
+        {
+            if (!athleteIds.Any())
+            {
+                return Enumerable.Empty<(int, DateTime)>();
+            }
+
+            // Consulta optimizada: solo obtener AthleteId y Date (sin Includes pesados)
+            // Luego agrupamos en memoria para obtener el último workout de cada atleta
+            var workouts = await context.CompletedWorkouts
+                .Where(w => athleteIds.Contains(w.TrainingSessionAthlete.AthleteId))
+                .Select(w => new
+                {
+                    AthleteId = w.TrainingSessionAthlete.AthleteId,
+                    Date = w.Date
+                })
+                .ToListAsync(cancellationToken);
+
+            // Agrupar en memoria y obtener el último workout de cada atleta
+            return workouts
+                .GroupBy(w => w.AthleteId)
+                .Select(g => (g.Key, g.OrderByDescending(w => w.Date).First().Date));
+        }
     }
 }
 
