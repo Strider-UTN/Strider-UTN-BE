@@ -82,7 +82,7 @@ namespace StriderWebApi.Services
                     Duration = lapDto.Duration,
                     AverageHR = lapDto.AverageHR,
                     Speed = lapDto.Distance > 0 && lapDto.Duration > 0 
-                        ? (lapDto.Distance * 1000) / lapDto.Duration // m/s
+                        ? lapDto.Distance / lapDto.Duration // m/s (Distance ya está en metros)
                         : 0,
                     StartTime = lapDto.StartTime.Kind == DateTimeKind.Utc 
                         ? lapDto.StartTime 
@@ -178,7 +178,7 @@ namespace StriderWebApi.Services
                     Duration = lapDto.Duration,
                     AverageHR = lapDto.AverageHR,
                     Speed = lapDto.Distance > 0 && lapDto.Duration > 0 
-                        ? (lapDto.Distance * 1000) / lapDto.Duration
+                        ? lapDto.Distance / lapDto.Duration // m/s (Distance ya está en metros)
                         : 0,
                     StartTime = lapDto.StartTime.Kind == DateTimeKind.Utc 
                         ? lapDto.StartTime 

@@ -6,7 +6,7 @@ namespace StriderWebApi.Dto.CompletedWorkout
     {
         public int TrainingSessionAthleteId { get; set; }
         public string Name { get; set; } = string.Empty;
-        public double Distance { get; set; } // km
+        public double Distance { get; set; } // meters
         public DateTime Date { get; set; }
         public double Duration { get; set; }
         public double AverageHR { get; set; } // bpm
@@ -34,7 +34,7 @@ namespace StriderWebApi.Dto.CompletedWorkout
     public class CreateWorkoutLapDto
     {
         public int Index { get; set; }
-        public double Distance { get; set; } // km
+        public double Distance { get; set; } // meters
         public double Duration { get; set; } // segundos
         public double AverageHR { get; set; } // bpm
         public DateTime StartTime { get; set; }
@@ -54,7 +54,7 @@ namespace StriderWebApi.Dto.CompletedWorkout
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public double Distance { get; set; } // km
+        public double Distance { get; set; } // meters
         public DateTime Date { get; set; }
         public double Duration { get; set; } // segundos (se puede convertir a mm:ss en el frontend)
         public double AverageHR { get; set; } // bpm
@@ -106,7 +106,7 @@ namespace StriderWebApi.Dto.CompletedWorkout
     {
         public int Id { get; set; }
         public int Index { get; set; }
-        public double Distance { get; set; } // km
+        public double Distance { get; set; } // meters
         public double Duration { get; set; } // segundos
         public double AverageHR { get; set; } // bpm
         public double Speed { get; set; } // m/s
