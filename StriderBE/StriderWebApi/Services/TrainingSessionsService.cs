@@ -303,10 +303,10 @@ namespace StriderWebApi.Services
                 }
 
                 // Calcular la distancia base de la serie (suma de intervalos * repeticiones de intervalo)
-                var seriesBaseDistanceMeters = set.Intervals.Sum(interval => interval.Distance * interval.Repetitions);
+                var seriesBaseDistanceMeters = set.Intervals.Sum(interval => (interval.Distance == 0? ParseTimeStringToSeconds(interval.Duration) / interval.Pace : interval.Distance) * interval.Repetitions);
                 // Multiplicar por las repeticiones de la serie
                 var seriesRepetitions = set.Repetitions > 0 ? set.Repetitions : 1;
-                totalDistanceMeters += seriesBaseDistanceMeters * seriesRepetitions;
+                totalDistanceMeters += seriesBaseDistanceMeters ?? 0 * seriesRepetitions;
             }
 
             return totalDistanceMeters / 1000m;
