@@ -12,7 +12,7 @@ namespace StriderWebApi.Domain.DomainClasses
         public int Id { get; set; }
 
         public int Index { get; set; }
-        public double Distance { get; set; } // km
+        public double Distance { get; set; } // meters
         public double Duration { get; set; } // segundos
         public double AverageHR { get; set; } // bpm
         public double Speed { get; set; } // m/s (calculado de distance/duration)
