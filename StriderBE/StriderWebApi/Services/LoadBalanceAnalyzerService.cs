@@ -24,8 +24,8 @@ public class LoadBalanceAnalyzerService(
 
 	public AthleteAnalysisResultResponseDto Analyze(Athlete athlete, IEnumerable<TrainingSession> trainingSessions)
 	{
-		double chronicTrainingLoad = _calculator.ExponentialAverageTrainingLoad(athlete, _chronicLookBackInDays, _weightFactor);
-		double acuteTrainingLoad = _calculator.ExponentialAverageTrainingLoad(athlete, _acuteLookBackInDays, _weightFactor);
+		double chronicTrainingLoad = _calculator.ExponentialAverageTrainingLoad(athlete, trainingSessions, _chronicLookBackInDays, _weightFactor);
+		double acuteTrainingLoad = _calculator.ExponentialAverageTrainingLoad(athlete, trainingSessions, _acuteLookBackInDays, _weightFactor);
 		
 		if (chronicTrainingLoad == 0 && acuteTrainingLoad == 0)
 		{
@@ -72,7 +72,7 @@ public class LoadBalanceAnalyzerService(
 		return new AthleteAnalysisResultResponseDto()
 		{
 			Title = $"El atleta {athlete.FullName} tiene un buen balance de carga",
-			Description = $"La relación aguda-crónica del atleta es {acRatio:F2}. Los límites establecidos para sobrecarga fueron {_overreachThreshold:F2} y {_overTrainingThreshold:F2}. El atleta tiene un balance de carga adecuado.",
+			Description = $"La relación aguda-crónica del atleta es {acRatio:F2}. Los límites establecidos para sobrecarga fueron {_undertrainmentThreshold:F2} y {_overreachThreshold:F2}. El atleta tiene un balance de carga adecuado.",
 			Type = AthleteAnalysisResultType.Ok
 		};
 	}

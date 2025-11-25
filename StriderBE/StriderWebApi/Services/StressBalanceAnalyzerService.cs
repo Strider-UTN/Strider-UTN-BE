@@ -46,9 +46,9 @@ public class StressBalanceAnalyzerService(
 		}
 		
 		DateTime nextCompetitionDate = nextCompetition.Date;
-		double stressBalance =  CalculateTrainingStressBalance(athlete);
+		double stressBalance =  CalculateTrainingStressBalance(athlete, trainingSessions);
 
-		if (stressBalance < _stressBalanceThreshold)
+		if (stressBalance > _stressBalanceThreshold)
 		{
 			return new AthleteAnalysisResultResponseDto()
 			{
@@ -62,13 +62,13 @@ public class StressBalanceAnalyzerService(
 		{
 			Title = $"No se detectaron problemas de balance de estrés",
 			Description = $"No se puede proporcionar un análisis de balance de estrés para el atleta {athlete.FullName}. El balance de estrés del atleta ({stressBalance:F2}) está dentro de los límites aceptables (umbral: {_stressBalanceThreshold:F2}).",
-			Type = AthleteAnalysisResultType.NoData
+			Type = AthleteAnalysisResultType.Ok
 		};
 	}
 
-	private double CalculateTrainingStressBalance(Athlete athlete)
+	private double CalculateTrainingStressBalance(Athlete athlete, IEnumerable<TrainingSession> trainingSessions)
 	{
-		return _calculator.ExponentialAverageTrainingLoad(athlete, _acuteLookBackInDays, _weightFactor) - _calculator.ExponentialAverageTrainingLoad(athlete, _chronicLookBackInDays, _weightFactor);
+		return _calculator.ExponentialAverageTrainingLoad(athlete, trainingSessions, _acuteLookBackInDays, _weightFactor) - _calculator.ExponentialAverageTrainingLoad(athlete, trainingSessions, _chronicLookBackInDays, _weightFactor);
 	}
 
 }
