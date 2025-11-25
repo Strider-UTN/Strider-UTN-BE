@@ -142,7 +142,10 @@ namespace StriderWebApi.Services
                     RecoveryDate = injury.RecoveryDate,
                     CreatedAt = injury.CreatedAt,
                     Treatment = injury.Treatment,
-                    ImpactOnTraining = injury.ImpactOnTraining
+                    ImpactOnTraining = injury.ImpactOnTraining,
+                    Description = injury.Description,
+                    Notes = injury.Notes,
+                    AffectedArea = injury.AffectedArea
                 })
                 .ToList();
         }
@@ -165,7 +168,10 @@ namespace StriderWebApi.Services
                     RecoveryDate = injury.RecoveryDate,
                     CreatedAt = injury.CreatedAt,
                     Treatment = injury.Treatment,
-                    ImpactOnTraining = injury.ImpactOnTraining
+                    ImpactOnTraining = injury.ImpactOnTraining,
+                    Description = injury.Description,
+                    Notes = injury.Notes,
+                    AffectedArea = injury.AffectedArea
                 })
                 .ToList();
         }

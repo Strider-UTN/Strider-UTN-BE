@@ -8,7 +8,7 @@ namespace StriderWebApi.Services.Interfaces
         Task<IEnumerable<TrainingSessionResponseDto>> GetByPlanningIdAsync(int planningId, CancellationToken cancellationToken = default);
         Task<IEnumerable<TrainingSessionResponseDto>> GetByMicrocycleIdAsync(int microcycleId, CancellationToken cancellationToken = default);
         Task<IEnumerable<TrainingSessionResponseDto>> GetByMesocycleIdAsync(int mesocycleId, CancellationToken cancellationToken = default);
-        Task<IEnumerable<TrainingSessionResponseDto>> GetByAthleteIdAsync(int athleteId, int? planningId = null, CancellationToken cancellationToken = default);
+        Task<IEnumerable<TrainingSessionResponseDto>> GetByAthleteIdAsync(int athleteId, int? planningId = null, DateTime? startDate = null, DateTime? endDate = null, CancellationToken cancellationToken = default);
         Task<IEnumerable<TrainingSessionResponseDto>> GetMyTrainingSessionsAsync(int athleteId, DateTime? date = null, CancellationToken cancellationToken = default);
         Task<TrainingSessionResponseDto> CreateAsync(CreateTrainingSessionDto dto, int coachId, CancellationToken cancellationToken = default);
         Task<TrainingSessionResponseDto> UpdateAsync(int id, UpdateTrainingSessionDto dto, int coachId, CancellationToken cancellationToken = default);

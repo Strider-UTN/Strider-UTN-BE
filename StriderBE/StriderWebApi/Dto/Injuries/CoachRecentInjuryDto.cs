@@ -17,5 +17,8 @@ namespace StriderWebApi.Dto.Injuries
         public DateTime CreatedAt { get; set; }
         public InjuryTreatmentType? Treatment { get; set; }
         public InjuryImpactLevel? ImpactOnTraining { get; set; }
+        public string? Description { get; set; }
+        public string? Notes { get; set; }
+        public InjuryLocation? AffectedArea { get; set; }
     }
 }

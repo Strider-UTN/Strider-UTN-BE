@@ -19,7 +19,7 @@ namespace StriderWebApi.Data.Repositories.Interfaces
         Task<IEnumerable<TrainingSession>> GetByDateRangeAsync(int planningId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
         Task<IEnumerable<TrainingSession>> GetByDateAsync(int planningId, DateTime date, CancellationToken cancellationToken = default);
         Task<TrainingSession?> GetByIdWithAthletesAsync(int id, CancellationToken cancellationToken = default);
-        Task<IEnumerable<TrainingSession>> GetByAthleteIdAsync(int athleteId, int? planningId = null, CancellationToken cancellationToken = default);
+        Task<IEnumerable<TrainingSession>> GetByAthleteIdAsync(int athleteId, int? planningId = null, DateTime? startDate = null, DateTime? endDate = null, CancellationToken cancellationToken = default);
         Task<IEnumerable<TrainingSession>> GetByAthleteIdAndDateAsync(int athleteId, DateTime date, CancellationToken cancellationToken = default);
         
         // Método optimizado para obtener conteo de sesiones por múltiples microciclos

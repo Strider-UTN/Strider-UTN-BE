@@ -85,9 +85,11 @@ namespace StriderWebApi.Controllers
         public async Task<ActionResult<IEnumerable<TrainingSessionResponseDto>>> GetByAthleteId(
             int athleteId,
             [FromQuery] int? planningId = null,
+            [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null,
             CancellationToken cancellationToken = default)
         {
-            var sessions = await trainingSessionService.GetByAthleteIdAsync(athleteId, planningId, cancellationToken);
+            var sessions = await trainingSessionService.GetByAthleteIdAsync(athleteId, planningId, startDate, endDate, cancellationToken);
             return Ok(sessions);
         }
 
