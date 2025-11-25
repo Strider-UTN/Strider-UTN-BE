@@ -253,9 +253,9 @@ namespace StriderWebApi.Services
             return date >= microcycle.StartDate && date <= microcycle.EndDate;
         }
 
-        public async Task<IEnumerable<TrainingSessionResponseDto>> GetByAthleteIdAsync(int athleteId, int? planningId = null, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<TrainingSessionResponseDto>> GetByAthleteIdAsync(int athleteId, int? planningId = null, DateTime? startDate = null, DateTime? endDate = null, CancellationToken cancellationToken = default)
         {
-            var sessions = await trainingSessionRepository.GetByAthleteIdAsync(athleteId, planningId, cancellationToken);
+            var sessions = await trainingSessionRepository.GetByAthleteIdAsync(athleteId, planningId, startDate, endDate, cancellationToken);
             var result = new List<TrainingSessionResponseDto>();
             foreach (var session in sessions)
             {
@@ -279,7 +279,7 @@ namespace StriderWebApi.Services
             else
             {
                 // Obtener todas las sesiones del atleta
-                sessions = await trainingSessionRepository.GetByAthleteIdAsync(athleteId, null, cancellationToken);
+                sessions = await trainingSessionRepository.GetByAthleteIdAsync(athleteId, null, null, null, cancellationToken);
             }
 
             var result = new List<TrainingSessionResponseDto>();

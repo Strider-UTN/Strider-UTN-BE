@@ -143,7 +143,7 @@ namespace StriderWebApi.Data.Repositories
             return session;
         }
 
-        public async Task<IEnumerable<TrainingSession>> GetByAthleteIdAsync(int athleteId, int? planningId = null, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<TrainingSession>> GetByAthleteIdAsync(int athleteId, int? planningId = null, DateTime? startDate = null, DateTime? endDate = null, CancellationToken cancellationToken = default)
         {
             var query = context.TrainingSessions
                 .Include(s => s.Planning)
@@ -161,6 +161,49 @@ namespace StriderWebApi.Data.Repositories
             if (planningId.HasValue)
             {
                 query = query.Where(s => s.PlanningId == planningId.Value);
+            }
+
+            // Filtrar por rango de fechas si se proporciona
+            // Asegurar que las fechas estén en UTC para PostgreSQL
+            if (startDate.HasValue)
+            {
+                var startDateValue = startDate.Value;
+                // Si la fecha viene como Unspecified, asumir que es UTC
+                if (startDateValue.Kind == DateTimeKind.Unspecified)
+                {
+                    startDateValue = DateTime.SpecifyKind(startDateValue.Date, DateTimeKind.Utc);
+                }
+                else if (startDateValue.Kind == DateTimeKind.Local)
+                {
+                    startDateValue = startDateValue.Date.ToUniversalTime();
+                }
+                else
+                {
+                    startDateValue = startDateValue.Date;
+                }
+                // Incluir todas las sesiones desde el inicio del día startDate
+                query = query.Where(s => s.Date.Date >= startDateValue);
+            }
+
+            if (endDate.HasValue)
+            {
+                var endDateValue = endDate.Value;
+                // Si la fecha viene como Unspecified, asumir que es UTC
+                if (endDateValue.Kind == DateTimeKind.Unspecified)
+                {
+                    endDateValue = DateTime.SpecifyKind(endDateValue.Date, DateTimeKind.Utc);
+                }
+                else if (endDateValue.Kind == DateTimeKind.Local)
+                {
+                    endDateValue = endDateValue.Date.ToUniversalTime();
+                }
+                else
+                {
+                    endDateValue = endDateValue.Date;
+                }
+                // Incluir todas las sesiones hasta el final del día endDate
+                // Usar <= para incluir todo el día endDate
+                query = query.Where(s => s.Date.Date <= endDateValue);
             }
 
             return await query
