@@ -11,10 +11,14 @@ public class TrainingLoadCalculatorService : ITrainingLoadCalculatorService
     private const double THRESHOLD_HR_FACTOR = 0.64;
     private const double REFERENCE_DURATION = 3600;
 
-    public double TrainingLoadFrom(Athlete athlete, Workout w) => 100.0 * w.Laps.Sum(l => LapTrainingLoad(athlete, l.Duration)) / LapTrainingLoad(athlete, REFERENCE_DURATION);
-    public double ExponentialAverageTrainingLoad(Athlete athlete, int lookBackInDays, double weightFactor)
+    public double TrainingLoadFrom(Athlete athlete, CompletedWorkout w) => 100.0 * w.Laps.Sum(l => LapTrainingLoad(athlete, l.Duration)) / LapTrainingLoad(athlete, REFERENCE_DURATION);
+    public double ExponentialAverageTrainingLoad(Athlete athlete, IEnumerable<TrainingSession> trainingSessions,  int lookBackInDays, double weightFactor)
     {
-        List<Workout> workouts = athlete.Workouts.Where(w => w.Date >= DateTime.Now.AddDays(-lookBackInDays)).ToList();
+        var completedWorkouts = trainingSessions.SelectMany(ts => ts.Athletes)
+                                                .Where(ath => ath.AthleteId == athlete.Id && ath.CompletedWorkouts is not null && ath.CompletedWorkouts.Count > 0)
+                                                .Select(ath => ath.CompletedWorkouts.First());
+
+        List<CompletedWorkout> workouts = completedWorkouts.Where(w => w.Date >= DateTime.Now.AddDays(-lookBackInDays)).ToList();
         double totalTrainingLoad = 0;
         for (int i = 0; i < workouts.Count; i++){
             double daysDifference = (DateTime.Now - workouts[i].Date).TotalDays;
