@@ -35,5 +35,15 @@ namespace StriderWebApi.Data.Repositories
             _context.Users.Update(user);
             return await _context.SaveChangesAsync().ContinueWith(t => t.Result > 0);
         }
+
+        public async Task<IReadOnlyList<User>> GetAllUsersAsync()
+        {
+            return await _context.Users.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<User?> GetUserByPasswordResetTokenAsync(string token)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == token);
+        }
     }
 }

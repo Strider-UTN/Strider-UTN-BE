@@ -1,4 +1,5 @@
 ﻿using StriderWebApi.Domain.Enums;
+using StriderWebApi.Dto.User;
 using StriderWebApi.Dto.UserCreation;
 
 namespace StriderWebApi.Services.Interfaces
@@ -11,5 +12,6 @@ namespace StriderWebApi.Services.Interfaces
         Task<bool> UpdateUserThemeAsync(int userId, ThemePreference theme);
         Task<bool> UpdateUserProfileAsync(int userId, UpdateUserProfileDto dto);
         Task<UserProfileResponseDto?> GetUserProfileAsync(int userId);
+        Task<IReadOnlyList<UserSummaryDto>> GetAllUsersAsync();
     }
 }

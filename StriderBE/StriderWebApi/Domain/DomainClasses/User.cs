@@ -16,6 +16,8 @@ namespace StriderWebApi.Domain.DomainClasses
         public bool Active { get; set; }
         public string? ActivationToken { get; set; }
         public DateTime? ActivationTokenExpires { get; set; }
+        public string? PasswordResetToken { get; set; }
+        public DateTime? PasswordResetTokenExpires { get; set; }
         public ThemePreference PreferredTheme { get; set; } = ThemePreference.Light; // Default claro
 
         public UserTypeEnum UserType { get; set; }

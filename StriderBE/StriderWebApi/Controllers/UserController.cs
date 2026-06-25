@@ -78,6 +78,19 @@ namespace StriderWebApi.Controllers
         }
 
         /// <summary>
+        /// Listado administrativo de usuarios del sistema (solo entrenadores).
+        /// </summary>
+        [HttpGet]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = await userService.GetAllUsersAsync();
+            return Ok(users);
+        }
+
+        /// <summary>
         /// Actualiza el tema preferido del usuario actual
         /// </summary>
         [HttpPatch("theme")]
