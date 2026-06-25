@@ -11,13 +11,14 @@ using System.Text;
 
 namespace StriderWebApi.Services
 {
-    public class AuthService(IConfiguration config, IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IAthleteRepository athleteRepository, ICoachRepository coachRepository) : IAuthService
+    public class AuthService(IConfiguration config, IUserRepository userRepository, IPasswordHasher<User> passwordHasher, IAthleteRepository athleteRepository, ICoachRepository coachRepository, IEmailService emailService) : IAuthService
     {
         private readonly IConfiguration _config = config ?? throw new ArgumentNullException(nameof(config));
         private readonly IUserRepository _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         private readonly IAthleteRepository _athleteRepository = athleteRepository ?? throw new ArgumentNullException(nameof(athleteRepository));
         private readonly ICoachRepository _coachRepository = coachRepository ?? throw new ArgumentNullException(nameof(coachRepository));
         private readonly IPasswordHasher<User> _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
+        private readonly IEmailService _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
 
         public IPasswordHasher<User> PasswordHasher => _passwordHasher;
 
@@ -95,6 +96,53 @@ namespace StriderWebApi.Services
                 throw new UnauthorizedAccessException("Email o contraseña inválidos.");
 
             return GetToken(dbUser, dbUser.FullName);
+        }
+
+        public async Task ForgotPasswordAsync(string email, UserTypeEnum userType)
+        {
+            var user = await _userRepository.GetUserByEmailAsync(email, userType)
+                ?? throw new KeyNotFoundException("No se encontró un usuario con ese email y tipo.");
+
+            var token = Guid.NewGuid().ToString();
+            user.PasswordResetToken = token;
+            user.PasswordResetTokenExpires = DateTime.UtcNow.AddHours(24);
+            user.UpdatedBy = "Password Reset Request";
+            user.UpdatedDate = DateTime.UtcNow;
+
+            await UpdateUserAsync(user);
+            await _emailService.SendPasswordResetEmailAsync(user.Email, user.FullName, token);
+        }
+
+        public async Task ResetPasswordAsync(string resetToken, string newPassword)
+        {
+            var user = await _userRepository.GetUserByPasswordResetTokenAsync(resetToken);
+            if (user == null || string.IsNullOrEmpty(user.PasswordResetToken))
+                throw new ArgumentException("Token de recuperación inválido.");
+
+            user.PasswordHash = _passwordHasher.HashPassword(user, newPassword);
+            user.PasswordResetToken = null;
+            user.PasswordResetTokenExpires = null;
+            user.UpdatedBy = "Password Reset";
+            user.UpdatedDate = DateTime.UtcNow;
+
+            await UpdateUserAsync(user);
+        }
+
+        private async Task UpdateUserAsync(User user)
+        {
+            if (user.UserType == UserTypeEnum.Athlete && user is Athlete athlete)
+            {
+                await _athleteRepository.UpdateAthleteAsync(athlete);
+                return;
+            }
+
+            if (user.UserType == UserTypeEnum.Coach && user is Coach coach)
+            {
+                await _coachRepository.UpdateCoachAsync(coach);
+                return;
+            }
+
+            await _userRepository.UpdateUserAsync(user);
         }
 
         private string GetToken(User user, string name)

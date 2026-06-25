@@ -9,5 +9,7 @@ namespace StriderWebApi.Data.Repositories.Interfaces
         Task<User?> GetUserByEmailAsync(string email, UserTypeEnum? userType = null);
         Task<bool> UserExistsByEmailAsync(string email, UserTypeEnum userType);
         Task<bool> UpdateUserAsync(User user);
+        Task<IReadOnlyList<User>> GetAllUsersAsync();
+        Task<User?> GetUserByPasswordResetTokenAsync(string token);
     }
 }

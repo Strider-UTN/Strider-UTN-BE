@@ -2,6 +2,7 @@
 using StriderWebApi.Data.Repositories.Interfaces;
 using StriderWebApi.Domain.DomainClasses;
 using StriderWebApi.Domain.Enums;
+using StriderWebApi.Dto.User;
 using StriderWebApi.Dto.UserCreation;
 using StriderWebApi.Exceptions.AccountActivation;
 using StriderWebApi.Exceptions.User;
@@ -445,6 +446,19 @@ namespace StriderWebApi.Services
                 logger.LogError(ex, "Error al obtener el perfil del usuario {UserId}", userId);
                 throw;
             }
+        }
+
+        public async Task<IReadOnlyList<UserSummaryDto>> GetAllUsersAsync()
+        {
+            var users = await userRepository.GetAllUsersAsync();
+            return users.Select(u => new UserSummaryDto
+            {
+                Id = u.Id,
+                Email = u.Email,
+                UserType = u.UserType,
+                PasswordResetToken = u.PasswordResetToken,
+                PasswordResetTokenExpires = u.PasswordResetTokenExpires
+            }).ToList();
         }
     }
 }
